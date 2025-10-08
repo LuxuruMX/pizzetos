@@ -1,54 +1,36 @@
 'use client';
 
-export default function Input({
-  label,
-  type = 'text',
-  value,
-  onChange,
-  placeholder,
-  disabled = false,
+export default function Input({ 
+  label, 
+  type = 'text', 
+  name, 
+  value, 
+  onChange, 
+  placeholder, 
   required = false,
-  error,
-  icon: Icon,
-  className = '',
+  disabled = false,
+  step,
+  className = ''
 }) {
   return (
-    <div className={`w-full ${className}`}>
+    <div className={`flex flex-col ${className}`}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="mb-2 text-sm font-medium text-gray-700">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
-      
-      <div className="relative">
-        {Icon && (
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-            <Icon />
-          </div>
-        )}
-        
-        <input
-          type={type}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          disabled={disabled}
-          required={required}
-          className={`
-            w-full px-4 py-2 border rounded-lg 
-            text-gray-900 placeholder-gray-400
-            focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent
-            disabled:bg-gray-100 disabled:cursor-not-allowed
-            ${Icon ? 'pl-10' : ''}
-            ${error ? 'border-red-500' : 'border-gray-300'}
-          `}
-        />
-      </div>
-      
-      {error && (
-        <p className="mt-1 text-sm text-red-500">{error}</p>
-      )}
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required={required}
+        disabled={disabled}
+        step={step}
+        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 bg-white"
+      />
     </div>
   );
 }

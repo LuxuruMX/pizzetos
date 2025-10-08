@@ -1,5 +1,7 @@
 'use client';
 
+import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+
 export default function Table({ 
   columns, 
   data, 
@@ -47,21 +49,23 @@ export default function Table({
                 ))}
                 {(onEdit || onDelete) && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       {onEdit && (
                         <button
                           onClick={() => onEdit(row)}
-                          className="text-blue-600 hover:text-blue-800 font-medium"
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="Editar"
                         >
-                          Editar
+                          <FaEdit size={18} />
                         </button>
                       )}
                       {onDelete && (
                         <button
                           onClick={() => onDelete(row)}
-                          className="text-red-600 hover:text-red-800 font-medium"
+                          className="text-red-600 hover:text-red-800 transition-colors"
+                          title="Eliminar"
                         >
-                          Eliminar
+                          <FaTrashAlt size={18} />
                         </button>
                       )}
                     </div>

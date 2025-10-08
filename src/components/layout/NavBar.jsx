@@ -27,10 +27,10 @@ const menuItems = [
       { name: 'Magno', path: '/productos/magno', icon: FaUtensils },
       { name: 'Papas', path: '/productos/papas', icon: FaUtensils },
       { name: 'Mariscos', path: '/productos/mariscos', icon: FaFish },
-      { name: 'Rectangulares', path: '/productos/rectangulares', icon: FaUtensils },
+      { name: 'Rectangular', path: '/productos/rectangular', icon: FaUtensils },
       { name: 'Refrescos', path: '/productos/refrescos', icon: FaGlassWhiskey },
       { name: 'Spaguetty', path: '/productos/spaguetty', icon: FaUtensils },
-      { name: 'Especialidades', path: '/productos/especialidades', icon: FaUtensils },
+      { name: 'Especialidad', path: '/productos/especialidad', icon: FaUtensils },
       { name: 'Barra', path: '/productos/barra', icon: FaGlassWhiskey },
     ]
   },
