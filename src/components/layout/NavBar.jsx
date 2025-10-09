@@ -12,7 +12,8 @@ import {
   FaUtensils,
   FaPalette,
   FaChevronDown,
-  FaChevronRight
+  FaChevronRight,
+  FaUser
 } from 'react-icons/fa';
 
 const menuItems = [
@@ -35,6 +36,7 @@ const menuItems = [
     ]
   },
   { name: 'Componentes Demo', path: '/componentes-demo', icon: FaPalette },
+  { name: 'Empleados', path: '/empleados', icon: FaUser}
 ];
 
 export default function NavBar() {
