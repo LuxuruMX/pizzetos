@@ -24,12 +24,12 @@ export const catalogsService = {
 
   // Nuevos catálogos para empleados
   getCargos: async () => {
-    const response = await api.get('/extras/cargos');
+    const response = await api.get('/recursos/cargos/');
     return response.data;
   },
 
   getSucursales: async () => {
-    const response = await api.get('/extras/sucursales');
+    const response = await api.get('/recursos/sucursales');
     return response.data;
   },
 };

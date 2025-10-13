@@ -10,11 +10,15 @@ import {
   FaFish,
   FaGlassWhiskey,
   FaUtensils,
-  FaPalette,
   FaChevronDown,
   FaChevronRight,
-  FaUser
+  FaUser,
+  FaCodeBranch
 } from 'react-icons/fa';
+import { GrResources } from "react-icons/gr";
+import { BiSolidCategoryAlt } from "react-icons/bi";
+import { TbHierarchy3 } from "react-icons/tb";
+
 
 const menuItems = [
   { name: 'Dashboard', path: '/dashboard', icon: FaHome },
@@ -35,8 +39,17 @@ const menuItems = [
       { name: 'Barra', path: '/productos/barra', icon: FaGlassWhiskey },
     ]
   },
-  { name: 'Componentes Demo', path: '/componentes-demo', icon: FaPalette },
-  { name: 'Empleados', path: '/empleados', icon: FaUser}
+  //{ name: 'Componentes Demo', path: '/componentes-demo', icon: FaPalette },
+  { name: 'Empleados', path: '/empleados', icon: FaUser},
+  {
+    name: 'Recursos',
+    icon: GrResources,
+    submenu: [
+      { name: 'Categorias', path: '/recursos/categorias', icon: BiSolidCategoryAlt },
+      { name: 'Sucursales', path: '/recursos/sucursales',  icon: FaCodeBranch },
+      { name: 'Cargos', path: '/recursos/cargos', icon: TbHierarchy3 },
+    ]
+  }
 ];
 
 export default function NavBar() {
