@@ -71,12 +71,10 @@ export default function AgregarRectangularPage() {
       };
 
       await api.post('/ventas/rectangular', dataToSend);
-      
-      alert('Pizza rectangular creada correctamente ✅');
       router.push('/productos/rectangular');
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear la pizza rectangular ❌');
+      alert('Error al crear la pizza rectangular');
     } finally {
       setLoading(false);
     }

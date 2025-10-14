@@ -5,7 +5,8 @@ import { useProducts } from '@/hooks/useProducts';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
-import { FaPlus } from 'react-icons/fa';
+import Popconfirm from '@/components/ui/Popconfirm';
+import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 
 export default function RefrescosPage() {
   const router = useRouter();
@@ -16,13 +17,11 @@ export default function RefrescosPage() {
   };
 
   const handleDelete = async (product) => {
-    if (confirm(`¿Estás seguro de eliminar "${product.nombre}"?`)) {
-      const result = await deleteProduct(product.id_refresco);
-      if (result.success) {
-        alert('Producto eliminado correctamente ✅');
-      } else {
-        alert(result.error);
-      }
+    const result = await deleteProduct(product.id_spag);
+    if (result.success) {
+      window.location.reload();
+    } else {
+      alert(result.error);
     }
   };
 
@@ -46,6 +45,34 @@ export default function RefrescosPage() {
       accessor: 'categoria',
       render: (row) => <span className="text-gray-500 italic">{row.categoria}</span>
     },
+    {
+      header: 'ACCIONES',
+      accessor: 'actions',
+      render: (row) => (
+        <div className="flex justify-center gap-2">
+          <button
+            onClick={() => handleEdit(row)}
+            className="text-blue-600 hover:text-blue-800 transition-colors"
+            title="Editar"
+          >
+            <FaEdit size={18} />
+          </button>
+          <Popconfirm
+            title="¿Seguro que quiere eliminar?"
+            okText="Sí"
+            cancelText="No"
+            onConfirm={() => handleDelete(row)}
+          >
+            <button
+              className="text-red-600 hover:text-red-800 transition-colors"
+              title="Eliminar"
+            >
+              <FaTrash size={18} />
+            </button>
+          </Popconfirm>
+        </div>
+      )
+    }
   ];
 
   if (loading) {
@@ -90,8 +117,6 @@ export default function RefrescosPage() {
         <Table
           columns={columns}
           data={products}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
         />
       </Card>
     </div>

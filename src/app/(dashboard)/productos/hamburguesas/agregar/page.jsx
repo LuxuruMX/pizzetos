@@ -65,12 +65,10 @@ export default function AgregarHamburguesasPage() {
       };
 
       await api.post('/ventas/hamburguesas', dataToSend);
-      
-      alert('Producto creado correctamente ✅');
       router.push('/productos/hamburguesas');
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear el producto ❌');
+      alert('Error al crear el producto');
     } finally {
       setLoading(false);
     }

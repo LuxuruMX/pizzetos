@@ -40,7 +40,6 @@ export default function AgregarEspecialidadPage() {
     setLoading(false);
 
     if (result.success) {
-      alert('Producto creado correctamente ✅');
       router.push('/productos/especialidad');
     } else {
       alert(result.error);

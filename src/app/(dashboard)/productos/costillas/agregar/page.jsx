@@ -64,13 +64,11 @@ export default function AgregarCostillasPage() {
         id_cat: parseInt(formData.categoria),
       };
 
-      await api.post('/ventas/costillas/crear-costillas', dataToSend);
-      
-      alert('Producto creado correctamente ✅');
+      await api.post('/ventas/costillas/', dataToSend);
       router.push('/productos/costillas');
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear el producto ❌');
+      alert('Error al crear el producto');
     } finally {
       setLoading(false);
     }

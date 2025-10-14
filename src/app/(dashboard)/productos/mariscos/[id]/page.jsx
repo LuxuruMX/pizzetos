@@ -92,12 +92,10 @@ export default function EditarMariscosPage() {
       };
 
       await api.put(`/ventas/mariscos/${params.id}`, dataToSend);
-      
-      alert('Producto actualizado correctamente ✅');
       router.push('/productos/mariscos');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Error al actualizar el producto ❌');
+      alert('Error al actualizar el producto');
     } finally {
       setLoading(false);
     }

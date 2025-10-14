@@ -78,13 +78,11 @@ export default function EditarCostillasPage() {
         id_cat: parseInt(formData.categoria),
       };
 
-      await api.put(`/ventas/costillas/actualizar-costillas/${params.id}`, dataToSend);
-      
-      alert('Producto actualizado correctamente ✅');
+      await api.put(`/ventas/costillas/${params.id}`, dataToSend);
       router.push('/productos/costillas');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Error al actualizar el producto ❌');
+      alert('Error al actualizar el producto');
     } finally {
       setLoading(false);
     }

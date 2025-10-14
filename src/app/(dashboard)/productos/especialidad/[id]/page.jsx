@@ -62,7 +62,6 @@ export default function EditarEspecialidadPage() {
     setLoading(false);
 
     if (result.success) {
-      alert('Producto actualizado correctamente ✅');
       router.push('/productos/especialidad');
     } else {
       alert(result.error);

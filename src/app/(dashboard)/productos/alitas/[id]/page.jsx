@@ -83,13 +83,12 @@ export default function EditarAlitasPage() {
       };
 
       // Usar el endpoint correcto
-      await api.put(`/ventas/alitas/actualizar-alitas/${params.id}`, dataToSend);
+      await api.put(`/ventas/alitas/${params.id}`, dataToSend);
       
-      alert('Producto actualizado correctamente ✅');
       router.push('/productos/alitas');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Error al actualizar el producto ❌');
+      alert('Error al actualizar el producto');
     } finally {
       setLoading(false);
     }

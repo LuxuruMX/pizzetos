@@ -89,12 +89,10 @@ export default function EditarRefrescosPage() {
       };
 
       await api.put(`/ventas/refrescos/${params.id}`, dataToSend);
-      
-      alert('Producto actualizado correctamente ✅');
       router.push('/productos/refrescos');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Error al actualizar el producto ❌');
+      alert('Error al actualizar el producto');
     } finally {
       setLoading(false);
     }

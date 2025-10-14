@@ -64,9 +64,8 @@ export default function AgregarAlitasPage() {
         id_cat: parseInt(formData.categoria),
       };
 
-      await api.post('/ventas/alitas/crear-alitas', dataToSend);
+      await api.post('/ventas/alitas/', dataToSend);
       
-      alert('Producto creado correctamente ✅');
       router.push('/productos/alitas');
     } catch (error) {
       console.error('Error creating product:', error);

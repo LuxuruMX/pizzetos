@@ -72,11 +72,10 @@ export default function AgregarBarraPage() {
 
       await api.post('/ventas/barra', dataToSend);
       
-      alert('Pizza de barra creada correctamente ✅');
       router.push('/productos/barra');
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear la pizza de barra ❌');
+      alert('Error al crear la pizza de barra');
     } finally {
       setLoading(false);
     }

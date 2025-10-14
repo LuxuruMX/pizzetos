@@ -89,12 +89,10 @@ export default function EditarRectangularPage() {
       };
 
       await api.put(`/ventas/rectangular/${params.id}`, dataToSend);
-      
-      alert('Pizza rectangular actualizada correctamente ✅');
       router.push('/productos/rectangular');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Error al actualizar la pizza rectangular ❌');
+      alert('Error al actualizar la pizza rectangular');
     } finally {
       setLoading(false);
     }

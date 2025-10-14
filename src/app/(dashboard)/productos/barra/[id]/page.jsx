@@ -89,12 +89,9 @@ export default function EditarBarraPage() {
       };
 
       await api.put(`/ventas/barra/${params.id}`, dataToSend);
-      
-      alert('Pizza de barra actualizada correctamente ✅');
       router.push('/productos/barra');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Error al actualizar la pizza de barra ❌');
     } finally {
       setLoading(false);
     }
