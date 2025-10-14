@@ -9,59 +9,64 @@ import Table from '@/components/ui/Table';
 import Popconfirm from '@/components/ui/Popconfirm';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 
-export default function CategoriasPage() {
+export default function SucursalesPage() {
   const router = useRouter();
-  const [categorias, setCategorias] = useState([]);
+  const [sucursales, setSucursales] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchCategorias();
+    fetchSucursales();
   }, []);
 
-  const fetchCategorias = async () => {
+  const fetchSucursales = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/recursos/categorias');
-      setCategorias(response.data);
+      const response = await api.get('/recursos/sucursales');
+      setSucursales(response.data);
     } catch (error) {
-      console.error('Error fetching categorias:', error);
-      setError('Error al cargar las categorías');
+      console.error('Error fetching sucursales:', error);
+      setError('Error al cargar las sucursales');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (categoria) => {
-    router.push(`/recursos/categorias/${categoria.id_cat}`);
+  const handleEdit = (sucursal) => {
+    router.push(`/recursos/sucursales/${sucursal.id_suc}`);
   };
 
-  const handleDelete = async (categoria) => {
+  const handleDelete = async (sucursal) => {
     try {
-      await api.delete(`/recursos/categorias/${categoria.id_cat}`);
-      alert('Categoría eliminada correctamente ✅');
-      fetchCategorias();
+      await api.delete(`/recursos/sucursales?id_suc=${sucursal.id_suc}`);
+      alert('Sucursal eliminada correctamente ✅');
+      fetchSucursales();
     } catch (error) {
-      console.error('Error deleting categoria:', error);
-      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al eliminar la categoría ❌';
+      console.error('Error deleting sucursal:', error);
+      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al eliminar la sucursal ❌';
       alert(errorMsg);
     }
   };
 
   const handleAdd = () => {
-    router.push('/recursos/categorias/agregar');
+    router.push('/recursos/sucursales/agregar');
   };
 
   const columns = [
     { 
-      header: 'ID', 
-      accessor: 'id_cat',
-      render: (row) => <span className="font-mono text-gray-600">#{row.id_cat}</span>
+      header: 'NOMBRE', 
+      accessor: 'nombre',
+      render: (row) => <span className="font-semibold text-gray-900">{row.nombre}</span>
     },
     { 
-      header: 'DESCRIPCIÓN', 
-      accessor: 'descripcion',
-      render: (row) => <span className="font-semibold text-gray-900">{row.descripcion}</span>
+      header: 'DIRECCIÓN', 
+      accessor: 'direccion',
+      render: (row) => <span className="text-gray-700">{row.direccion}</span>
+    },
+    { 
+      header: 'TELÉFONO', 
+      accessor: 'telefono',
+      render: (row) => <span className="text-gray-700">{row.telefono}</span>
     },
   ];
 
@@ -70,7 +75,7 @@ export default function CategoriasPage() {
       <div className="p-6">
         <Card>
           <div className="text-center py-8">
-            <p className="text-gray-600">Cargando categorías...</p>
+            <p className="text-gray-600">Cargando sucursales...</p>
           </div>
         </Card>
       </div>
@@ -94,19 +99,19 @@ export default function CategoriasPage() {
       <Card>
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Categorías</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Sucursales</h1>
             <p className="text-gray-600 text-sm mt-1">
-              Gestiona las categorías de productos
+              Gestiona las sucursales de la empresa
             </p>
           </div>
           <Button icon={FaPlus} onClick={handleAdd}>
-            Agregar Categoría
+            Agregar Sucursal
           </Button>
         </div>
 
         <Table
           columns={columns}
-          data={categorias}
+          data={sucursales}
           onEdit={handleEdit}
           onDelete={handleDelete}
           renderActions={(row) => (
