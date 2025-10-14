@@ -19,7 +19,6 @@ export default function SpaguettyPage() {
     if (confirm(`¿Estás seguro de eliminar "${product.orden}"?`)) {
       const result = await deleteProduct(product.id_spag);
       if (result.success) {
-        alert('Producto eliminado correctamente ✅');
       } else {
         alert(result.error);
       }

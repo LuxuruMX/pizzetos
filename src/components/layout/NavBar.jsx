@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -13,7 +13,8 @@ import {
   FaChevronDown,
   FaChevronRight,
   FaUser,
-  FaCodeBranch
+  FaCodeBranch,
+  FaShoppingBasket
 } from 'react-icons/fa';
 import { GrResources } from "react-icons/gr";
 import { BiSolidCategoryAlt } from "react-icons/bi";
@@ -49,12 +50,18 @@ const menuItems = [
       { name: 'Sucursales', path: '/recursos/sucursales',  icon: FaCodeBranch },
       { name: 'Cargos', path: '/recursos/cargos', icon: TbHierarchy3 },
     ]
-  }
+  },
+  { name: 'POS', path: '/pos', icon: FaShoppingBasket }
 ];
 
 export default function NavBar() {
   const pathname = usePathname();
   const [openMenus, setOpenMenus] = useState({});
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleMenu = (menuName) => {
     setOpenMenus(prev => ({
@@ -86,7 +93,7 @@ export default function NavBar() {
                     <item.icon className="text-lg" />
                     <span>{item.name}</span>
                   </div>
-                  {openMenus[item.name] ? (
+                  {mounted && openMenus[item.name] ? (
                     <FaChevronDown className="text-sm" />
                   ) : (
                     <FaChevronRight className="text-sm" />
@@ -94,7 +101,7 @@ export default function NavBar() {
                 </button>
                 
                 {/* Submenu desplegable */}
-                {openMenus[item.name] && (
+                {mounted && openMenus[item.name] && (
                   <div className="ml-4 mt-1 space-y-1">
                     {item.submenu.map((subitem) => (
                       <Link

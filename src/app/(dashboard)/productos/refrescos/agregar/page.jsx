@@ -71,12 +71,10 @@ export default function AgregarRefrescosPage() {
       };
 
       await api.post('/ventas/refrescos', dataToSend);
-      
-      alert('Producto creado correctamente ✅');
       router.push('/productos/refrescos');
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear el producto ❌');
+      alert('Error al crear el producto');
     } finally {
       setLoading(false);
     }

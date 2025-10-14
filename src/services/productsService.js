@@ -15,19 +15,19 @@ export const productsService = {
 
   // Crear un nuevo producto
   async create(categoria, data) {
-    const response = await api.post(`/ventas/${categoria}/crear-${categoria}`, data);
+    const response = await api.post(`/ventas/${categoria}/`, data);
     return response.data;
   },
 
   // Actualizar un producto
   async update(categoria, id, data) {
-    const response = await api.put(`/ventas/${categoria}/actualizar-${categoria}/${id}`, data);
+    const response = await api.put(`/ventas/${categoria}/${id}`, data);
     return response.data;
   },
 
   // Eliminar un producto
   async delete(categoria, id) {
-    const response = await api.delete(`/ventas/${categoria}/eliminar-${categoria}/${id}`);
+    const response = await api.delete(`/ventas/${categoria}/${id}`);
     return response.data;
   },
 };

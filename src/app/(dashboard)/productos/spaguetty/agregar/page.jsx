@@ -65,12 +65,10 @@ export default function AgregarSpaguettyPage() {
       };
 
       await api.post('/ventas/spaguetty', dataToSend);
-      
-      alert('Producto creado correctamente ✅');
       router.push('/productos/spaguetty');
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear el producto ❌');
+      alert('Error al crear el producto');
     } finally {
       setLoading(false);
     }
