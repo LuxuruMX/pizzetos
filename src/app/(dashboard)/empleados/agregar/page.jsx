@@ -35,7 +35,7 @@ export default function AgregarEmpleadoPage() {
   const fetchCatalogs = async () => {
     try {
       const [cargosData, sucursalesData] = await Promise.all([
-        catalogsService.getCargos(),
+        catalogsService.getCargosEmpleados(),
         catalogsService.getSucursales()
       ]);
       
@@ -93,7 +93,7 @@ export default function AgregarEmpleadoPage() {
       router.push('/empleados');
     } catch (error) {
       console.error('Error creating empleado:', error);
-      alert('Error al crear el empleado ❌');
+      alert('Error al crear el empleado');
     } finally {
       setLoading(false);
     }

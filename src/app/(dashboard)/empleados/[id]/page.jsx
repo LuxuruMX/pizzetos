@@ -36,7 +36,7 @@ export default function EditarEmpleadoPage() {
   const fetchData = async () => {
     try {
       const [cargosData, sucursalesData] = await Promise.all([
-        catalogsService.getCargos(),
+        catalogsService.getCargosEmpleados(),
         catalogsService.getSucursales()
       ]);
       
