@@ -7,7 +7,8 @@ import { useProducts } from '@/hooks/useProducts';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import Popconfirm from '@/components/ui/Popconfirm';
 
 export default function MagnoPage() {
   const router = useRouter();
