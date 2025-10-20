@@ -19,6 +19,8 @@ import {
 import { GrResources } from "react-icons/gr";
 import { BiSolidCategoryAlt } from "react-icons/bi";
 import { TbHierarchy3 } from "react-icons/tb";
+import { FaMoneyBills } from "react-icons/fa6";
+
 
 
 const menuItems = [
@@ -51,7 +53,8 @@ const menuItems = [
       { name: 'Cargos', path: '/recursos/cargos', icon: TbHierarchy3 },
     ]
   },
-  { name: 'POS', path: '/pos', icon: FaShoppingBasket }
+  { name: 'POS', path: '/pos', icon: FaShoppingBasket },
+  { name: 'Gastos', path: '/gastos', icon: FaMoneyBills },
 ];
 
 export default function NavBar() {
