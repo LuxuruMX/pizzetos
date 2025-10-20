@@ -27,6 +27,7 @@ export default function AgregarEmpleadoPage() {
   const [sucursales, setSucursales] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingCatalogs, setLoadingCatalogs] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchCatalogs();
@@ -58,46 +59,53 @@ export default function AgregarEmpleadoPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.nombre || !formData.direccion || !formData.telefono || 
-        !formData.cargo || !formData.sucursal) {
-      alert('Por favor completa todos los campos obligatorios');
+  e.preventDefault();
+  
+  if (!formData.nombre || !formData.direccion || !formData.telefono || 
+      !formData.cargo || !formData.sucursal) {
+    alert('Por favor completa todos los campos obligatorios');
+    return;
+  }
+
+  setLoading(true);
+  setError(''); // Limpiar errores previos
+
+  try {
+    const dataToSend = {
+      nombre: formData.nombre,
+      direccion: formData.direccion,
+      telefono: formData.telefono,
+      id_ca: parseInt(formData.cargo),
+      id_suc: parseInt(formData.sucursal),
+      status: true,
+    };
+
+    if (formData.nickName && formData.nickName.trim() !== '') {
+      dataToSend.nickName = formData.nickName.trim();
+    }
+
+    if (formData.password && formData.password.trim() !== '') {
+      dataToSend.password = formData.password;
+    }
+
+    const response = await api.post('/empleados', dataToSend);
+    const result = response.data; // Ajusta esto si usas fetch en lugar de axios
+
+    // Verificar si el backend devolvió un mensaje de error lógico
+    if (result.message === "El nickName ya existe, elija otro usuario") {
+      setError('El nombre de usuario ya está en uso. Por favor, elige otro.');
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    
-    try {
-      const dataToSend = {
-        nombre: formData.nombre,
-        direccion: formData.direccion,
-        telefono: formData.telefono,
-        id_ca: parseInt(formData.cargo),
-        id_suc: parseInt(formData.sucursal),
-        status: true,
-      };
-
-      // Solo agregar nickname si se proporcionó
-      if (formData.nickName && formData.nickName.trim() !== '') {
-        dataToSend.nickName = formData.nickName;
-      }
-
-      // Solo agregar password si se proporcionó
-      if (formData.password && formData.password.trim() !== '') {
-        dataToSend.password = formData.password;
-      }
-
-      await api.post('/empleados', dataToSend);
-      
-      router.push('/empleados');
-    } catch (error) {
-      console.error('Error creating empleado:', error);
-      alert('Error al crear el empleado');
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Si todo salió bien
+    router.push('/empleados');
+  } catch (error) {
+    console.error('Error creating empleado:', error);
+    setError('Error al crear el empleado. Intenta nuevamente.');
+    setLoading(false);
+  }
+};
 
   if (loadingCatalogs) {
     return (
@@ -196,6 +204,11 @@ export default function AgregarEmpleadoPage() {
             onChange={handleChange}
             placeholder="Ingresa una contraseña"
           />
+          {error && (
+            <div className="text-red-500 text-sm p-2 bg-red-50 rounded-md">
+              {error}
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button 
