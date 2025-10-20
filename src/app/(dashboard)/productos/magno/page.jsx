@@ -1,6 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
 import { useProducts } from '@/hooks/useProducts';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -10,6 +12,23 @@ import { FaPlus } from 'react-icons/fa';
 export default function MagnoPage() {
   const router = useRouter();
   const { products, loading, error, deleteProduct } = useProducts('magno');
+
+  const [permisos, setPermisos] = useState(null);
+
+  useEffect(() => {
+    // Leer permisos del token
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          setPermisos(decoded.permisos || {});
+        } catch (e) {
+          console.error('Token inválido', e);
+        }
+      }
+    }
+  }, []);
 
   const handleEdit = (product) => {
     router.push(`/productos/magno/${product.id_magno}`);
@@ -30,6 +49,18 @@ export default function MagnoPage() {
     router.push('/productos/magno/agregar');
   };
 
+  if (permisos === null) {
+      return (
+        <div className="p-6">
+          <Card>
+            <div className="text-center py-8">
+              <p className="text-gray-600">Cargando...</p>
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
   const columns = [
     { 
       header: 'ESPECIALIDAD', 
@@ -49,6 +80,40 @@ export default function MagnoPage() {
         return <span className="text-blue-500 font-medium">${isNaN(precio) ? '0.00' : precio.toFixed(2)}</span>;
       }
     },
+    {
+      header: 'ACCIONES',
+      accessor: 'actions',
+      render: (row) => (
+        <div className="flex justify-center gap-2">
+          {/* Botón Editar */}
+          {permisos.modificar_producto && (
+            <button
+              onClick={() => handleEdit(row)}
+              className="text-blue-600 hover:text-blue-800 transition-colors"
+              title="Editar"
+            >
+              <FaEdit size={18} />
+            </button>
+          )}
+           {/* Botón Eliminar */}
+          {permisos.eliminar_producto && (
+            <Popconfirm
+              title="¿Seguro que quiere eliminar?"
+              okText="Sí"
+              cancelText="No"
+              onConfirm={() => handleDelete(row)}
+            >
+              <button
+                className="text-red-600 hover:text-red-800 transition-colors"
+                title="Eliminar"
+              >
+                <FaTrash size={18} />
+              </button>
+            </Popconfirm>
+          )}
+        </div>
+      )
+    }
   ];
 
   if (loading) {
@@ -85,16 +150,16 @@ export default function MagnoPage() {
               Gestiona los productos Magno
             </p>
           </div>
+          {permisos.crear_producto && (
           <Button icon={FaPlus} onClick={handleAdd}>
             Añadir
           </Button>
+          )}
         </div>
 
         <Table
           columns={columns}
           data={products}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
         />
       </Card>
     </div>

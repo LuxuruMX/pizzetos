@@ -1,6 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
 import { useProducts } from '@/hooks/useProducts';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -11,6 +13,23 @@ import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 export default function EspecialidadPage() {
   const router = useRouter();
   const { products, loading, error, deleteProduct } = useProducts('especialidad');
+
+  const [permisos, setPermisos] = useState(null);
+
+  useEffect(() => {
+    // Leer permisos del token
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          setPermisos(decoded.permisos || {});
+        } catch (e) {
+          console.error('Token inválido', e);
+        }
+      }
+    }
+  }, []);
 
   const handleEdit = (product) => {
     router.push(`/productos/especialidad/${product.id_esp}`);
@@ -29,6 +48,18 @@ export default function EspecialidadPage() {
     router.push('/productos/especialidad/agregar');
   };
 
+  if (permisos === null) {
+      return (
+        <div className="p-6">
+          <Card>
+            <div className="text-center py-8">
+              <p className="text-gray-600">Cargando...</p>
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
   const columns = [
     { 
       header: 'NOMBRE', 
@@ -45,6 +76,7 @@ export default function EspecialidadPage() {
       accessor: 'actions',
       render: (row) => (
         <div className="flex justify-center gap-2">
+          {permisos.modificar_producto && (
           <button
             onClick={() => handleEdit(row)}
             className="text-blue-600 hover:text-blue-800 transition-colors"
@@ -52,6 +84,8 @@ export default function EspecialidadPage() {
             >
             <FaEdit size={18} />
           </button>
+          )}
+          {permisos.eliminar_producto && (
           <Popconfirm
             title="¿Seguro que quiere eliminar?"
             okText="Sí"
@@ -65,6 +99,7 @@ export default function EspecialidadPage() {
               <FaTrash size={18} />
             </button>
           </Popconfirm>
+          )}
         </div>
       )
     }
@@ -104,9 +139,11 @@ export default function EspecialidadPage() {
               Gestiona las especialidades
             </p>
           </div>
+          {permisos.crear_producto && (
           <Button icon={FaPlus} onClick={handleAdd}>
             Añadir
           </Button>
+          )}
         </div>
 
         <Table
