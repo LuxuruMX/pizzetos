@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
 import { 
   FaHome, 
   FaDrumstickBite, 
@@ -21,13 +22,13 @@ import { BiSolidCategoryAlt } from "react-icons/bi";
 import { TbHierarchy3 } from "react-icons/tb";
 import { FaMoneyBills } from "react-icons/fa6";
 
-
-
-const menuItems = [
-  { name: 'Dashboard', path: '/dashboard', icon: FaHome },
+// Configuración del menú con permisos asociados
+const menuConfig = [
+  { name: 'Dashboard', path: '/dashboard', icon: FaHome, permiso: null },
   { 
     name: 'Productos', 
     icon: FaUtensils,
+    permiso: 'ver_producto',
     submenu: [
       { name: 'Alitas', path: '/productos/alitas', icon: FaDrumstickBite },
       { name: 'Costillas', path: '/productos/costillas', icon: FaDrumstickBite },
@@ -42,28 +43,56 @@ const menuItems = [
       { name: 'Barra', path: '/productos/barra', icon: FaGlassWhiskey },
     ]
   },
-  //{ name: 'Componentes Demo', path: '/componentes-demo', icon: FaPalette },
-  { name: 'Empleados', path: '/empleados', icon: FaUser},
+  { 
+    name: 'Empleados', 
+    path: '/empleados', 
+    icon: FaUser,
+    permiso: 'ver_empleado'
+  },
   {
     name: 'Recursos',
     icon: GrResources,
+    permiso: 'ver_recurso',
     submenu: [
       { name: 'Categorias', path: '/recursos/categorias', icon: BiSolidCategoryAlt },
       { name: 'Sucursales', path: '/recursos/sucursales',  icon: FaCodeBranch },
       { name: 'Cargos', path: '/recursos/cargos', icon: TbHierarchy3 },
     ]
   },
-  { name: 'POS', path: '/pos', icon: FaShoppingBasket },
-  { name: 'Gastos', path: '/gastos', icon: FaMoneyBills },
+  { 
+    name: 'POS', 
+    path: '/pos', 
+    icon: FaShoppingBasket,
+    permiso: 'ver_venta'
+  },
+  { 
+    name: 'Gastos', 
+    path: '/gastos', 
+    icon: FaMoneyBills,
+    permiso: 'ver_venta'
+  },
 ];
 
 export default function NavBar() {
   const pathname = usePathname();
   const [openMenus, setOpenMenus] = useState({});
   const [mounted, setMounted] = useState(false);
+  const [userPermisos, setUserPermisos] = useState(null);
 
   useEffect(() => {
     setMounted(true);
+    
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          setUserPermisos(decoded.permisos || {});
+        } catch (e) {
+          console.error('Token inválido o expirado', e);
+        }
+      }
+    }
   }, []);
 
   const toggleMenu = (menuName) => {
@@ -73,21 +102,36 @@ export default function NavBar() {
     }));
   };
 
+  // Filtrar menús según permisos
+  const visibleMenus = menuConfig.filter(item => {
+    if (!item.permiso) return true; // Si no requiere permiso, siempre visible
+    return userPermisos?.[item.permiso] === true;
+  });
+
+  // Mostrar loading mientras se carga el token
+  if (!mounted || userPermisos === null) {
+    return (
+      <aside className="w-64 bg-gray-900 text-white min-h-screen p-4">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold text-yellow-400">Pizzetos</h1>
+          <p className="text-sm text-gray-400">Cargando...</p>
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside className="w-64 bg-gray-900 text-white min-h-screen p-4">
-      {/* Logo */}
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-yellow-400">Pizzetos</h1>
         <p className="text-sm text-gray-400">Admin Panel</p>
       </div>
 
-      {/* Menu */}
       <nav className="space-y-2">
-        {menuItems.map((item) => (
+        {visibleMenus.map((item) => (
           <div key={item.name}>
             {item.submenu ? (
               <div>
-                {/* Botón para abrir/cerrar submenu */}
                 <button
                   onClick={() => toggleMenu(item.name)}
                   className="w-full flex items-center justify-between gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors"
@@ -96,15 +140,14 @@ export default function NavBar() {
                     <item.icon className="text-lg" />
                     <span>{item.name}</span>
                   </div>
-                  {mounted && openMenus[item.name] ? (
+                  {openMenus[item.name] ? (
                     <FaChevronDown className="text-sm" />
                   ) : (
                     <FaChevronRight className="text-sm" />
                   )}
                 </button>
                 
-                {/* Submenu desplegable */}
-                {mounted && openMenus[item.name] && (
+                {openMenus[item.name] && (
                   <div className="ml-4 mt-1 space-y-1">
                     {item.submenu.map((subitem) => (
                       <Link
