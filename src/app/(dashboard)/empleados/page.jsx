@@ -105,7 +105,7 @@ export default function EmpleadosPage() {
       <Card>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Empleados</h1>
-          {permisos.modificar_producto && (
+          {permisos.crear_producto && (
           <Button 
             icon={FaPlus}
             onClick={() => router.push('/empleados/agregar')}
