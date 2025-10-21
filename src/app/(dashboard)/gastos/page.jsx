@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
 import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -18,7 +19,24 @@ export default function GastosPage() {
   // Estados para los totales
   const [totalHoy, setTotalHoy] = useState(0);
   const [totalUltimos30Dias, setTotalUltimos30Dias] = useState(0);
-  const [totalNoEvaluados, setTotalNoEvaluados] = useState(0); // Total de no evaluados
+  const [totalNoEvaluados, setTotalNoEvaluados] = useState(0);
+
+  const [permisos, setPermisos] = useState(null);
+
+  useEffect(() => {
+    // Leer permisos del token
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          setPermisos(decoded.permisos || {});
+        } catch (e) {
+          console.error('Token inválido', e);
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetchGastos();
@@ -53,12 +71,9 @@ export default function GastosPage() {
       const fechaGasto = new Date(gasto.fecha);
       const precio = parseFloat(gasto.precio) || 0;
 
-      // Comparar solo la parte de la fecha (YYYY-MM-DD)
       const fechaGastoSolo = new Date(fechaGasto);
       fechaGastoSolo.setHours(0, 0, 0, 0);
 
-      // --- Cálculo Total Gastos (Verde) ---
-      // Este se calcula para todos los gastos, evaluados o no
       if (fechaGastoSolo.getTime() === hoy.getTime()) {
         sumaHoy += precio;
       }
@@ -67,20 +82,14 @@ export default function GastosPage() {
         suma30Dias += precio;
       }
 
-      // --- Cálculo Total No Evaluados (Amarillo) ---
-      // Este se calcula solo si evaluado es false
       if (!gasto.evaluado) {
         if (fechaGastoSolo.getTime() === hoy.getTime()) {
-          // Este if ya no es necesario aquí si solo queremos el total general de no evaluados
-          // Lo dejamos si queremos que el "de hoy" también ignore los evaluados
+
         }
 
         if (fechaGasto >= hace30Dias && fechaGasto <= new Date()) {
-          // Este if ya no es necesario aquí si solo queremos el total general de no evaluados
-          // Lo dejamos si queremos que el "de 30 días" también ignore los evaluados
         }
 
-        // Acumular para el total general de no evaluados
         sumaNoEvaluados += precio;
       }
     });
@@ -120,6 +129,18 @@ export default function GastosPage() {
     });
   };
 
+  if (permisos === null) {
+      return (
+        <div className="p-6">
+          <Card>
+            <div className="text-center py-8">
+              <p className="text-gray-600">Cargando...</p>
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
   const columns = [
     { 
       header: 'DESCRIPCIÓN', 
@@ -158,6 +179,7 @@ export default function GastosPage() {
       accessor: 'actions',
       render: (row) => (
         <div className="flex justify-center gap-2">
+          {permisos.modificar_producto && (
           <button
             onClick={() => handleEdit(row)}
             className="text-blue-600 hover:text-blue-800 transition-colors"
@@ -165,6 +187,9 @@ export default function GastosPage() {
           >
             <FaEdit size={18} />
           </button>
+          )}
+
+          {permisos.eliminar_producto && (
           <Popconfirm
             title="¿Seguro que quiere eliminar?"
             okText="Sí"
@@ -178,6 +203,7 @@ export default function GastosPage() {
               <FaTrash size={18} />
             </button>
           </Popconfirm>
+          )}
         </div>
       )
     }
@@ -236,9 +262,11 @@ export default function GastosPage() {
               Gestiona los gastos de las sucursales
             </p>
           </div>
+          {permisos.crear_producto && (
           <Button icon={FaPlus} onClick={handleAdd}>
             Añadir
           </Button>
+          )}
         </div>
 
         <Table

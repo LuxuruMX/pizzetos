@@ -1,14 +1,14 @@
-'use client';
-
-import { FaEdit, FaTrashAlt } from 'react-icons/fa';
-
-export default function Table({ 
-  columns, 
-  data, 
-  onEdit, 
-  onDelete,
-  className = '' 
+// @/components/ui/Table.js
+export default function Table({
+  columns,
+  data,
+  // onEdit, // <-- Puedes remover esta prop si ya no se usa internamente
+  // onDelete, // <-- Puedes remover esta prop si ya no se usa internamente
+  renderActions, // <-- Acepta la nueva prop
+  className = ''
 }) {
+  const hasActions = !!renderActions; // Determina si hay acciones basado en si se pasó renderActions
+
   return (
     <div className={`overflow-x-auto ${className}`}>
       <table className="min-w-full bg-white border border-gray-200 rounded-lg">
@@ -22,7 +22,7 @@ export default function Table({
                 {column.header}
               </th>
             ))}
-            {(onEdit || onDelete) && (
+            {hasActions && ( // <-- Ahora el encabezado de acciones depende de renderActions
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                 Acciones
               </th>
@@ -33,7 +33,7 @@ export default function Table({
           {data.length === 0 ? (
             <tr>
               <td
-                colSpan={columns.length + (onEdit || onDelete ? 1 : 0)}
+                colSpan={columns.length + (hasActions ? 1 : 0)} // <-- Ajusta el colspan
                 className="px-6 py-4 text-center text-gray-500"
               >
                 No hay datos disponibles
@@ -47,28 +47,9 @@ export default function Table({
                     {column.render ? column.render(row) : row[column.accessor]}
                   </td>
                 ))}
-                {(onEdit || onDelete) && (
+                {hasActions && ( // <-- Renderiza la celda de acciones si se provee renderActions
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex gap-3">
-                      {onEdit && (
-                        <button
-                          onClick={() => onEdit(row)}
-                          className="text-blue-600 hover:text-blue-800 transition-colors"
-                          title="Editar"
-                        >
-                          <FaEdit size={18} />
-                        </button>
-                      )}
-                      {onDelete && (
-                        <button
-                          onClick={() => onDelete(row)}
-                          className="text-red-600 hover:text-red-800 transition-colors"
-                          title="Eliminar"
-                        >
-                          <FaTrashAlt size={18} />
-                        </button>
-                      )}
-                    </div>
+                    {renderActions(row)} {/* <-- Llama a la función renderActions */}
                   </td>
                 )}
               </tr>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
 import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -11,6 +12,23 @@ export default function EmpleadosPage() {
   const router = useRouter();
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [permisos, setPermisos] = useState(null);
+  
+    useEffect(() => {
+      // Leer permisos del token
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          try {
+            const decoded = jwtDecode(token);
+            setPermisos(decoded.permisos || {});
+          } catch (e) {
+            console.error('Token inválido', e);
+          }
+        }
+      }
+    }, []);
 
   useEffect(() => {
     fetchEmpleados();
@@ -58,6 +76,18 @@ export default function EmpleadosPage() {
     }
   };
 
+  if (permisos === null) {
+      return (
+        <div className="p-6">
+          <Card>
+            <div className="text-center py-8">
+              <p className="text-gray-600">Cargando...</p>
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -75,12 +105,14 @@ export default function EmpleadosPage() {
       <Card>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Empleados</h1>
+          {permisos.modificar_producto && (
           <Button 
             icon={FaPlus}
             onClick={() => router.push('/empleados/agregar')}
           >
             Agregar Empleado
           </Button>
+          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -160,6 +192,7 @@ export default function EmpleadosPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
+                        {permisos.modificar_empleado && (
                         <button
                           onClick={() => router.push(`/empleados/${empleado.id_emp}`)}
                           className="text-blue-600 hover:text-blue-900"
@@ -167,6 +200,8 @@ export default function EmpleadosPage() {
                         >
                           <FaEdit size={18} />
                         </button>
+                        )}
+                        {permisos.eliminar_empleado && (
                         <button
                           onClick={() => handleDelete(empleado.id_emp)}
                           className="text-red-600 hover:text-red-900"
@@ -174,6 +209,7 @@ export default function EmpleadosPage() {
                         >
                           <FaTrash size={18} />
                         </button>
+                        )}
                       </div>
                     </td>
                   </tr>

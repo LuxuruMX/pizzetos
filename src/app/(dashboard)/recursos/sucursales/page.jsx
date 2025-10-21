@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
 import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
-import Popconfirm from '@/components/ui/Popconfirm';
+import Popconfirm from '@/components/ui/Popconfirm'; // Asegúrate de tener esta importación
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 
 export default function SucursalesPage() {
@@ -14,6 +15,23 @@ export default function SucursalesPage() {
   const [sucursales, setSucursales] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const [permisos, setPermisos] = useState(null);
+
+  useEffect(() => {
+    // Leer permisos del token
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          setPermisos(decoded.permisos || {});
+        } catch (e) {
+          console.error('Token inválido', e);
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetchSucursales();
@@ -51,6 +69,18 @@ export default function SucursalesPage() {
   const handleAdd = () => {
     router.push('/recursos/sucursales/agregar');
   };
+
+  if (permisos === null) {
+      return (
+        <div className="p-6">
+          <Card>
+            <div className="text-center py-8">
+              <p className="text-gray-600">Cargando...</p>
+            </div>
+          </Card>
+        </div>
+      );
+    }
 
   const columns = [
     { 
@@ -104,38 +134,46 @@ export default function SucursalesPage() {
               Gestiona las sucursales de la empresa
             </p>
           </div>
-          <Button icon={FaPlus} onClick={handleAdd}>
-            Agregar Sucursal
-          </Button>
+          {/* Verifica permiso para agregar */}
+          {permisos.crear_recurso && (
+            <Button icon={FaPlus} onClick={handleAdd}>
+              Agregar Sucursal
+            </Button>
+          )}
         </div>
 
         <Table
           columns={columns}
           data={sucursales}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          // No pases onEdit ni onDelete aquí si Table no los usa
           renderActions={(row) => (
             <div className="flex justify-center gap-2">
-              <button
-                onClick={() => handleEdit(row)}
-                className="text-blue-600 hover:text-blue-800 transition-colors"
-                title="Editar"
-              >
-                <FaEdit size={18} />
-              </button>
-              <Popconfirm
-                title="¿Seguro que quiere eliminar?"
-                okText="Sí"
-                cancelText="No"
-                onConfirm={() => handleDelete(row)}
-              >
+              {/* Verifica permiso para editar */}
+              {permisos.modificar_recurso && (
                 <button
-                  className="text-red-600 hover:text-red-800 transition-colors"
-                  title="Eliminar"
+                  onClick={() => handleEdit(row)}
+                  className="text-blue-600 hover:text-blue-800 transition-colors"
+                  title="Editar"
                 >
-                  <FaTrash size={18} />
+                  <FaEdit size={18} />
                 </button>
-              </Popconfirm>
+              )}
+              {/* Verifica permiso para eliminar */}
+              {permisos.eliminar_recurso && (
+                <Popconfirm
+                  title="¿Seguro que quiere eliminar?"
+                  okText="Sí"
+                  cancelText="No"
+                  onConfirm={() => handleDelete(row)}
+                >
+                  <button
+                    className="text-red-600 hover:text-red-800 transition-colors"
+                    title="Eliminar"
+                  >
+                    <FaTrash size={18} />
+                  </button>
+                </Popconfirm>
+              )}
             </div>
           )}
         />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
 import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -12,6 +13,22 @@ export default function CargosPage() {
   const router = useRouter();
   const [cargos, setCargos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [permisos, setPermisos] = useState(null);
+
+  useEffect(() => {
+    // Leer permisos del token
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          setPermisos(decoded.permisos || {});
+        } catch (e) {
+          console.error('Token inválido', e);
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetchCargos();
@@ -49,6 +66,18 @@ export default function CargosPage() {
     );
   };
 
+  if (permisos === null) {
+    return (
+      <div className="p-6">
+        <Card>
+          <div className="text-center py-8">
+            <p className="text-gray-600">Cargando...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -71,12 +100,14 @@ export default function CargosPage() {
               Gestiona los cargos y sus permisos del sistema
             </p>
           </div>
+          {permisos.crear_producto && (
           <Button 
             icon={FaPlus}
             onClick={() => router.push('/recursos/cargos/agregar')}
           >
             Agregar Cargo
           </Button>
+          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -168,6 +199,7 @@ export default function CargosPage() {
                     
                     <td className="px-4 py-3 whitespace-nowrap text-center">
                       <div className="flex justify-center gap-2">
+                        {permisos.modificar_recurso && (
                         <button
                           onClick={() => router.push(`/recursos/cargos/${cargo.id_cargo}`)}
                           className="text-blue-600 hover:text-blue-800 transition-colors"
@@ -175,6 +207,8 @@ export default function CargosPage() {
                         >
                           <FaEdit size={18} />
                         </button>
+                        )}
+                        {permisos.eliminar_recurso && (
                         <Popconfirm
                           title="¿Seguro que quiere eliminar?"
                           okText="Sí"
@@ -188,6 +222,7 @@ export default function CargosPage() {
                             <FaTrash size={18} />
                           </button>
                         </Popconfirm>
+                        )}
                       </div>
                     </td>
                   </tr>

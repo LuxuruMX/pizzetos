@@ -56,7 +56,13 @@ export default function LoginPage() {
           </p>
 
           {/* Formulario */}
-          <div className="space-y-4">
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleLogin();
+            }}
+          >
             {/* Usuario */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
@@ -91,13 +97,13 @@ export default function LoginPage() {
 
             {/* Botón */}
             <button
-              onClick={handleLogin}
+              type="submit"
               disabled={loading}
               className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             >
               {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
