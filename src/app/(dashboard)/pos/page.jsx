@@ -11,6 +11,16 @@ const POS = () => {
     hamburguesas: [],
     alitas: [],
     costillas: [],
+    spaguetty: [],
+    papas: [],
+    rectangular: [],
+    barra: [],
+    mariscos: [],
+    refrescos: [],
+    paquete1: [],
+    paquete2: [],
+    paquete3: [],
+    magno: []
   });
   const [categoriaActiva, setCategoriaActiva] = useState('hamburguesas');
   const [loading, setLoading] = useState(true);
