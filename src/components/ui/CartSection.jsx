@@ -1,4 +1,3 @@
-// src/components/pos/CartSection.jsx
 import CartItem from '@/components/ui/CartItem';
 
 const CartSection = ({ orden, total, onUpdateQuantity, onRemove, onEnviarOrden }) => {

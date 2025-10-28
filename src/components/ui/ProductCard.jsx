@@ -1,6 +1,4 @@
-// src/components/ui/ProductCard.jsx
 const ProductCard = ({ producto, tipoId, onAddToCart }) => {
-  // Validaciones defensivas
   if (!producto || !tipoId) {
     return null;
   }
