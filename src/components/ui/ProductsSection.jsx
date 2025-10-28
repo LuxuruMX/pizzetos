@@ -1,5 +1,6 @@
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import ProductCard from '@/components/ui/ProductCard';
-import { useRef } from 'react'; // Importamos useRef para manejar el desplazamiento
+import { useRef } from 'react';
 
 const ProductsSection = ({ 
   categorias, 
@@ -8,15 +9,15 @@ const ProductsSection = ({
   productos, 
   onAddToCart 
 }) => {
-  const categoriesContainerRef = useRef(null); // Referencia para el contenedor de categorías
+  const categoriesContainerRef = useRef(null);
 
   const scroll = (direction) => {
     const container = categoriesContainerRef.current;
     if (container) {
-      const scrollAmount = container.clientWidth * 0.8; // Desplazar el 80% del ancho visible
+      const scrollAmount = container.clientWidth * 0.8;
       container.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth' // Desplazamiento suave
+        behavior: 'smooth'
       });
     }
   };
@@ -24,11 +25,6 @@ const ProductsSection = ({
   return (
     <div className="w-2/3 ml-6 flex flex-col overflow-y-auto" 
          style={{ maxHeight: 'calc(100vh - 8rem)' }}>
-      {/* ocultar scrollbar horizontal (WebKit, Firefox, IE/Edge) */}
-      <style jsx global>{`
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
       <div className="px-6 pt-6">
         <h1 className="text-3xl font-bold text-center mb-6 text-black">Punto de Venta</h1>
 
@@ -44,16 +40,13 @@ const ProductsSection = ({
                 className="p-2 text-gray-600 hover:bg-gray-200 rounded-full mr-1 flex-shrink-0 z-10"
                 aria-label="Desplazar categorías a la izquierda"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
+                <FaChevronLeft className="h-5 w-5" />
               </button>
 
               {/* Contenedor de Categorías con Scroll Horizontal y Scrollbar Oculto */}
               <div
-                ref={categoriesContainerRef} // Asignamos la referencia aquí
+                ref={categoriesContainerRef}
                 className="flex-1 overflow-x-auto hide-scrollbar flex justify-start py-1"
-                style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
               >
                 <div className="flex space-x-4 min-w-max">
                   {categorias.map((categoria) => (
@@ -78,35 +71,35 @@ const ProductsSection = ({
                 className="p-2 text-gray-600 hover:bg-gray-200 rounded-full ml-1 flex-shrink-0 z-10"
                 aria-label="Desplazar categorías a la derecha"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
+                <FaChevronRight className="h-5 w-5" />
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Lista de Productos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-6 pb-6">
-        {productos.length === 0 ? (
-          <p className="text-gray-500 col-span-3 text-center">No hay productos disponibles</p>
-        ) : (
-          productos.map((producto) => {
-            if (!producto) return null;
-            const tipoId = Object.keys(producto).find((key) => key.startsWith('id_'));
-            if (!tipoId) return null;
+      {/* Esta sección SÍ se desplaza verticalmente */}
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {productos.length === 0 ? (
+            <p className="text-gray-500 col-span-3 text-center">No hay productos disponibles</p>
+          ) : (
+            productos.map((producto) => {
+              if (!producto) return null;
+              const tipoId = Object.keys(producto).find((key) => key.startsWith('id_'));
+              if (!tipoId) return null;
 
-            return (
-              <ProductCard
-                key={producto[tipoId]}
-                producto={producto}
-                tipoId={tipoId}
-                onAddToCart={onAddToCart}
-              />
-            );
-          })
-        )}
+              return (
+                <ProductCard
+                  key={producto[tipoId]}
+                  producto={producto}
+                  tipoId={tipoId}
+                  onAddToCart={onAddToCart}
+                />
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
