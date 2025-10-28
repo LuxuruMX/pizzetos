@@ -10,11 +10,11 @@ const ProductCard = ({ producto, tipoId, onAddToCart }) => {
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md flex flex-col">
-      <h3 className="font-semibold text-lg">{nombre}</h3>
+      <h3 className="font-semibold text-lg text-black">{nombre}</h3>
       <p className="text-gray-600">Precio: ${precio.toFixed(2)}</p>
       <button
         onClick={() => onAddToCart(producto, tipoId)}
-        className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+        className="mt-4 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded"
       >
         Agregar
       </button>

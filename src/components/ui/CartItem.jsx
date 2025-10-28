@@ -16,7 +16,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
 
   return (
     <li className="flex justify-between items-center border-b pb-2">
-      <div className="flex-grow">
+      <div className="flex-grow text-black">
         <span className="font-medium">{item.nombre}</span> x <span>{item.cantidad}</span>
         <br />
         <span className="text-sm text-gray-600">Subtotal: ${item.subtotal.toFixed(2)}</span>
@@ -33,7 +33,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
           min="1"
           value={item.cantidad}
           onChange={handleQuantityChange}
-          className="w-12 text-center border rounded"
+          className="w-12 text-center border rounded text-black border-gray-300"
         />
         <button
           onClick={handleIncrement}

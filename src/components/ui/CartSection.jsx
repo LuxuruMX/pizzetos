@@ -6,7 +6,7 @@ const CartSection = ({ orden, total, onUpdateQuantity, onRemove, onEnviarOrden }
     <div className="w-1/3 bg-white rounded-lg shadow-lg flex flex-col justify-between overflow-y-auto" 
          style={{ maxHeight: 'calc(100vh - 8rem)' }}>
       <div>
-        <h2 className="text-2xl font-bold mb-4 px-6 pt-6">Carrito</h2>
+        <h2 className="text-2xl font-bold mb-4 px-6 pt-6 text-black">Carrito</h2>
         {orden.length === 0 ? (
           <p className="text-gray-500 px-6">El carrito está vacío.</p>
         ) : (
@@ -22,7 +22,7 @@ const CartSection = ({ orden, total, onUpdateQuantity, onRemove, onEnviarOrden }
               ))}
             </ul>
             <div className="border-t pt-2 px-6">
-              <div className="flex justify-between">
+              <div className="flex justify-between text-black">
                 <strong>Total:</strong>
                 <span>${total.toFixed(2)}</span>
               </div>
@@ -33,7 +33,7 @@ const CartSection = ({ orden, total, onUpdateQuantity, onRemove, onEnviarOrden }
       <div className="mt-6 px-6 pb-6">
         <button
           onClick={onEnviarOrden}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded"
+          className="w-full bg-orange-400 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded"
         >
           Enviar Orden
         </button>

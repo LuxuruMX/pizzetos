@@ -12,7 +12,7 @@ const ProductsSection = ({
     <div className="w-2/3 ml-6 flex flex-col overflow-y-auto" 
          style={{ maxHeight: 'calc(100vh - 8rem)' }}>
       <div className="px-6 pt-6">
-        <h1 className="text-3xl font-bold text-center mb-6">Punto de Venta</h1>
+        <h1 className="text-3xl font-bold text-center mb-6 text-black">Punto de Venta</h1>
 
         {/* Selector de Categorías */}
         <div className="flex justify-center space-x-4 mb-6">
@@ -22,7 +22,7 @@ const ProductsSection = ({
               onClick={() => onCategoriaChange(categoria)}
               className={`px-4 py-2 rounded-lg ${
                 categoriaActiva === categoria
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-orange-400 text-white'
                   : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
               }`}
             >
