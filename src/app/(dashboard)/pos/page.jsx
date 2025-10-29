@@ -20,7 +20,8 @@ const POS = () => {
     paquete1: [],
     paquete2: [],
     paquete3: [],
-    magno: []
+    magno: [],
+    pizzas: []
   });
   const [categoriaActiva, setCategoriaActiva] = useState('hamburguesas');
   const [loading, setLoading] = useState(true);

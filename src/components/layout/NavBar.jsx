@@ -15,7 +15,8 @@ import {
   FaChevronRight,
   FaUser,
   FaCodeBranch,
-  FaShoppingBasket
+  FaShoppingBasket,
+  FaPizzaSlice
 } from 'react-icons/fa';
 import { GrResources } from "react-icons/gr";
 import { BiSolidCategoryAlt } from "react-icons/bi";
@@ -30,6 +31,7 @@ const menuConfig = [
     icon: FaUtensils,
     permiso: 'ver_producto',
     submenu: [
+      { name: 'Pizzas', path: '/productos/pizzas', icon: FaPizzaSlice },
       { name: 'Alitas', path: '/productos/alitas', icon: FaDrumstickBite },
       { name: 'Costillas', path: '/productos/costillas', icon: FaDrumstickBite },
       { name: 'Hamburguesas', path: '/productos/hamburguesas', icon: FaHamburger },

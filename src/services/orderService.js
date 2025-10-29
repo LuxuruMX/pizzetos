@@ -1,11 +1,11 @@
 // src/services/orderService.js
 import api from '@/services/api';
 
-const CATEGORIAS = ['hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'resfrescos', 'paquete1', 'paquete2', 'paquete3', 'magno'];
+const CATEGORIAS = ['hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'resfrescos', 'paquete1', 'paquete2', 'paquete3', 'magno', 'pizzas'];
 
 export const fetchProductosPorCategoria = async () => {
   try {
-    const [resHamb, resAlis, resCos, resSpag, resPapa, ResRec, ResBarr, ResMar, ResRefr, ResPaq1, ResPaq2, ResPaq3, ResMag ] = await Promise.all([
+    const [resHamb, resAlis, resCos, resSpag, resPapa, ResRec, ResBarr, ResMar, ResRefr, ResPaq1, ResPaq2, ResPaq3, ResMag, ResPizza ] = await Promise.all([
       api.get('/prices/hamburguesas'),
       api.get('/prices/alitas'),
       api.get('/prices/costillas'),
@@ -19,6 +19,7 @@ export const fetchProductosPorCategoria = async () => {
       api.get('/prices/paquete2'),
       api.get('/prices/paquete3'),
       api.get('/prices/magno'),
+      api.get('/prices/pizzas'),
     ]);
 
     // Validar que las respuestas tengan datos
@@ -35,8 +36,9 @@ export const fetchProductosPorCategoria = async () => {
     const paquete2 = Array.isArray(ResPaq2.data) ? ResPaq2.data : [];
     const paquete3 = Array.isArray(ResPaq3.data) ? ResPaq3.data : [];
     const magno = Array.isArray(ResMag.data) ? ResMag.data : [];
+    const pizzas = Array.isArray(ResPizza.data) ? ResPizza.data : [];
 
-    console.log('Productos cargados:', { hamburguesas, alitas, costillas, spaguetty, papas, rectangular, barra, mariscos, resfrescos, paquete1, paquete2, paquete3, magno });
+    console.log('Productos cargados:', { hamburguesas, alitas, costillas, spaguetty, papas, rectangular, barra, mariscos, resfrescos, paquete1, paquete2, paquete3, magno, pizzas });
 
     return {
       hamburguesas,
@@ -51,7 +53,8 @@ export const fetchProductosPorCategoria = async () => {
       paquete1,
       paquete2,
       paquete3,
-      magno
+      magno,
+      pizzas
     };
   } catch (error) {
     console.error('Error al cargar productos:', error);
@@ -69,7 +72,8 @@ export const fetchProductosPorCategoria = async () => {
       paquete1: [],
       paquete2: [],
       paquete3: [],
-      magno: []
+      magno: [],
+      pizzas: []
     };
   }
 };
