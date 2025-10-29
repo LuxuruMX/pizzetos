@@ -1,11 +1,12 @@
 // src/services/orderService.js
 import api from '@/services/api';
 
-const CATEGORIAS = ['hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'resfrescos', 'paquete1', 'paquete2', 'paquete3', 'magno', 'pizzas'];
+const CATEGORIAS = ['pizzas', 'hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'resfrescos', 'paquete1', 'paquete2', 'paquete3', 'magno'];
 
 export const fetchProductosPorCategoria = async () => {
   try {
-    const [resHamb, resAlis, resCos, resSpag, resPapa, ResRec, ResBarr, ResMar, ResRefr, ResPaq1, ResPaq2, ResPaq3, ResMag, ResPizza ] = await Promise.all([
+    const [ResPizza, resHamb, resAlis, resCos, resSpag, resPapa, ResRec, ResBarr, ResMar, ResRefr, ResPaq1, ResPaq2, ResPaq3, ResMag ] = await Promise.all([
+      api.get('/prices/pizzas'),
       api.get('/prices/hamburguesas'),
       api.get('/prices/alitas'),
       api.get('/prices/costillas'),
@@ -19,7 +20,6 @@ export const fetchProductosPorCategoria = async () => {
       api.get('/prices/paquete2'),
       api.get('/prices/paquete3'),
       api.get('/prices/magno'),
-      api.get('/prices/pizzas'),
     ]);
 
     // Validar que las respuestas tengan datos

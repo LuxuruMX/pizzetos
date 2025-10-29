@@ -23,7 +23,7 @@ const POS = () => {
     magno: [],
     pizzas: []
   });
-  const [categoriaActiva, setCategoriaActiva] = useState('hamburguesas');
+  const [categoriaActiva, setCategoriaActiva] = useState('pizzas');
   const [loading, setLoading] = useState(true);
 
   const {
