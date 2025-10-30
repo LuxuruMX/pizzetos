@@ -44,8 +44,6 @@ const POS = () => {
         setProductos(data);
       } catch (error) {
         console.error('Error al cargar productos:', error);
-        // No mostramos alert aquí porque el servicio ya maneja el error
-        // y retorna arrays vacíos
       } finally {
         setLoading(false);
       }
@@ -56,18 +54,19 @@ const POS = () => {
 
   // Enviar orden
   const handleEnviarOrden = async () => {
-    try {
-      await enviarOrdenAPI(orden);
-      limpiarCarrito();
-      alert('Orden enviada correctamente.');
-    } catch (error) {
-      alert(error.message || 'Hubo un error al enviar la orden.');
-    }
-  };
+  try {
+    await enviarOrdenAPI(orden); // Ya no se pasa id_suc
+    limpiarCarrito();
+    alert('Orden enviada correctamente.');
+  } catch (error) {
+    console.error('Error al enviar la orden:', error);
+    alert(error.message || 'Hubo un error al enviar la orden.');
+  }
+};
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-4 bg-gray-100 min-h-screen flex items-center justify-center">
+      <div className="max-w-7xl mx-auto p-4 bg-gray-100 min-h-screen flex items-center justify-center">
         <p className="text-xl">Cargando productos...</p>
       </div>
     );

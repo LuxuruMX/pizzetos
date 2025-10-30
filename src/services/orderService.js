@@ -1,5 +1,5 @@
-// src/services/orderService.js
 import api from '@/services/api';
+import {getSucursalFromToken} from '@/services/jwt';
 
 const CATEGORIAS = ['pizzas', 'hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'resfrescos', 'paquete1', 'paquete2', 'paquete3', 'magno'];
 
@@ -78,27 +78,28 @@ export const fetchProductosPorCategoria = async () => {
   }
 };
 
-export const enviarOrdenAPI = async (orden, id_suc = 1, id_cliente = 1) => {
+export const enviarOrdenAPI = async (orden, id_cliente = 1) => {
   if (orden.length === 0) {
     throw new Error('La orden está vacía');
   }
 
-  const groupedItems = orden.reduce((acc, item) => {
-    if (!acc[item.tipoId]) {
-      acc[item.tipoId] = { [item.tipoId]: item.id, cantidad: 0 };
-    }
-    acc[item.tipoId].cantidad += item.cantidad;
-    return acc;
-  }, {});
+  const id_suc = getSucursalFromToken(); // Obtener la sucursal del token
+
+  // Construir el array de items según el formato del backend
+  const items = orden.map(item => ({
+    cantidad: item.cantidad,
+    precio_unitario: item.precioUnitario,
+    [item.tipoId]: item.id, // Por ejemplo: { id_hamb: 1 }
+  }));
 
   const ordenParaEnviar = {
-    id_suc,
-    id_cliente,
-    items: Object.values(groupedItems),
+    id_suc, // Dinámico desde el token
+    id_cliente, // Fijo o también podría obtenerse del token si es necesario
+    total: orden.reduce((acc, item) => acc + item.subtotal, 0), // Total calculado en frontend
+    items, // Array con el formato correcto
   };
 
   console.log('Enviando orden:', ordenParaEnviar);
-  
   const response = await api.post('/pos/', ordenParaEnviar);
   return response.data;
 };
