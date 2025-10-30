@@ -78,7 +78,7 @@ export const fetchProductosPorCategoria = async () => {
   }
 };
 
-export const enviarOrdenAPI = async (orden, id_cliente = 1) => {
+export const enviarOrdenAPI = async (orden, id_cliente) => {
   if (orden.length === 0) {
     throw new Error('La orden está vacía');
   }

@@ -26,7 +26,6 @@ const ProductsSection = ({
     <div className="w-2/3 ml-6 flex flex-col overflow-y-auto" 
          style={{ maxHeight: 'calc(100vh - 8rem)' }}>
       <div className="px-6 pt-6">
-        <h1 className="text-3xl font-bold text-center mb-6 text-black">Punto de Venta</h1>
 
         {/* Contenedor para Categorías con Scroll Horizontal y Flechas */}
         <div className="relative mb-6">
