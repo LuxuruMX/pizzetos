@@ -93,10 +93,10 @@ export const enviarOrdenAPI = async (orden, id_cliente = 1) => {
   }));
 
   const ordenParaEnviar = {
-    id_suc, // Dinámico desde el token
-    id_cliente, // Fijo o también podría obtenerse del token si es necesario
-    total: orden.reduce((acc, item) => acc + item.subtotal, 0), // Total calculado en frontend
-    items, // Array con el formato correcto
+    id_suc,
+    id_cliente,
+    total: orden.reduce((acc, item) => acc + item.subtotal, 0),
+    items,
   };
 
   console.log('Enviando orden:', ordenParaEnviar);

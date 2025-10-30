@@ -34,5 +34,9 @@ export const catalogsService = {
   getCargosEmpleados: async () => {
     const response = await api.get('/empleados/cargo');
     return response.data;
+  },
+  getNombresClientes: async () => {
+    const response = await api.get('/clientes/posclientes');
+    return response.data;
   }
 };
