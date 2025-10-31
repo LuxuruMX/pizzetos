@@ -22,6 +22,8 @@ import { GrResources } from "react-icons/gr";
 import { BiSolidCategoryAlt } from "react-icons/bi";
 import { TbHierarchy3 } from "react-icons/tb";
 import { FaMoneyBills } from "react-icons/fa6";
+import { RiCustomerServiceFill } from "react-icons/ri";
+
 
 // Configuración del menú con permisos asociados
 const menuConfig = [
@@ -71,6 +73,12 @@ const menuConfig = [
     name: 'Gastos', 
     path: '/gastos', 
     icon: FaMoneyBills,
+    permiso: 'ver_venta'
+  },
+  { 
+    name: 'Clientes',
+    path: '/clientes',
+    icon: RiCustomerServiceFill,
     permiso: 'ver_venta'
   },
 ];
