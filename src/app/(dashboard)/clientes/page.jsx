@@ -3,13 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
-import { useClientes } from '@/hooks/useClientes'; // Asegúrate de tener este hook
+import { useClientes } from '@/hooks/useClientes';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import { FaPlus, FaEdit, FaTrash, FaAddressBook } from 'react-icons/fa';
 import Popconfirm from '@/components/ui/Popconfirm';
-// Importamos el nuevo componente modal
 import ModalDirecciones from '@/components/ui/ModalDirecciones';
 
 export default function ClientesPage() {
@@ -20,8 +19,8 @@ export default function ClientesPage() {
   // Estados para el modal de direcciones
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  const [direccionActual, setDireccionActual] = useState(null); // Para edición
-  const [loadingDireccion, setLoadingDireccion] = useState(false); // Para mostrar loading en el botón del modal
+  const [direccionActual, setDireccionActual] = useState(null);
+  const [loadingDireccion, setLoadingDireccion] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -49,20 +48,48 @@ export default function ClientesPage() {
     setDireccionActual(null);
   };
 
-  // Función para manejar el envío del formulario dentro del modal
+  // Función para enviar la dirección al backend
   const handleSubmitDireccion = async (formData) => {
-    if (!clienteSeleccionado) return; // No debería pasar si el modal se abre correctamente
+    if (!clienteSeleccionado) return;
 
     setLoadingDireccion(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        alert('No se encontró el token de autenticación');
+        return;
+      }
 
-      alert('Dirección guardada correctamente (simulado).');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/clientes/${clienteSeleccionado.id_clie}/direcciones`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            calle: formData.calle,
+            manzana: formData.manzana,
+            lote: formData.lote,
+            colonia: formData.colonia,
+            referencia: formData.referencia
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al guardar la dirección');
+      }
+
+      const result = await response.json();
+      alert('Dirección guardada correctamente');
       handleCloseModal();
 
     } catch (err) {
       console.error('Error al guardar dirección:', err);
-      alert('Error al guardar la dirección.');
+      alert(`Error al guardar la dirección: ${err.message}`);
     } finally {
       setLoadingDireccion(false);
     }
@@ -99,11 +126,6 @@ export default function ClientesPage() {
 
   const columns = [
     {
-      header: 'ID',
-      accessor: 'id_clie',
-      render: (row) => <span className="font-semibold">{row.id_clie}</span>
-    },
-    {
       header: 'NOMBRE',
       accessor: 'nombre',
       render: (row) => <span>{row.nombre}</span>
@@ -123,8 +145,8 @@ export default function ClientesPage() {
       accessor: 'actions',
       render: (row) => (
         <div className="flex justify-center gap-2">
-          {/* Botón Editar */}
-          {permisos.modificar_venta && ( // Asumiendo que este permiso es el correcto
+          {/* Botón Agregar Dirección */}
+          {permisos.modificar_venta && (
             <button
               onClick={() => handleAddAddress(row)}
               className="text-green-500 hover:text-green-700 transition-colors"
@@ -133,6 +155,8 @@ export default function ClientesPage() {
               <FaAddressBook size={18} />
             </button>
           )}
+          
+          {/* Botón Editar */}
           {permisos.modificar_venta && (
             <button
               onClick={() => handleEdit(row)}
@@ -142,9 +166,6 @@ export default function ClientesPage() {
               <FaEdit size={18} />
             </button>
           )}
-
-          {/* Botón Agregar Dirección */}
-          
 
           {/* Botón Eliminar */}
           {permisos.eliminar_venta && (
@@ -215,12 +236,12 @@ export default function ClientesPage() {
         />
       </Card>
 
-      {/* Renderizado condicional del Modal de Direcciones */}
+      {/* Modal de Direcciones */}
       <ModalDirecciones
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         cliente={clienteSeleccionado}
-        direccionActual={direccionActual} // Puede ser null
+        direccionActual={direccionActual}
         onSubmit={handleSubmitDireccion}
         loading={loadingDireccion}
       />
