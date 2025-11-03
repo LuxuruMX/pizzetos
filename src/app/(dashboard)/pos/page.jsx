@@ -29,6 +29,7 @@ const POS = () => {
   });
   const [categorias] = useState(CATEGORIAS);
   const [categoriaActiva, setCategoriaActiva] = useState('pizzas');
+  const [subcategoriaActiva, setSubcategoriaActiva] = useState(null);
   const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
@@ -69,7 +70,6 @@ const POS = () => {
   }, []);
 
   const handleEnviarOrden = async () => {
-    // 1. Verificar que se haya seleccionado un cliente
     if (!clienteSeleccionado) {
       alert('Por favor, selecciona un cliente antes de enviar la orden.');
       return;
@@ -77,7 +77,7 @@ const POS = () => {
     const idCliente = clienteSeleccionado.value;
     if (idCliente == null || idCliente === '') {
       alert('El cliente seleccionado no tiene un ID válido.');
-      console.error("Objeto clienteSeleccionado recibido:", clienteSeleccionado); // Log adicional para debug
+      console.error("Objeto clienteSeleccionado recibido:", clienteSeleccionado);
       return;
     }
 
@@ -89,6 +89,31 @@ const POS = () => {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
     }
+  };
+
+  // Define las subcategorías por categoría
+  const subcategoriasPorCategoria = {
+    'pizzas': ['Chica', 'Mediana', 'Grande', 'Familiar'],
+    'refrescos': ['355ml', '600ml', '2L'],
+  };
+
+  const handleCategoriaChange = (categoria) => {
+    setCategoriaActiva(categoria);
+    setSubcategoriaActiva(null);
+  };
+
+  const productosFiltrados = () => {
+    const productosCategoria = productos[categoriaActiva] || [];
+    
+    if (!subcategoriaActiva) {
+      return productosCategoria;
+    }
+    
+    return productosCategoria.filter(producto => 
+      producto.subcategoria === subcategoriaActiva || 
+      producto.tamano === subcategoriaActiva ||
+      producto.tamaño === subcategoriaActiva
+    );
   };
 
   if (loading) {
@@ -133,12 +158,15 @@ const POS = () => {
           onRemove={eliminarDelCarrito}
           onEnviarOrden={handleEnviarOrden}
         />
-
+        
         <ProductsSection
           categorias={categorias}
           categoriaActiva={categoriaActiva}
-          onCategoriaChange={setCategoriaActiva}
-          productos={productos[categoriaActiva] || []}
+          onCategoriaChange={handleCategoriaChange}
+          subcategorias={subcategoriasPorCategoria[categoriaActiva] || []}
+          subcategoriaActiva={subcategoriaActiva}
+          onSubcategoriaChange={setSubcategoriaActiva}
+          productos={productosFiltrados()}
           onAddToCart={agregarAlCarrito}
         />
       </div>

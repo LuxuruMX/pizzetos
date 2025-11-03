@@ -1,18 +1,44 @@
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import ProductCard from '@/components/ui/ProductCard';
 import { useRef } from 'react';
+
+// Definir ProductCard ANTES de ProductsSection
+const ProductCard = ({ producto, tipoId, onAddToCart }) => {
+  if (!producto || !tipoId) {
+    return null;
+  }
+
+  const nombre = producto.nombre || 'Sin nombre';
+  const precio = parseFloat(producto.precio) || 0;
+
+  return (
+    <div className="bg-white p-4 rounded-lg shadow-md flex flex-col">
+      <h3 className="font-semibold text-lg text-black">{nombre}</h3>
+      <p className="text-gray-600">Precio: ${precio.toFixed(2)}</p>
+      <button
+        onClick={() => onAddToCart(producto, tipoId)}
+        className="mt-4 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded"
+      >
+        Agregar
+      </button>
+    </div>
+  );
+};
 
 const ProductsSection = ({ 
   categorias, 
   categoriaActiva, 
-  onCategoriaChange, 
+  onCategoriaChange,
+  subcategorias = [], 
+  subcategoriaActiva = null, 
+  onSubcategoriaChange = null, 
   productos, 
   onAddToCart 
 }) => {
   const categoriesContainerRef = useRef(null);
+  const subcategoriesContainerRef = useRef(null);
 
-  const scroll = (direction) => {
-    const container = categoriesContainerRef.current;
+  const scroll = (direction, containerRef) => {
+    const container = containerRef.current;
     if (container) {
       const scrollAmount = container.clientWidth * 0.8;
       container.scrollBy({
@@ -22,27 +48,27 @@ const ProductsSection = ({
     }
   };
 
+  const mostrarSubcategorias = subcategorias && subcategorias.length > 0;
+
   return (
     <div className="w-2/3 ml-6 flex flex-col overflow-y-auto" 
          style={{ maxHeight: 'calc(100vh - 8rem)' }}>
       <div className="px-6 pt-6">
 
         {/* Contenedor para Categorías con Scroll Horizontal y Flechas */}
-        <div className="relative mb-6">
-          {/* Card exterior que encierra el contenedor de categorías y las flechas */}
+        <div className="relative mb-4">
           <div className="border border-gray-300 rounded-lg p-1 shadow-sm bg-white">
-            {/* Contenedor de flechas izquierda y contenedor interno con categorías */}
             <div className="flex items-center">
               {/* Flecha Izquierda */}
               <button
-                onClick={() => scroll('left')}
+                onClick={() => scroll('left', categoriesContainerRef)}
                 className="p-2 text-gray-600 hover:bg-gray-200 rounded-full mr-1 flex-shrink-0 z-10"
                 aria-label="Desplazar categorías a la izquierda"
               >
                 <FaChevronLeft className="h-5 w-5" />
               </button>
 
-              {/* Contenedor de Categorías con Scroll Horizontal y Scrollbar Oculto */}
+              {/* Contenedor de Categorías */}
               <div
                 ref={categoriesContainerRef}
                 className="flex-1 overflow-x-auto hide-scrollbar flex justify-start py-1"
@@ -66,7 +92,7 @@ const ProductsSection = ({
 
               {/* Flecha Derecha */}
               <button
-                onClick={() => scroll('right')}
+                onClick={() => scroll('right', categoriesContainerRef)}
                 className="p-2 text-gray-600 hover:bg-gray-200 rounded-full ml-1 flex-shrink-0 z-10"
                 aria-label="Desplazar categorías a la derecha"
               >
@@ -75,9 +101,69 @@ const ProductsSection = ({
             </div>
           </div>
         </div>
+
+        {/* Contenedor para Subcategorías */}
+        {mostrarSubcategorias && (
+          <div className="relative mb-6">
+            <div className="border border-gray-300 rounded-lg p-1 shadow-sm bg-gray-50">
+              <div className="flex items-center">
+                {/* Flecha Izquierda */}
+                <button
+                  onClick={() => scroll('left', subcategoriesContainerRef)}
+                  className="p-2 text-gray-600 hover:bg-gray-200 rounded-full mr-1 flex-shrink-0 z-10"
+                  aria-label="Desplazar subcategorías a la izquierda"
+                >
+                  <FaChevronLeft className="h-4 w-4" />
+                </button>
+
+                {/* Contenedor de Subcategorías */}
+                <div
+                  ref={subcategoriesContainerRef}
+                  className="flex-1 overflow-x-auto hide-scrollbar flex justify-start py-1"
+                >
+                  <div className="flex space-x-3 min-w-max">
+                    {/* Botón "Todas" */}
+                    <button
+                      onClick={() => onSubcategoriaChange && onSubcategoriaChange(null)}
+                      className={`px-3 py-1.5 text-sm rounded-lg flex-shrink-0 ${
+                        subcategoriaActiva === null
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      Todas
+                    </button>
+                    {subcategorias.map((subcategoria) => (
+                      <button
+                        key={subcategoria}
+                        onClick={() => onSubcategoriaChange && onSubcategoriaChange(subcategoria)}
+                        className={`px-3 py-1.5 text-sm rounded-lg flex-shrink-0 ${
+                          subcategoriaActiva === subcategoria
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        {subcategoria}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Flecha Derecha */}
+                <button
+                  onClick={() => scroll('right', subcategoriesContainerRef)}
+                  className="p-2 text-gray-600 hover:bg-gray-200 rounded-full ml-1 flex-shrink-0 z-10"
+                  aria-label="Desplazar subcategorías a la derecha"
+                >
+                  <FaChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Esta sección SÍ se desplaza verticalmente */}
+      {/* Sección de productos con scroll vertical */}
       <div className="flex-1 overflow-y-auto px-6 pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {productos.length === 0 ? (

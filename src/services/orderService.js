@@ -1,7 +1,7 @@
 import api from '@/services/api';
 import {getSucursalFromToken} from '@/services/jwt';
 
-const CATEGORIAS = ['pizzas', 'hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'resfrescos', 'paquete1', 'paquete2', 'paquete3', 'magno'];
+const CATEGORIAS = ['pizzas', 'hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'refrescos', 'paquete1', 'paquete2', 'paquete3', 'magno'];
 
 export const fetchProductosPorCategoria = async () => {
   try {
@@ -31,14 +31,14 @@ export const fetchProductosPorCategoria = async () => {
     const rectangular = Array.isArray(ResRec.data) ? ResRec.data : [];
     const barra = Array.isArray(ResBarr.data) ? ResBarr.data : [];
     const mariscos = Array.isArray(ResMar.data) ? ResMar.data : [];
-    const resfrescos = Array.isArray(ResRefr.data) ? ResRefr.data : [];
+    const refrescos = Array.isArray(ResRefr.data) ? ResRefr.data : [];
     const paquete1 = Array.isArray(ResPaq1.data) ? ResPaq1.data : [];
     const paquete2 = Array.isArray(ResPaq2.data) ? ResPaq2.data : [];
     const paquete3 = Array.isArray(ResPaq3.data) ? ResPaq3.data : [];
     const magno = Array.isArray(ResMag.data) ? ResMag.data : [];
     const pizzas = Array.isArray(ResPizza.data) ? ResPizza.data : [];
 
-    console.log('Productos cargados:', { hamburguesas, alitas, costillas, spaguetty, papas, rectangular, barra, mariscos, resfrescos, paquete1, paquete2, paquete3, magno, pizzas });
+    console.log('Productos cargados:', { hamburguesas, alitas, costillas, spaguetty, papas, rectangular, barra, mariscos, refrescos, paquete1, paquete2, paquete3, magno, pizzas });
 
     return {
       hamburguesas,
@@ -49,7 +49,7 @@ export const fetchProductosPorCategoria = async () => {
       rectangular,
       barra,
       mariscos,
-      resfrescos,
+      refrescos,
       paquete1,
       paquete2,
       paquete3,
@@ -68,7 +68,7 @@ export const fetchProductosPorCategoria = async () => {
       rectangular: [],
       barra: [],
       mariscos: [],
-      resfrescos: [],
+      refrescos: [],
       paquete1: [],
       paquete2: [],
       paquete3: [],
