@@ -45,8 +45,10 @@ export function useClientes() {
   // updateCliente
   const updateCliente = async (id, clienteData) => {
     try {
-      const clienteActualizado = await clientesService.update(id, clienteData); // Llama al servicio
-      setClientes(clientes.map(c => c.id_clie === id ? clienteActualizado : c)); // Asume que el ID se llama id_clie
+      // Llama al servicio para actualizar
+      const clienteActualizado = await clientesService.update(id, clienteData);
+      // Actualiza el estado local
+      setClientes(clientes.map(c => c.id_clie === id ? clienteActualizado : c));
       return { success: true, data: clienteActualizado };
     } catch (err) {
       console.error('Error updating cliente:', err);
@@ -73,13 +75,13 @@ export function useClientes() {
   };
 
   return {
-    clientes, // Cambiamos products por clientes
+    clientes,
     loading,
     error,
-    fetchClientes, // Nuevo nombre
-    createCliente, // Nueva función
-    updateCliente, // Nueva función
-    deleteCliente, // Nueva función
+    fetchClientes,
+    createCliente,
+    updateCliente,
+    deleteCliente,
   };
   
 }
