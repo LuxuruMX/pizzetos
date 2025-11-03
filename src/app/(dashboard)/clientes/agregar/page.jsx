@@ -44,13 +44,26 @@ export default function AgregarClientePage() {
     }));
   };
 
+  // Verifica si el usuario empezó a llenar algún campo de dirección
+  const direccionTieneDatos = () => {
+    return Object.values(direccionForm).some(valor => valor.trim() !== '');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validación simple (puedes hacerla más exhaustiva)
+    // Validación de datos del cliente (siempre obligatorios)
     if (!formData.nombre || !formData.apellido || !formData.telefono) {
       alert('Por favor completa todos los campos obligatorios del cliente.');
       return;
+    }
+
+    // Si hay datos en la dirección, validar campos esenciales
+    if (direccionTieneDatos()) {
+      if (!direccionForm.calle || !direccionForm.colonia) {
+        alert('Si agregas una dirección, los campos Calle y Colonia son obligatorios.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -58,23 +71,19 @@ export default function AgregarClientePage() {
     try {
       const dataToSend = {
         ...formData,
-        // Convertimos telefono a número si el backend lo requiere
-        telefono: parseInt(formData.telefono, 10), 
-        // Enviamos la dirección como un array, ya que el backend lo espera así
-        direcciones: [direccionForm],
+        telefono: parseInt(formData.telefono, 10),
+        // Solo enviar direcciones si el usuario llenó algún campo
+        direcciones: direccionTieneDatos() ? [direccionForm] : [],
       };
 
-      // Llamamos a la función createCliente del hook
       const result = await createCliente(dataToSend);
 
       if (result.success) {
-        router.push('/clientes'); // Redirige a la lista de clientes
+        router.push('/clientes');
       } else {
-        // Maneja el error devuelto por el hook
         alert(`Error al crear cliente: ${result.error || 'Error desconocido'}`);
       }
     } catch (error) {
-        // Este catch manejará errores inesperados no capturados por el hook
         console.error('Error inesperado al crear cliente:', error);
         alert('Error inesperado al crear cliente.');
     } finally {
@@ -89,7 +98,7 @@ export default function AgregarClientePage() {
           <Button
             variant="ghost"
             icon={FaArrowLeft}
-            onClick={() => router.back()} // Vuelve a la página anterior (ej: lista de clientes)
+            onClick={() => router.back()}
           >
             Volver
           </Button>
@@ -132,16 +141,20 @@ export default function AgregarClientePage() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">Dirección de Entrega</h2>
-            <p className="text-sm text-gray-500 mb-4">Se puede agregar más direcciones después de crear el cliente.</p>
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Dirección de Entrega (Opcional)</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Puedes agregar una dirección ahora o hacerlo después. 
+              {direccionTieneDatos() && (
+                <span className="text-orange-600 font-medium"> Si llenas algún campo, Calle y Colonia son obligatorios.</span>
+              )}
+            </p>
             <div className="grid grid-cols-1 gap-4">
               <Input
-                label="Calle"
+                label={`Calle${direccionTieneDatos() ? ' *' : ''}`}
                 name="calle"
                 value={direccionForm.calle}
                 onChange={handleChangeDireccion}
                 placeholder="Calle y número"
-                required
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
@@ -160,12 +173,11 @@ export default function AgregarClientePage() {
                 />
               </div>
               <Input
-                label="Colonia"
+                label={`Colonia${direccionTieneDatos() ? ' *' : ''}`}
                 name="colonia"
                 value={direccionForm.colonia}
                 onChange={handleChangeDireccion}
                 placeholder="Colonia"
-                required
               />
               <Input
                 label="Referencia"
@@ -188,7 +200,7 @@ export default function AgregarClientePage() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => router.back()} // Vuelve sin guardar
+              onClick={() => router.back()}
               disabled={loading}
             >
               Cancelar

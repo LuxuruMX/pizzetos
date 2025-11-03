@@ -7,6 +7,8 @@ import { useCart } from '@/hooks/useCart';
 import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
 import Select from 'react-select';
+import { PiPlusFill } from "react-icons/pi";
+import Link from 'next/link';
 
 const POS = () => {
   const [productos, setProductos] = useState({
@@ -80,13 +82,9 @@ const POS = () => {
     }
 
     try {
-      // 3. Ahora sí, usar el idCliente (que es clienteSeleccionado.value)
-      console.log("ID Cliente a enviar a la API:", idCliente); // Log para confirmar valor
-      await enviarOrdenAPI(orden, idCliente); // Pasar el ID del cliente a la función
+      console.log("ID Cliente a enviar a la API:", idCliente);
+      await enviarOrdenAPI(orden, idCliente);
       limpiarCarrito();
-      // Opcional: Limpiar la selección del cliente después de enviar
-      // setClienteSeleccionado(null);
-      alert('Orden enviada correctamente.');
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -103,20 +101,27 @@ const POS = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 bg-gray-100 min-h-screen flex flex-col">
-      {/* Contenedor para el título y el selector de cliente */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold text-black">Punto de Venta</h1>
         <div className="w-1/3">
           <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Cliente</label>
-          <Select
-            options={clientes}
-            value={clienteSeleccionado}
-            onChange={setClienteSeleccionado}
-            placeholder="Buscar y seleccionar cliente..."
-            isClearable
-            isSearchable
-            className="w-full text-black"
-          />
+          <div className="flex items-center gap-2">
+            <Link 
+              href="/clientes/agregar" 
+              className='text-yellow-400 text-4xl hover:text-yellow-500 transition-colors'
+            >
+              <PiPlusFill />
+            </Link>
+            <Select
+              options={clientes}
+              value={clienteSeleccionado}
+              onChange={setClienteSeleccionado}
+              placeholder="Buscar y seleccionar cliente..."
+              isClearable
+              isSearchable
+              className="w-full text-black"
+            />
+          </div>
         </div>
       </div>
 
