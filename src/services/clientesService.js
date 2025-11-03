@@ -1,4 +1,3 @@
-// services/clientesService.js
 import api from './api';
 
 export const clientesService = {
@@ -27,8 +26,13 @@ export const clientesService = {
   },
 
   // Eliminar un cliente
-  async delete(id) {
+  async deleteCliente(id) {
     const response = await api.delete(`/clientes/${id}`); // Endpoint para eliminar
+    return response.data;
+  },
+
+  async addDireccion(id, data) {
+    const response = await api.post(`/clientes/${id}/direcciones`, data);
     return response.data;
   },
 };

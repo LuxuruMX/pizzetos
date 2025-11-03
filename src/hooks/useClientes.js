@@ -1,8 +1,7 @@
-// hooks/useClientes.js
 'use client';
 
 import { useState, useEffect } from 'react';
-import { clientesService } from '@/services/clientesService'; // Asegúrate de la ruta correcta
+import { clientesService } from '@/services/clientesService';
 
 export function useClientes() {
   const [clientes, setClientes] = useState([]);
@@ -29,7 +28,6 @@ export function useClientes() {
     fetchClientes();
   }, []); // Quitamos dependencias si no se recarga dinámicamente
 
-  // createCliente
   const createCliente = async (clienteData) => {
     try {
       const nuevoCliente = await clientesService.create(clienteData); // Llama al servicio

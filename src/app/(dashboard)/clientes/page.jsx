@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { useClientes } from '@/hooks/useClientes';
+import { clientesService } from '@/services/clientesService';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
@@ -48,48 +49,27 @@ export default function ClientesPage() {
     setDireccionActual(null);
   };
 
-  // Función para enviar la dirección al backend
+  // Función para enviar la dirección al backend usando clientesService
   const handleSubmitDireccion = async (formData) => {
     if (!clienteSeleccionado) return;
 
     setLoadingDireccion(true);
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        alert('No se encontró el token de autenticación');
-        return;
-      }
+      await clientesService.addDireccion(clienteSeleccionado.id_clie, {
+        calle: formData.calle,
+        manzana: formData.manzana,
+        lote: formData.lote,
+        colonia: formData.colonia,
+        referencia: formData.referencia
+      });
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/clientes/${clienteSeleccionado.id_clie}/direcciones`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            calle: formData.calle,
-            manzana: formData.manzana,
-            lote: formData.lote,
-            colonia: formData.colonia,
-            referencia: formData.referencia
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al guardar la dirección');
-      }
-
-      const result = await response.json();
       alert('Dirección guardada correctamente');
       handleCloseModal();
 
     } catch (err) {
       console.error('Error al guardar dirección:', err);
-      alert(`Error al guardar la dirección: ${err.message}`);
+      const errorMsg = err.response?.data?.detail || 'Error al guardar la dirección';
+      alert(`Error: ${errorMsg}`);
     } finally {
       setLoadingDireccion(false);
     }
