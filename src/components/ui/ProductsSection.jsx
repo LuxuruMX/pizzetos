@@ -142,7 +142,7 @@ const ProductsSection = ({
       </div>
 
       {/* Sección de productos con scroll vertical */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
+      <div className="flex-1 overflow-y-auto px-6 pb-6 pt-1">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {productos.length === 0 ? (
             <p className="text-gray-500 col-span-3 text-center">No hay productos disponibles</p>
