@@ -95,6 +95,7 @@ const POS = () => {
   const subcategoriasPorCategoria = {
     'pizzas': ['Chica', 'Mediana', 'Grande', 'Familiar'],
     'refrescos': ['355ml', '600ml', '2L'],
+    'mariscos':['Chica', 'Mediana', 'Grande', 'Familiar']
   };
 
   const handleCategoriaChange = (categoria) => {

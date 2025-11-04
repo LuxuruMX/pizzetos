@@ -127,8 +127,8 @@ const ProductsSection = ({
                       onClick={() => onSubcategoriaChange && onSubcategoriaChange(null)}
                       className={`px-3 py-1.5 text-sm rounded-lg flex-shrink-0 ${
                         subcategoriaActiva === null
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          ? 'bg-orange-400 text-white'
+                          : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
                       }`}
                     >
                       Todas
@@ -139,8 +139,8 @@ const ProductsSection = ({
                         onClick={() => onSubcategoriaChange && onSubcategoriaChange(subcategoria)}
                         className={`px-3 py-1.5 text-sm rounded-lg flex-shrink-0 ${
                           subcategoriaActiva === subcategoria
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            ? 'bg-orange-400 text-white'
+                            : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
                         }`}
                       >
                         {subcategoria}

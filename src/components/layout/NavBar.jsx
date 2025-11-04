@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { 
@@ -23,11 +23,19 @@ import { BiSolidCategoryAlt } from "react-icons/bi";
 import { TbHierarchy3 } from "react-icons/tb";
 import { FaMoneyBills } from "react-icons/fa6";
 import { RiCustomerServiceFill } from "react-icons/ri";
+import { MdPointOfSale } from "react-icons/md";
+import { IoIosAlbums, IoIosSettings } from "react-icons/io";
 
 
 // Configuración del menú con permisos asociados
 const menuConfig = [
   { name: 'Dashboard', path: '/dashboard', icon: FaHome, permiso: null },
+  { 
+    name: 'Empleados', 
+    path: '/empleados', 
+    icon: FaUser,
+    permiso: 'ver_empleado'
+  },
   { 
     name: 'Productos', 
     icon: FaUtensils,
@@ -47,12 +55,6 @@ const menuConfig = [
       { name: 'Barra', path: '/productos/barra', icon: FaGlassWhiskey },
     ]
   },
-  { 
-    name: 'Empleados', 
-    path: '/empleados', 
-    icon: FaUser,
-    permiso: 'ver_empleado'
-  },
   {
     name: 'Recursos',
     icon: GrResources,
@@ -63,24 +65,23 @@ const menuConfig = [
       { name: 'Cargos', path: '/recursos/cargos', icon: TbHierarchy3 },
     ]
   },
-  { 
-    name: 'POS', 
-    path: '/pos', 
-    icon: FaShoppingBasket,
-    permiso: 'ver_venta'
+  {
+    name:"Venta",
+    icon: MdPointOfSale,
+    permiso: 'ver_venta',
+    submenu: [
+      { name: 'POS', path: '/pos', icon: FaShoppingBasket},
+      { name: 'Gastos', path: '/gastos', icon: FaMoneyBills },
+      { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
+      { name: 'Pedidos', path: '/pedidos', icon:IoIosAlbums }
+    ]
   },
-  { 
-    name: 'Gastos', 
-    path: '/gastos', 
-    icon: FaMoneyBills,
-    permiso: 'ver_venta'
-  },
-  { 
-    name: 'Clientes',
-    path: '/clientes',
-    icon: RiCustomerServiceFill,
-    permiso: 'ver_venta'
-  },
+  {
+    name: 'Configuración',
+    icon: IoIosSettings,
+    permiso: null,
+    path: '/Configuracion'
+  }
 ];
 
 export default function NavBar() {
