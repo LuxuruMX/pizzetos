@@ -19,3 +19,5 @@ const ProductCard = ({ producto, tipoId, onAddToCart }) => {
     </div>
   );
 };
+
+export default ProductCard;
