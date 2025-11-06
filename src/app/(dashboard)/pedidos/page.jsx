@@ -53,7 +53,6 @@ export default function App() {
         if (response.ok) {
           const data = await response.json();
           fetchPedidos();
-          alert(data.message);
         } else {
           const error = await response.json();
           alert(error.detail);
@@ -68,7 +67,6 @@ export default function App() {
     const completarPedido = async (id_venta, status) => {
       // Solo permitir si está en estado 1 (Preparando)
       if (status !== 1) {
-        alert('Solo se pueden completar pedidos que estén en preparación');
         return;
       }
 
@@ -81,7 +79,6 @@ export default function App() {
         if (response.ok) {
           const data = await response.json();
           fetchPedidos();
-          alert(data.message);
         } else {
           const error = await response.json();
           alert(error.detail);
@@ -123,7 +120,7 @@ export default function App() {
     useEffect(() => {
       fetchPedidos();
       // Auto-refresh cada 30 segundos
-      const interval = setInterval(fetchPedidos, 30000);
+      const interval = setInterval(fetchPedidos, 60000);
       return () => clearInterval(interval);
     }, [filtro, statusFiltro]);
 
