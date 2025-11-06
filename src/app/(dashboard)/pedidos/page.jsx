@@ -216,7 +216,7 @@ export default function App() {
               <select 
                 value={statusFiltro ?? ''} 
                 onChange={(e) => setStatusFiltro(e.target.value === '' ? null : parseInt(e.target.value))}
-                className="px-4 py-2 border rounded bg-yellow-500"
+                className="px-4 py-2 border rounded bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
               >
                 <option value="">Todos los estados</option>
                 <option value="0">Esperando</option>

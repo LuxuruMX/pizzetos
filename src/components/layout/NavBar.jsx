@@ -16,7 +16,8 @@ import {
   FaUser,
   FaCodeBranch,
   FaShoppingBasket,
-  FaPizzaSlice
+  FaPizzaSlice,
+  FaBorderAll
 } from 'react-icons/fa';
 import { GrResources } from "react-icons/gr";
 import { BiSolidCategoryAlt } from "react-icons/bi";
@@ -70,6 +71,7 @@ const menuConfig = [
     icon: MdPointOfSale,
     permiso: 'ver_venta',
     submenu: [
+      { name: 'Resume', path: '/pedidos/resumen', icon: FaBorderAll },
       { name: 'POS', path: '/pos', icon: FaShoppingBasket},
       { name: 'Gastos', path: '/gastos', icon: FaMoneyBills },
       { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
