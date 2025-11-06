@@ -1,38 +1,58 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
-const Card = ({ title, description, actions, loading = false, maxHeight = 150 }) => {
+const Card = ({ title, description, actions, loading = false, maxHeight = 150, icon }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showExpandButton, setShowExpandButton] = useState(false);
-  const contentRef = React.useRef(null);
+  const contentRef = useRef(null);
+  const cardRef = useRef(null);
 
-  React.useEffect(() => {
-
+  useEffect(() => {
     if (contentRef.current && !loading) {
       const contentHeight = contentRef.current.scrollHeight;
       setShowExpandButton(contentHeight > maxHeight);
     }
   }, [description, loading, maxHeight]);
 
-  if (loading) {
+  // Detectar clicks fuera del componente
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (cardRef.current && !cardRef.current.contains(event.target) && isExpanded) {
+        setIsExpanded(false);
+      }
+    };
 
+    if (isExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isExpanded]);
+
+  if (loading) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 animate-pulse" style={{ minWidth: 300 }}>
-
       </div>
     );
   }
 
-
   return (
     <div 
+      ref={cardRef}
       className="relative bg-white rounded-lg shadow-md border border-gray-200" 
       style={{ minWidth: 300 }}
     >
-      
-
       <div className="p-6">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+          <div className="flex items-center gap-3 mb-2">
+            {icon && (
+              <div className="flex-shrink-0">
+                {icon}
+              </div>
+            )}
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          </div>
           <div className="relative">
             <div
               ref={contentRef} 
@@ -62,8 +82,14 @@ const Card = ({ title, description, actions, loading = false, maxHeight = 150 })
             <button
               key={idx}
               onClick={action.onClick}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              disabled={action.disabled}
+              className={`flex items-center justify-center gap-2 flex-1 px-4 py-2 text-sm font-medium rounded transition-colors ${
+                action.disabled 
+                  ? 'text-gray-400 bg-gray-100 cursor-not-allowed opacity-50' 
+                  : 'text-gray-700 hover:text-yellow-500 hover:bg-yellow-50'
+              }`}
             >
+              {action.icon && <span className="flex-shrink-0 text-xl">{action.icon}</span>}
               {action.label}
             </button>
           ))}
@@ -76,14 +102,19 @@ const Card = ({ title, description, actions, loading = false, maxHeight = 150 })
                      bg-white rounded-lg shadow-xl 
                      border border-gray-300"
         >
-
           <div className="p-6">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+              <div className="flex items-center gap-3 mb-2">
+                {icon && (
+                  <div className="flex-shrink-0">
+                    {icon}
+                  </div>
+                )}
+                <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+              </div>
               <div className="text-gray-600 text-sm">
                 {description}
               </div>
-              {/* El botón 'Mostrar menos' solo cierra (pone 'isExpanded' en 'false') */}
               <button
                 onClick={() => setIsExpanded(false)}
                 className="mt-2 text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
@@ -98,8 +129,14 @@ const Card = ({ title, description, actions, loading = false, maxHeight = 150 })
                 <button
                   key={idx}
                   onClick={action.onClick}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                  disabled={action.disabled}
+                  className={`flex items-center justify-center gap-2 flex-1 px-4 py-2 text-sm font-medium rounded transition-colors ${
+                    action.disabled 
+                      ? 'text-gray-400 bg-gray-100 cursor-not-allowed opacity-50' 
+                      : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                  }`}
                 >
+                  {action.icon && <span className="flex-shrink-0 text-xl">{action.icon}</span>}
                   {action.label}
                 </button>
               ))}
@@ -107,7 +144,6 @@ const Card = ({ title, description, actions, loading = false, maxHeight = 150 })
           )}
         </div>
       )}
-
     </div>
   );
 };
