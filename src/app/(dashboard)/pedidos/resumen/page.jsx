@@ -70,10 +70,10 @@ export default function TodosPedidosPage() {
       render: (row) => <span className="text-gray-600">{row.sucursal}</span>
     },
     { 
-      header: 'ITEMS', 
+      header: 'PRODUCTOS', 
       accessor: 'cantidad_items',
       render: (row) => (
-        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">
+        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-medium">
           {row.cantidad_items}
         </span>
       )

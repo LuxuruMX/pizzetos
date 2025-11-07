@@ -261,7 +261,7 @@ export default function App() {
                   description={card.description}
                   actions={card.actions}
                   loading={loading}
-                  maxHeight={300}
+                  maxHeight={200}
                 />
               ))}
             </div>
