@@ -14,12 +14,49 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
     onUpdateQuantity(item.id, item.tipoId, value);
   };
 
+  // Verificar si tiene descuento
+  const tieneDescuento = item.precioUnitario < item.precioOriginal;
+  const porcentajeDescuento = tieneDescuento 
+    ? Math.round(((item.precioOriginal - item.precioUnitario) / item.precioOriginal) * 100)
+    : 0;
+
   return (
     <li className="flex justify-between items-center border-b pb-2">
       <div className="flex-grow text-black">
-        <span className="font-medium">{item.nombre}</span> x <span>{item.cantidad}</span>
-        <br />
-        <span className="text-sm text-gray-600">Subtotal: ${item.subtotal.toFixed(2)}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{item.nombre}</span>
+          {item.tamano && item.tamano !== 'N/A' && (
+            <span className="text-xs bg-gray-200 px-2 py-0.5 rounded">
+              {item.tamano}
+            </span>
+          )}
+          {tieneDescuento && (
+            <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded font-semibold">
+              -{porcentajeDescuento}%
+            </span>
+          )}
+        </div>
+        <div className="text-sm text-gray-600 mt-1">
+          {tieneDescuento ? (
+            <>
+              <span className="line-through text-red-500 mr-2">
+                ${item.precioOriginal.toFixed(2)}
+              </span>
+              <span className="text-green-600 font-semibold">
+                ${item.precioUnitario.toFixed(2)}
+              </span>
+              <span className="ml-1">x {item.cantidad}</span>
+            </>
+          ) : (
+            <>
+              <span>${item.precioUnitario.toFixed(2)}</span>
+              <span className="ml-1">x {item.cantidad}</span>
+            </>
+          )}
+        </div>
+        <span className="text-sm text-gray-600">
+          Subtotal: <span className="font-semibold">${item.subtotal.toFixed(2)}</span>
+        </span>
       </div>
       <div className="flex items-center space-x-2">
         <button
