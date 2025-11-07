@@ -6,6 +6,7 @@ import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS } from '@/servic
 import { useCart } from '@/hooks/useCart';
 import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
+import ProductModal from '@/components/ui/ProductModal';
 import Select from 'react-select';
 import { PiPlusFill } from "react-icons/pi";
 import Link from 'next/link';
@@ -29,10 +30,14 @@ const POS = () => {
   });
   const [categorias] = useState(CATEGORIAS);
   const [categoriaActiva, setCategoriaActiva] = useState('pizzas');
-  const [subcategoriaActiva, setSubcategoriaActiva] = useState(null);
   const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  
+  // Estados para el modal
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [variantesProducto, setVariantesProducto] = useState([]);
 
   const {
     orden,
@@ -91,30 +96,51 @@ const POS = () => {
     }
   };
 
-  // Define las subcategorías por categoría
-  const subcategoriasPorCategoria = {
-    'pizzas': ['Chica', 'Mediana', 'Grande', 'Familiar'],
-    'refrescos': ['355ml', '600ml', '2L'],
-    'mariscos':['Chica', 'Mediana', 'Grande', 'Familiar']
-  };
-
   const handleCategoriaChange = (categoria) => {
     setCategoriaActiva(categoria);
-    setSubcategoriaActiva(null);
   };
 
-  const productosFiltrados = () => {
+  // Categorías que requieren modal
+  const categoriasConModal = ['pizzas', 'refrescos', 'mariscos'];
+
+  const handleProductoClick = (producto, tipoId) => {
+    // Si es una categoría especial, abrir modal
+    if (categoriasConModal.includes(categoriaActiva)) {
+      const productosCategoria = productos[categoriaActiva];
+      
+      // Agrupar variantes por nombre
+      const variantes = productosCategoria.filter(p => p.nombre === producto.nombre);
+      
+      setProductoSeleccionado(producto.nombre);
+      setVariantesProducto(variantes);
+      setModalAbierto(true);
+    } else {
+      // Para otras categorías, agregar directamente al carrito
+      agregarAlCarrito(producto, tipoId);
+    }
+  };
+
+  const handleSeleccionarVariante = (variante, tipoId) => {
+    agregarAlCarrito(variante, tipoId);
+    setModalAbierto(false);
+  };
+
+  const procesarProductos = () => {
     const productosCategoria = productos[categoriaActiva] || [];
     
-    if (!subcategoriaActiva) {
-      return productosCategoria;
+    // Si es una categoría especial, agrupar por nombre
+    if (categoriasConModal.includes(categoriaActiva)) {
+      const nombresUnicos = {};
+      productosCategoria.forEach(producto => {
+        if (!nombresUnicos[producto.nombre]) {
+          nombresUnicos[producto.nombre] = producto;
+        }
+      });
+      return Object.values(nombresUnicos);
     }
     
-    return productosCategoria.filter(producto => 
-      producto.subcategoria === subcategoriaActiva || 
-      producto.tamano === subcategoriaActiva ||
-      producto.tamaño === subcategoriaActiva
-    );
+    // Para otras categorías, devolver todos los productos
+    return productosCategoria;
   };
 
   if (loading) {
@@ -150,7 +176,7 @@ const POS = () => {
           </div>
         </div>
       </div>
-
+      
       <div className="flex flex-1">
         <CartSection
           orden={orden}
@@ -164,13 +190,22 @@ const POS = () => {
           categorias={categorias}
           categoriaActiva={categoriaActiva}
           onCategoriaChange={handleCategoriaChange}
-          subcategorias={subcategoriasPorCategoria[categoriaActiva] || []}
-          subcategoriaActiva={subcategoriaActiva}
-          onSubcategoriaChange={setSubcategoriaActiva}
-          productos={productosFiltrados()}
-          onAddToCart={agregarAlCarrito}
+          productos={procesarProductos()}
+          onProductoClick={handleProductoClick}
+          mostrarPrecio={!categoriasConModal.includes(categoriaActiva)}
         />
       </div>
+
+      {/* Modal para seleccionar tamaño */}
+      {modalAbierto && (
+        <ProductModal
+          isOpen={modalAbierto}
+          onClose={() => setModalAbierto(false)}
+          nombreProducto={productoSeleccionado}
+          variantes={variantesProducto}
+          onSeleccionar={handleSeleccionarVariante}
+        />
+      )}
     </div>
   );
 };

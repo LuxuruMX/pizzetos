@@ -6,14 +6,11 @@ const ProductsSection = ({
   categorias, 
   categoriaActiva, 
   onCategoriaChange,
-  subcategorias = [], 
-  subcategoriaActiva = null, 
-  onSubcategoriaChange = null, 
   productos, 
-  onAddToCart 
+  onProductoClick,
+  mostrarPrecio = true
 }) => {
   const categoriesContainerRef = useRef(null);
-  const subcategoriesContainerRef = useRef(null);
 
   const scroll = (direction, containerRef) => {
     const container = containerRef.current;
@@ -25,8 +22,6 @@ const ProductsSection = ({
       });
     }
   };
-
-  const mostrarSubcategorias = subcategorias && subcategorias.length > 0;
 
   return (
     <div className="w-2/3 ml-6 flex flex-col overflow-y-auto" 
@@ -79,66 +74,6 @@ const ProductsSection = ({
             </div>
           </div>
         </div>
-
-        {/* Contenedor para Subcategorías */}
-        {mostrarSubcategorias && (
-          <div className="relative mb-6">
-            <div className="border border-gray-300 rounded-lg p-1 shadow-sm bg-gray-50">
-              <div className="flex items-center">
-                {/* Flecha Izquierda */}
-                <button
-                  onClick={() => scroll('left', subcategoriesContainerRef)}
-                  className="p-2 text-gray-600 hover:bg-gray-200 rounded-full mr-1 flex-shrink-0 z-10"
-                  aria-label="Desplazar subcategorías a la izquierda"
-                >
-                  <FaChevronLeft className="h-4 w-4" />
-                </button>
-
-                {/* Contenedor de Subcategorías */}
-                <div
-                  ref={subcategoriesContainerRef}
-                  className="flex-1 overflow-x-auto hide-scrollbar flex justify-start py-1"
-                >
-                  <div className="flex space-x-3 min-w-max">
-                    {/* Botón "Todas" */}
-                    <button
-                      onClick={() => onSubcategoriaChange && onSubcategoriaChange(null)}
-                      className={`px-3 py-1.5 text-sm rounded-lg flex-shrink-0 ${
-                        subcategoriaActiva === null
-                          ? 'bg-orange-400 text-white'
-                          : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-                      }`}
-                    >
-                      Todas
-                    </button>
-                    {subcategorias.map((subcategoria) => (
-                      <button
-                        key={subcategoria}
-                        onClick={() => onSubcategoriaChange && onSubcategoriaChange(subcategoria)}
-                        className={`px-3 py-1.5 text-sm rounded-lg flex-shrink-0 ${
-                          subcategoriaActiva === subcategoria
-                            ? 'bg-orange-400 text-white'
-                            : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-                        }`}
-                      >
-                        {subcategoria}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Flecha Derecha */}
-                <button
-                  onClick={() => scroll('right', subcategoriesContainerRef)}
-                  className="p-2 text-gray-600 hover:bg-gray-200 rounded-full ml-1 flex-shrink-0 z-10"
-                  aria-label="Desplazar subcategorías a la derecha"
-                >
-                  <FaChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Sección de productos con scroll vertical */}
@@ -157,7 +92,8 @@ const ProductsSection = ({
                   key={producto[tipoId]}
                   producto={producto}
                   tipoId={tipoId}
-                  onAddToCart={onAddToCart}
+                  onProductoClick={onProductoClick}
+                  mostrarPrecio={mostrarPrecio}
                 />
               );
             })
