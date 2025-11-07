@@ -3,54 +3,79 @@ import { useState } from 'react';
 export const useCart = () => {
   const [orden, setOrden] = useState([]);
 
-  // Función para calcular el precio con descuento
-  const calcularPrecioConDescuento = (producto, tipoId, cantidad, ordenActual) => {
+  // Función para calcular el precio y subtotal con descuento
+  const calcularPrecioYSubtotal = (producto, tipoId, cantidad, ordenActual) => {
     // Solo aplicar descuentos a pizzas y mariscos
     const categoriasConDescuento = ['id_pizza', 'id_maris'];
     
+    const precioBase = parseFloat(producto.precio);
+    
     if (!categoriasConDescuento.includes(tipoId)) {
-      return parseFloat(producto.precio);
+      return {
+        precioUnitario: precioBase,
+        subtotal: precioBase * cantidad
+      };
     }
 
     // Obtener el tamaño del producto
     const tamanoActual = producto.subcategoria || producto.tamano || producto.tamaño;
     
-    // Contar cuántos productos del mismo tamaño hay en el carrito (incluyendo el actual)
-    const productosDelMismoTamano = ordenActual.filter(item => {
-      if (!categoriasConDescuento.includes(item.tipoId)) return false;
+    // Contar cuántos productos del mismo tamaño hay en el carrito
+    let totalMismoTamano = 0;
+    
+    ordenActual.forEach(item => {
+      if (!categoriasConDescuento.includes(item.tipoId)) return;
       const tamanoItem = item.tamano;
-      return tamanoItem === tamanoActual;
+      if (tamanoItem === tamanoActual) {
+        totalMismoTamano += item.cantidad;
+      }
     });
 
-    // Calcular total de productos del mismo tamaño
-    let totalMismoTamano = productosDelMismoTamano.reduce((sum, item) => sum + item.cantidad, 0);
-    
-    // Si estamos agregando/actualizando, incluir la cantidad actual
-    const productoExistente = ordenActual.find(
-      item => item.id === producto[tipoId] && item.tipoId === tipoId
-    );
-    
-    if (productoExistente) {
-      totalMismoTamano = totalMismoTamano - productoExistente.cantidad + cantidad;
-    } else {
-      totalMismoTamano += cantidad;
-    }
-
-    // Si hay 2 o más del mismo tamaño, precio original (sin descuento)
-    // Si hay menos de 2, aplicar descuento del 40%
-    const precioBase = parseFloat(producto.precio);
-    
+    // Si hay 2 o más del mismo tamaño: 2x1 al precio original
+    // Si hay menos de 2: aplicar descuento del 40%
     if (totalMismoTamano >= 2) {
-      return precioBase; // Precio original
+      // Calcular cuántas promociones 2x1 hay
+      const pares = Math.floor(totalMismoTamano / 2);
+      const sueltos = totalMismoTamano % 2;
+      
+      // Subtotal: (pares × precio original) + (sueltos × precio con descuento)
+      const subtotal = (pares * precioBase) + (sueltos * precioBase * 0.6);
+      
+      // Precio unitario promedio (para mostrar)
+      const precioUnitario = subtotal / totalMismoTamano;
+      
+      return {
+        precioUnitario,
+        subtotal
+      };
     } else {
-      return precioBase * 0.6; // 40% de descuento (paga el 60%)
+      // Menos de 2: aplicar descuento del 40%
+      const precioConDescuento = precioBase * 0.6;
+      return {
+        precioUnitario: precioConDescuento,
+        subtotal: precioConDescuento * cantidad
+      };
     }
   };
 
   // Función para recalcular todos los precios del carrito
   const recalcularPrecios = (nuevaOrden) => {
+    // Agrupar por tamaño para calcular correctamente
+    const itemsPorTamano = {};
+    
+    nuevaOrden.forEach(item => {
+      const categoriasConDescuento = ['id_pizza', 'id_maris'];
+      if (categoriasConDescuento.includes(item.tipoId)) {
+        const key = `${item.tipoId}_${item.tamano}`;
+        if (!itemsPorTamano[key]) {
+          itemsPorTamano[key] = [];
+        }
+        itemsPorTamano[key].push(item);
+      }
+    });
+
     return nuevaOrden.map(item => {
-      const precioUnitario = calcularPrecioConDescuento(
+      const { precioUnitario, subtotal } = calcularPrecioYSubtotal(
         { 
           [item.tipoId]: item.id, 
           precio: item.precioOriginal,
@@ -66,7 +91,7 @@ export const useCart = () => {
       return {
         ...item,
         precioUnitario,
-        subtotal: precioUnitario * item.cantidad
+        subtotal
       };
     });
   };
@@ -99,9 +124,9 @@ export const useCart = () => {
             tipoId,
             nombre: producto.nombre,
             precioOriginal,
-            precioUnitario: precioOriginal,
+            precioUnitario: precioOriginal * 0.6,
             cantidad: 1,
-            subtotal: precioOriginal,
+            subtotal: precioOriginal * 0.6,
             tamano
           },
         ];
