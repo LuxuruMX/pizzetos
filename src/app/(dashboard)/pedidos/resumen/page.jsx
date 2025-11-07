@@ -19,14 +19,12 @@ export default function TodosPedidosPage() {
     setLoading(true);
     setError(null);
     try {
-      let url = `http://localhost:8000/pos/pedidos-cocina?filtro=${filtro}`;
+      let url = `http://localhost:8000/pos/pedidos-resumen?filtro=${filtro}`;
       
-      // Agregar filtro de status si existe
       if (statusFiltro !== null && statusFiltro !== '') {
         url += `&status=${statusFiltro}`;
       }
       
-      // Agregar filtro de sucursal si existe
       if (idSuc) {
         url += `&id_suc=${idSuc}`;
       }
@@ -52,6 +50,9 @@ export default function TodosPedidosPage() {
     fetchTodosPedidos();
   }, [filtro, statusFiltro, idSuc]);
 
+  // Calcular suma total de todos los pedidos
+  const sumaTotal = pedidos.reduce((acc, pedido) => acc + pedido.total, 0);
+
   // Columnas de la tabla
   const columns = [
     { 
@@ -73,7 +74,7 @@ export default function TodosPedidosPage() {
       header: 'PRODUCTOS', 
       accessor: 'cantidad_items',
       render: (row) => (
-        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-medium">
+        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">
           {row.cantidad_items}
         </span>
       )
@@ -162,6 +163,7 @@ export default function TodosPedidosPage() {
               <option value="hoy">Hoy</option>
               <option value="semana">Esta semana</option>
               <option value="mes">Este mes</option>
+              <option value="todos">Todos los registros</option>
             </select>
 
             <select 
@@ -196,23 +198,28 @@ export default function TodosPedidosPage() {
           </div>
         ) : (
           <>
-            <div className="mb-4 flex gap-6 text-sm text-gray-600">
-              <span>
+            <div className="mb-4 flex gap-6 text-sm">
+              <span className="text-gray-600">
                 Total de pedidos: <span className="font-semibold text-gray-800">{pedidos.length}</span>
               </span>
-              <span>
+              <span className="text-gray-600">
                 Esperando: <span className="font-semibold text-gray-800">
                   {pedidos.filter(p => p.status === 0).length}
                 </span>
               </span>
-              <span>
+              <span className="text-gray-600">
                 Preparando: <span className="font-semibold text-yellow-600">
                   {pedidos.filter(p => p.status === 1).length}
                 </span>
               </span>
-              <span>
+              <span className="text-gray-600">
                 Completados: <span className="font-semibold text-green-600">
                   {pedidos.filter(p => p.status === 2).length}
+                </span>
+              </span>
+              <span className="text-gray-600 ml-auto">
+                Suma total: <span className="font-bold text-green-600 text-lg">
+                  ${sumaTotal.toFixed(2)}
                 </span>
               </span>
             </div>
