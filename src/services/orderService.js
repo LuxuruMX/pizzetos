@@ -22,7 +22,6 @@ export const fetchProductosPorCategoria = async () => {
       api.get('/prices/magno'),
     ]);
 
-    // Validar que las respuestas tengan datos
     const hamburguesas = Array.isArray(resHamb.data) ? resHamb.data : [];
     const alitas = Array.isArray(resAlis.data) ? resAlis.data : [];
     const costillas = Array.isArray(resCos.data) ? resCos.data : [];
@@ -38,7 +37,6 @@ export const fetchProductosPorCategoria = async () => {
     const magno = Array.isArray(ResMag.data) ? ResMag.data : [];
     const pizzas = Array.isArray(ResPizza.data) ? ResPizza.data : [];
 
-    console.log('Productos cargados:', { hamburguesas, alitas, costillas, spaguetty, papas, rectangular, barra, mariscos, refrescos, paquete1, paquete2, paquete3, magno, pizzas });
 
     return {
       hamburguesas,
@@ -58,7 +56,6 @@ export const fetchProductosPorCategoria = async () => {
     };
   } catch (error) {
     console.error('Error al cargar productos:', error);
-    // Retornar estructura vacía en caso de error
     return {
       hamburguesas: [],
       alitas: [],
@@ -83,25 +80,71 @@ export const enviarOrdenAPI = async (orden, id_cliente) => {
     throw new Error('La orden está vacía');
   }
 
-  const id_suc = getSucursalFromToken(); // Obtener la sucursal del token
+  const id_suc = getSucursalFromToken();
 
   // Construir el array de items según el formato del backend
-  const items = orden.map(item => ({
-    cantidad: item.cantidad,
-    precio_unitario: item.precioUnitario,
-    [item.tipoId]: item.id, // Por ejemplo: { id_hamb: 1 }
-  }));
+  const items = orden.flatMap(item => {
+    // Verificar si es un item agrupado (pizzas o mariscos con productos múltiples)
+    if (item.productos && Array.isArray(item.productos)) {
+      // Expandir cada producto del grupo en un item separado
+      return item.productos.map(producto => {
+        const itemData = {
+          cantidad: parseInt(producto.cantidad),
+          precio_unitario: parseFloat(item.precioUnitario),
+          [item.tipoId]: parseInt(producto.id)
+        };
+        return itemData;
+      });
+    } else {
+      // Item normal (no agrupado)
+      const itemId = parseInt(item.id);
+      
+      if (isNaN(itemId)) {
+        console.error('ID inválido encontrado:', item);
+        throw new Error(`El ID del producto "${item.nombre}" no es válido: ${item.id}`);
+      }
+
+      const itemData = {
+        cantidad: parseInt(item.cantidad),
+        precio_unitario: parseFloat(item.precioUnitario),
+        [item.tipoId]: itemId
+      };
+      return itemData;
+    }
+  });
+
+  // Calcular el total
+  const total = parseFloat(orden.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2));
 
   const ordenParaEnviar = {
-    id_suc,
-    id_cliente,
-    total: orden.reduce((acc, item) => acc + item.subtotal, 0),
+    id_suc: parseInt(id_suc),
+    id_cliente: parseInt(id_cliente),
+    total,
     items,
   };
 
-  console.log('Enviando orden:', ordenParaEnviar);
-  const response = await api.post('/pos/', ordenParaEnviar);
-  return response.data;
+  try {
+    const response = await api.post('/pos/', ordenParaEnviar);
+    return response.data;
+  } catch (error) {
+    console.error('Error al enviar orden:', error.response?.data || error.message);
+    
+    // Mostrar detalles del error de validación
+    if (error.response?.data?.detail) {
+      const detalles = error.response.data.detail;
+      if (Array.isArray(detalles)) {
+        console.error('Errores de validación:');
+        detalles.forEach(err => {
+          console.error(`- Campo: ${err.loc?.join(' > ')}`);
+          console.error(`  Tipo: ${err.type}`);
+          console.error(`  Mensaje: ${err.msg}`);
+          console.error(`  Valor recibido: ${err.input}`);
+        });
+      }
+    }
+    
+    throw error;
+  }
 };
 
 export { CATEGORIAS };
