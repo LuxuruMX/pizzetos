@@ -31,7 +31,6 @@ export const fetchProductosPorCategoria = async () => {
     const magno = Array.isArray(ResMag.data) ? ResMag.data : [];
     const pizzas = Array.isArray(ResPizza.data) ? ResPizza.data : [];
 
-
     return {
       hamburguesas,
       alitas,
@@ -72,6 +71,32 @@ export const enviarOrdenAPI = async (orden, id_cliente) => {
 
   // Construir el array de items según el formato del backend
   const items = orden.flatMap(item => {
+    // Si es un paquete, manejar de manera especial
+    if (item.esPaquete) {
+      const itemData = {
+        cantidad: parseInt(item.cantidad),
+        precio_unitario: parseFloat(item.precioUnitario),
+        id_paquete: item.datoPaquete.id_paquete,
+        id_refresco: item.datoPaquete.id_refresco
+      };
+
+      // Agregar campos opcionales solo si existen
+      if (item.datoPaquete.detalle_paquete) {
+        itemData.detalle_paquete = item.datoPaquete.detalle_paquete;
+      }
+      if (item.datoPaquete.id_pizza) {
+        itemData.id_pizza = parseInt(item.datoPaquete.id_pizza);
+      }
+      if (item.datoPaquete.id_hamb) {
+        itemData.id_hamb = parseInt(item.datoPaquete.id_hamb);
+      }
+      if (item.datoPaquete.id_alis) {
+        itemData.id_alis = parseInt(item.datoPaquete.id_alis);
+      }
+
+      return itemData;
+    }
+    
     // Verificar si es un item agrupado (pizzas o mariscos con productos múltiples)
     if (item.productos && Array.isArray(item.productos)) {
       // Expandir cada producto del grupo en un item separado
@@ -110,6 +135,8 @@ export const enviarOrdenAPI = async (orden, id_cliente) => {
     total,
     items,
   };
+
+  console.log('Orden a enviar:', JSON.stringify(ordenParaEnviar, null, 2));
 
   try {
     const response = await api.post('/pos/', ordenParaEnviar);

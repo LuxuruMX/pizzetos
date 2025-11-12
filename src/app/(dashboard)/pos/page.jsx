@@ -7,6 +7,7 @@ import { useCart } from '@/hooks/useCart';
 import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
 import ProductModal from '@/components/ui/ProductModal';
+import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
 import Select from 'react-select';
 import { PiPlusFill } from "react-icons/pi";
 import Link from 'next/link';
@@ -31,15 +32,21 @@ const POS = () => {
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   
-  // Estados para el modal
+  // Estados para el modal de productos
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [variantesProducto, setVariantesProducto] = useState([]);
+
+  // Estados para modales de paquetes
+  const [modalPaquete1, setModalPaquete1] = useState(false);
+  const [modalPaquete2, setModalPaquete2] = useState(false);
+  const [modalPaquete3, setModalPaquete3] = useState(false);
 
   const {
     orden,
     total,
     agregarAlCarrito,
+    agregarPaquete,
     actualizarCantidad,
     eliminarDelCarrito,
     limpiarCarrito,
@@ -101,18 +108,14 @@ const POS = () => {
   const categoriasConModal = ['pizzas', 'refrescos', 'mariscos'];
 
   const handleProductoClick = (producto, tipoId) => {
-    // Si es una categoría especial, abrir modal
     if (categoriasConModal.includes(categoriaActiva)) {
       const productosCategoria = productos[categoriaActiva];
-      
-      // Agrupar variantes por nombre
       const variantes = productosCategoria.filter(p => p.nombre === producto.nombre);
       
       setProductoSeleccionado(producto.nombre);
       setVariantesProducto(variantes);
       setModalAbierto(true);
     } else {
-      // Para otras categorías, agregar directamente al carrito
       agregarAlCarrito(producto, tipoId);
     }
   };
@@ -122,10 +125,42 @@ const POS = () => {
     setModalAbierto(false);
   };
 
+  // Handlers para los paquetes
+  const handleConfirmarPaquete1 = () => {
+    agregarPaquete({
+      numeroPaquete: 1,
+      precio: 295,
+      detallePaquete: "4,8", // IDs de las pizzas
+      idRefresco: 17
+    });
+    setModalPaquete1(false);
+  };
+
+  const handleConfirmarPaquete2 = (seleccion) => {
+    agregarPaquete({
+      numeroPaquete: 2,
+      precio: 265,
+      idHamb: seleccion.tipo === 'hamburguesa' ? seleccion.idProducto : null,
+      idAlis: seleccion.tipo === 'alitas' ? seleccion.idProducto : null,
+      idPizza: seleccion.idPizza,
+      idRefresco: 17
+    });
+    setModalPaquete2(false);
+  };
+
+  const handleConfirmarPaquete3 = (pizzasSeleccionadas) => {
+    agregarPaquete({
+      numeroPaquete: 3,
+      precio: 395,
+      detallePaquete: pizzasSeleccionadas.join(','), // IDs de las 3 pizzas
+      idRefresco: 17
+    });
+    setModalPaquete3(false);
+  };
+
   const procesarProductos = () => {
     const productosCategoria = productos[categoriaActiva] || [];
     
-    // Si es una categoría especial, agrupar por nombre
     if (categoriasConModal.includes(categoriaActiva)) {
       const nombresUnicos = {};
       productosCategoria.forEach(producto => {
@@ -136,7 +171,6 @@ const POS = () => {
       return Object.values(nombresUnicos);
     }
     
-    // Para otras categorías, devolver todos los productos
     return productosCategoria;
   };
 
@@ -157,13 +191,22 @@ const POS = () => {
 
         {/* Sección de Paquetes */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
-          <button className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow">
+          <button 
+            onClick={() => setModalPaquete1(true)}
+            className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow"
+          >
             Paquete 1
           </button>
-          <button className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow">
+          <button 
+            onClick={() => setModalPaquete2(true)}
+            className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow"
+          >
             Paquete 2
           </button>
-          <button className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow">
+          <button 
+            onClick={() => setModalPaquete3(true)}
+            className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow"
+          >
             Paquete 3
           </button>
         </div>
@@ -220,6 +263,29 @@ const POS = () => {
           onSeleccionar={handleSeleccionarVariante}
         />
       )}
+
+      {/* Modales de Paquetes */}
+      <ModalPaquete1
+        isOpen={modalPaquete1}
+        onClose={() => setModalPaquete1(false)}
+        onConfirmar={handleConfirmarPaquete1}
+      />
+
+      <ModalPaquete2
+        isOpen={modalPaquete2}
+        onClose={() => setModalPaquete2(false)}
+        onConfirmar={handleConfirmarPaquete2}
+        pizzas={productos.pizzas}
+        hamburguesas={productos.hamburguesas}
+        alitas={productos.alitas}
+      />
+
+      <ModalPaquete3
+        isOpen={modalPaquete3}
+        onClose={() => setModalPaquete3(false)}
+        onConfirmar={handleConfirmarPaquete3}
+        pizzas={productos.pizzas}
+      />
     </div>
   );
 };

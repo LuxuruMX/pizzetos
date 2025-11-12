@@ -5,14 +5,9 @@ export const useCart = () => {
 
   // Función para calcular el precio y subtotal con descuento
   const calcularPrecioYSubtotal = (precioBase, cantidad) => {
-    // Calcular cuántas promociones 2x1 hay
     const pares = Math.floor(cantidad / 2);
     const sueltos = cantidad % 2;
-    
-    // Subtotal: (pares × precio original) + (sueltos × precio con descuento)
     const subtotal = (pares * precioBase) + (sueltos * precioBase * 0.6);
-    
-    // Precio unitario promedio (para mostrar)
     const precioUnitario = subtotal / cantidad;
     
     return {
@@ -24,6 +19,14 @@ export const useCart = () => {
   // Función para recalcular todos los precios del carrito
   const recalcularPrecios = (nuevaOrden) => {
     return nuevaOrden.map(item => {
+      // Los paquetes no tienen descuento 2x1
+      if (item.esPaquete) {
+        return {
+          ...item,
+          subtotal: item.precioUnitario * item.cantidad
+        };
+      }
+
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
       
       if (!categoriasConDescuento.includes(item.tipoId)) {
@@ -47,6 +50,37 @@ export const useCart = () => {
     });
   };
 
+  // Nueva función para agregar paquetes
+  const agregarPaquete = (paquete) => {
+    setOrden((prevOrden) => {
+      const idUnico = `paquete_${paquete.numeroPaquete}_${Date.now()}`;
+      
+      const nuevoPaquete = {
+        id: idUnico,
+        tipoId: 'paquete',
+        esPaquete: true,
+        numeroPaquete: paquete.numeroPaquete,
+        nombre: `Paquete ${paquete.numeroPaquete}`,
+        precioOriginal: paquete.precio,
+        precioUnitario: paquete.precio,
+        cantidad: 1,
+        subtotal: paquete.precio,
+        tamano: 'N/A',
+        // Datos específicos del paquete para enviar al backend
+        datoPaquete: {
+          id_paquete: paquete.numeroPaquete,
+          id_refresco: paquete.idRefresco,
+          detalle_paquete: paquete.detallePaquete || null,
+          id_pizza: paquete.idPizza || null,
+          id_hamb: paquete.idHamb || null,
+          id_alis: paquete.idAlis || null
+        }
+      };
+
+      return recalcularPrecios([...prevOrden, nuevoPaquete]);
+    });
+  };
+
   const agregarAlCarrito = (producto, tipoId) => {
     const id = producto[tipoId];
     const precioOriginal = parseFloat(producto.precio);
@@ -56,23 +90,19 @@ export const useCart = () => {
     setOrden((prevOrden) => {
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
       
-      // Si es pizza o marisco, buscar si ya existe un item del mismo tamaño
       if (categoriasConDescuento.includes(tipoId)) {
         const itemMismoTamano = prevOrden.find(
-          (item) => item.tipoId === tipoId && item.tamano === tamano
+          (item) => item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete
         );
 
         let nuevaOrden;
 
         if (itemMismoTamano) {
-          // Ya existe un item del mismo tamaño, agregar a la lista de productos
           nuevaOrden = prevOrden.map((item) => {
-            if (item.tipoId === tipoId && item.tamano === tamano) {
-              // Verificar si el producto específico ya está en la lista
+            if (item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete) {
               const productoExistente = item.productos.find(p => p.id === id);
               
               if (productoExistente) {
-                // Incrementar cantidad del producto existente
                 return {
                   ...item,
                   cantidad: item.cantidad + 1,
@@ -81,7 +111,6 @@ export const useCart = () => {
                   )
                 };
               } else {
-                // Agregar nuevo producto a la lista
                 return {
                   ...item,
                   cantidad: item.cantidad + 1,
@@ -92,11 +121,10 @@ export const useCart = () => {
             return item;
           });
         } else {
-          // No existe, crear nuevo item agrupado
           nuevaOrden = [
             ...prevOrden,
             {
-              id: `${tipoId}_${tamano}`, // ID único por tipo y tamaño
+              id: `${tipoId}_${tamano}`,
               tipoId,
               nombre: `${tipoId === 'id_pizza' ? 'Pizza' : 'Marisco'} ${tamano}`,
               precioOriginal,
@@ -104,23 +132,23 @@ export const useCart = () => {
               cantidad: 1,
               subtotal: precioOriginal * 0.6,
               tamano,
-              productos: [{ id, nombre, cantidad: 1 }] // Lista de productos agrupados
+              productos: [{ id, nombre, cantidad: 1 }],
+              esPaquete: false
             },
           ];
         }
 
         return recalcularPrecios(nuevaOrden);
       } else {
-        // Para otras categorías, comportamiento normal
         const itemExistente = prevOrden.find(
-          (item) => item.id === id && item.tipoId === tipoId
+          (item) => item.id === id && item.tipoId === tipoId && !item.esPaquete
         );
 
         let nuevaOrden;
 
         if (itemExistente) {
           nuevaOrden = prevOrden.map((item) =>
-            item.id === id && item.tipoId === tipoId
+            item.id === id && item.tipoId === tipoId && !item.esPaquete
               ? { ...item, cantidad: item.cantidad + 1 }
               : item
           );
@@ -136,7 +164,8 @@ export const useCart = () => {
               cantidad: 1,
               subtotal: precioOriginal,
               tamano: 'N/A',
-              productos: null
+              productos: null,
+              esPaquete: false
             },
           ];
         }
@@ -156,7 +185,6 @@ export const useCart = () => {
       const nuevaOrden = prevOrden.map((item) => {
         if (item.id === id && item.tipoId === tipoId) {
           if (productoId && item.productos) {
-            // Actualizar cantidad de un producto específico dentro del grupo
             const diferencia = nuevaCantidad - item.productos.find(p => p.id === productoId).cantidad;
             
             return {
@@ -182,14 +210,13 @@ export const useCart = () => {
       let nuevaOrden;
 
       if (productoId) {
-        // Eliminar un producto específico del grupo
         nuevaOrden = prevOrden.map((item) => {
           if (item.id === id && item.tipoId === tipoId && item.productos) {
             const productoAEliminar = item.productos.find(p => p.id === productoId);
             const nuevosProductos = item.productos.filter(p => p.id !== productoId);
             
             if (nuevosProductos.length === 0) {
-              return null; // Marcar para eliminar
+              return null;
             }
             
             return {
@@ -201,7 +228,6 @@ export const useCart = () => {
           return item;
         }).filter(item => item !== null);
       } else {
-        // Eliminar item completo
         nuevaOrden = prevOrden.filter(
           (item) => !(item.id === id && item.tipoId === tipoId)
         );
@@ -221,6 +247,7 @@ export const useCart = () => {
     orden,
     total,
     agregarAlCarrito,
+    agregarPaquete,
     actualizarCantidad,
     eliminarDelCarrito,
     limpiarCarrito,
