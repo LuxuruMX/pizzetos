@@ -22,9 +22,6 @@ const POS = () => {
     barra: [],
     mariscos: [],
     refrescos: [],
-    paquete1: [],
-    paquete2: [],
-    paquete3: [],
     magno: [],
     pizzas: []
   });
@@ -153,9 +150,26 @@ const POS = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 bg-gray-100 min-h-screen flex flex-col">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl font-bold text-black">Punto de Venta</h1>
-        <div className="w-1/3">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold text-black">Punto de Venta</h1>
+        </div>
+
+        {/* Sección de Paquetes */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
+          <button className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow">
+            Paquete 1
+          </button>
+          <button className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow">
+            Paquete 2
+          </button>
+          <button className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow">
+            Paquete 3
+          </button>
+        </div>
+
+        {/* Sección de Cliente */}
+        <div className="w-full md:w-1/3">
           <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Cliente</label>
           <div className="flex items-center gap-2">
             <Link 

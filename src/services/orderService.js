@@ -1,11 +1,11 @@
 import api from '@/services/api';
 import {getSucursalFromToken} from '@/services/jwt';
 
-const CATEGORIAS = ['pizzas', 'hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'refrescos', 'paquete1', 'paquete2', 'paquete3', 'magno'];
+const CATEGORIAS = ['pizzas', 'hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'refrescos', 'magno'];
 
 export const fetchProductosPorCategoria = async () => {
   try {
-    const [ResPizza, resHamb, resAlis, resCos, resSpag, resPapa, ResRec, ResBarr, ResMar, ResRefr, ResPaq1, ResPaq2, ResPaq3, ResMag ] = await Promise.all([
+    const [ResPizza, resHamb, resAlis, resCos, resSpag, resPapa, ResRec, ResBarr, ResMar, ResRefr, ResMag ] = await Promise.all([
       api.get('/prices/pizzas'),
       api.get('/prices/hamburguesas'),
       api.get('/prices/alitas'),
@@ -16,9 +16,6 @@ export const fetchProductosPorCategoria = async () => {
       api.get('/prices/barra'),
       api.get('/prices/mariscos'),
       api.get('/prices/refrescos'),
-      api.get('/prices/paquete1'),
-      api.get('/prices/paquete2'),
-      api.get('/prices/paquete3'),
       api.get('/prices/magno'),
     ]);
 
@@ -31,9 +28,6 @@ export const fetchProductosPorCategoria = async () => {
     const barra = Array.isArray(ResBarr.data) ? ResBarr.data : [];
     const mariscos = Array.isArray(ResMar.data) ? ResMar.data : [];
     const refrescos = Array.isArray(ResRefr.data) ? ResRefr.data : [];
-    const paquete1 = Array.isArray(ResPaq1.data) ? ResPaq1.data : [];
-    const paquete2 = Array.isArray(ResPaq2.data) ? ResPaq2.data : [];
-    const paquete3 = Array.isArray(ResPaq3.data) ? ResPaq3.data : [];
     const magno = Array.isArray(ResMag.data) ? ResMag.data : [];
     const pizzas = Array.isArray(ResPizza.data) ? ResPizza.data : [];
 
@@ -48,9 +42,6 @@ export const fetchProductosPorCategoria = async () => {
       barra,
       mariscos,
       refrescos,
-      paquete1,
-      paquete2,
-      paquete3,
       magno,
       pizzas
     };
@@ -66,9 +57,6 @@ export const fetchProductosPorCategoria = async () => {
       barra: [],
       mariscos: [],
       refrescos: [],
-      paquete1: [],
-      paquete2: [],
-      paquete3: [],
       magno: [],
       pizzas: []
     };
