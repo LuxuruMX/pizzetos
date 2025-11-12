@@ -1,4 +1,5 @@
-import { Trash2, Plus, Minus } from 'lucide-react';
+import { FaTrash, FaMinus, FaPlus } from "react-icons/fa";
+
 
 const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
   // Si es un paquete, renderizar de manera especial
@@ -17,7 +18,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
             className="text-red-500 hover:text-red-700 transition-colors ml-2"
             title="Eliminar paquete"
           >
-            <Trash2 size={18} />
+            <FaTrash size={18} />
           </button>
         </div>
 
@@ -28,7 +29,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
               onClick={() => onUpdateQuantity(item.id, item.tipoId, item.cantidad - 1)}
               className="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded p-1 transition-colors"
             >
-              <Minus size={16} />
+              <FaMinus size={16} />
             </button>
             <span className="font-medium text-gray-800 min-w-[30px] text-center">
               {item.cantidad}
@@ -37,7 +38,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
               onClick={() => onUpdateQuantity(item.id, item.tipoId, item.cantidad + 1)}
               className="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded p-1 transition-colors"
             >
-              <Plus size={16} />
+              <FaPlus size={16} />
             </button>
           </div>
           <span className="font-bold text-gray-800">
@@ -48,7 +49,6 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
     );
   }
 
-  // Si es un item agrupado (pizzas/mariscos)
   if (item.productos && Array.isArray(item.productos)) {
     return (
       <li className="flex flex-col bg-gray-50 p-3 rounded border border-gray-200">
@@ -65,7 +65,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
             className="text-red-500 hover:text-red-700 transition-colors ml-2"
             title="Eliminar todo el grupo"
           >
-            <Trash2 size={18} />
+            <FaTrash size={18} />
           </button>
         </div>
 
@@ -81,7 +81,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
                   onClick={() => onUpdateQuantity(item.id, item.tipoId, producto.cantidad - 1, producto.id)}
                   className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded p-1 transition-colors"
                 >
-                  <Minus size={14} />
+                  <FaMinus size={14} />
                 </button>
                 <span className="font-medium text-gray-800 min-w-[25px] text-center">
                   {producto.cantidad}
@@ -90,14 +90,14 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
                   onClick={() => onUpdateQuantity(item.id, item.tipoId, producto.cantidad + 1, producto.id)}
                   className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded p-1 transition-colors"
                 >
-                  <Plus size={14} />
+                  <FaPlus size={14} />
                 </button>
                 <button
                   onClick={() => onRemove(item.id, item.tipoId, producto.id)}
                   className="text-red-500 hover:text-red-700 transition-colors ml-2"
                   title="Eliminar este producto"
                 >
-                  <Trash2 size={14} />
+                  <FaTrash size={14} />
                 </button>
               </div>
             </div>
@@ -129,7 +129,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
             onClick={() => onUpdateQuantity(item.id, item.tipoId, item.cantidad - 1)}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded p-1 transition-colors"
           >
-            <Minus size={16} />
+            <FaMinus size={16} />
           </button>
           <span className="font-medium text-gray-800 min-w-[30px] text-center">
             {item.cantidad}
@@ -138,7 +138,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
             onClick={() => onUpdateQuantity(item.id, item.tipoId, item.cantidad + 1)}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded p-1 transition-colors"
           >
-            <Plus size={16} />
+            <FaPlus size={16} />
           </button>
         </div>
         <span className="font-bold text-gray-800 min-w-[80px] text-right">
@@ -149,7 +149,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
           className="text-red-500 hover:text-red-700 transition-colors"
           title="Eliminar"
         >
-          <Trash2 size={18} />
+          <FaTrash size={18} />
         </button>
       </div>
     </li>
