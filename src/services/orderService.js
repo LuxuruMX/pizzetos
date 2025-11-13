@@ -136,8 +136,6 @@ export const enviarOrdenAPI = async (orden, id_cliente) => {
     items,
   };
 
-  console.log('Orden a enviar:', JSON.stringify(ordenParaEnviar, null, 2));
-
   try {
     const response = await api.post('/pos/', ordenParaEnviar);
     return response.data;

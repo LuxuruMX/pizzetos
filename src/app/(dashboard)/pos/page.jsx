@@ -91,7 +91,6 @@ const POS = () => {
     }
 
     try {
-      console.log("ID Cliente a enviar a la API:", idCliente);
       await enviarOrdenAPI(orden, idCliente);
       limpiarCarrito();
     } catch (error) {

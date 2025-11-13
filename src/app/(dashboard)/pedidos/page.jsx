@@ -5,6 +5,7 @@ import Card from '@/components/ui/PedidosCard'
 import { IoMailOpenSharp, IoSend, IoReload, IoClose } from "react-icons/io5";
 import { FaClock } from "react-icons/fa";
 import { PiCookingPotFill } from "react-icons/pi";
+import api from '@/services/api'; // Asumiendo que tienes este archivo de configuración de axios
 
 export default function App() {
     const [loading, setLoading] = useState(false);
@@ -21,19 +22,13 @@ export default function App() {
       setLoading(true);
       setError(null);
       try {
-        let url = `http://localhost:8000/pos/pedidos-cocina?filtro=${filtro}`;
+        let params = { filtro };
         if (statusFiltro !== null) {
-          url += `&status=${statusFiltro}`;
+          params.status = statusFiltro;
         }
         
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-          throw new Error('Error al obtener los pedidos');
-        }
-        
-        const data = await response.json();
-        setPedidos(data.pedidos);
+        const response = await api.get('/pos/pedidos-cocina', { params });
+        setPedidos(response.data.pedidos);
       } catch (err) {
         setError(err.message);
         console.error('Error:', err);
@@ -45,16 +40,13 @@ export default function App() {
     // Toggle entre Esperando (0) y Preparando (1)
     const togglePreparacion = async (id_venta) => {
       try {
-        const response = await fetch(
-          `http://localhost:8000/pos/${id_venta}/toggle-preparacion`,
-          { method: 'PATCH' }
-        );
+        const response = await api.patch(`/pos/${id_venta}/toggle-preparacion`);
         
-        if (response.ok) {
-          const data = await response.json();
+        if (response.status === 200) {
+          const data = response.data;
           fetchPedidos();
         } else {
-          const error = await response.json();
+          const error = response.data;
           alert(error.detail);
         }
       } catch (err) {
@@ -71,16 +63,13 @@ export default function App() {
       }
 
       try {
-        const response = await fetch(
-          `http://localhost:8000/pos/${id_venta}/completar`,
-          { method: 'PATCH' }
-        );
+        const response = await api.patch(`/pos/${id_venta}/completar`);
         
-        if (response.ok) {
-          const data = await response.json();
+        if (response.status === 200) {
+          const data = response.data;
           fetchPedidos();
         } else {
-          const error = await response.json();
+          const error = response.data;
           alert(error.detail);
         }
       } catch (err) {
@@ -94,14 +83,14 @@ export default function App() {
       setLoadingDetalle(true);
       setModalOpen(true);
       try {
-        const response = await fetch(`http://localhost:8000/pos/pedidos-cocina/${id}/detalle`);
+        const response = await api.get(`/pos/pedidos-cocina/${id}/detalle`);
         
-        if (!response.ok) {
+        if (response.status === 200) {
+          const data = response.data;
+          setPedidoDetalle(data);
+        } else {
           throw new Error('Error al obtener el detalle');
         }
-        
-        const data = await response.json();
-        setPedidoDetalle(data);
       } catch (err) {
         console.error('Error:', err);
         alert('Error al cargar el detalle del pedido');
@@ -186,16 +175,13 @@ export default function App() {
                     {prod.cantidad}x {prod.nombre || 'Producto sin nombre'}
                   </p>
                   <p className="text-xs text-gray-600">
-                    {prod.tipo} - ${prod.precio_unitario.toFixed(2)}
+                    {prod.tipo}
                   </p>
                 </div>
               ))}
             </div>
 
             <div className="mt-3 pt-2 border-t">
-              <p className="text-lg font-bold">
-                Total: ${pedido.total.toFixed(2)}
-              </p>
               <p className="text-xs text-gray-500">
                 {new Date(pedido.fecha_hora).toLocaleString('es-MX')}
               </p>
@@ -337,14 +323,6 @@ export default function App() {
                               </p>
                               <p className="text-sm text-gray-600">{prod.tipo}</p>
                             </div>
-                            <div className="text-right">
-                              <p className="text-sm text-gray-600">
-                                ${prod.precio_unitario.toFixed(2)} c/u
-                              </p>
-                              <p className="font-semibol">
-                                ${prod.subtotal.toFixed(2)}
-                              </p>
-                            </div>
                           </div>
                         </div>
                       ))}
@@ -352,12 +330,6 @@ export default function App() {
                   </div>
 
                   <div className="border-t pt-4">
-                    <div className="flex justify-between items-center mb-2 text-black">
-                      <p className="text-xl font-bold">Total:</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        ${pedidoDetalle.total.toFixed(2)}
-                      </p>
-                    </div>
                     <p className="text-sm text-gray-500">
                       Fecha: {new Date(pedidoDetalle.fecha_hora).toLocaleString('es-MX')}
                     </p>
