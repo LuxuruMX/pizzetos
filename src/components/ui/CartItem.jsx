@@ -18,7 +18,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
             className="text-red-500 hover:text-red-700 transition-colors ml-2"
             title="Eliminar paquete"
           >
-            <FaTrash size={18} />
+            <FaTrash size={20} />
           </button>
         </div>
 
@@ -65,7 +65,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
             className="text-red-500 hover:text-red-700 transition-colors ml-2"
             title="Eliminar todo el grupo"
           >
-            <FaTrash size={18} />
+            <FaTrash size={20} />
           </button>
         </div>
 
@@ -97,7 +97,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
                   className="text-red-500 hover:text-red-700 transition-colors ml-2"
                   title="Eliminar este producto"
                 >
-                  <FaTrash size={14} />
+                  <FaTrash size={17} />
                 </button>
               </div>
             </div>
@@ -149,7 +149,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
           className="text-red-500 hover:text-red-700 transition-colors"
           title="Eliminar"
         >
-          <FaTrash size={18} />
+          <FaTrash size={20} />
         </button>
       </div>
     </li>
