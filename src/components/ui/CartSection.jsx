@@ -1,6 +1,15 @@
 import CartItem from '@/components/ui/CartItem';
+import { MdComment } from "react-icons/md";
 
-const CartSection = ({ orden, total, onUpdateQuantity, onRemove, onEnviarOrden }) => {
+const CartSection = ({ 
+  orden, 
+  total, 
+  onUpdateQuantity, 
+  onRemove, 
+  onEnviarOrden,
+  comentarios,
+  onAbrirComentarios 
+}) => {
   return (
     <div className="w-1/3 bg-white rounded-lg shadow-lg flex flex-col" 
          style={{ maxHeight: 'calc(100vh - 8rem)' }}>
@@ -27,17 +36,32 @@ const CartSection = ({ orden, total, onUpdateQuantity, onRemove, onEnviarOrden }
         </div>
       </div>
 
-      {/* Sección inferior fija: Total y Botón Enviar */}
-      <div className="border-t pt-2 px-6 pb-6 bg-white">
+      {/* Sección inferior fija: Total, Botón Comentarios y Botón Enviar */}
+      <div className="border-t pt-4 px-6 pb-6 bg-white">
         {orden.length > 0 && (
           <div className="flex justify-between text-black mb-4">
             <strong>Total:</strong>
             <span>${total.toFixed(2)}</span>
           </div>
         )}
+        
+        {/* Botón de Comentarios */}
+        <button
+          onClick={onAbrirComentarios}
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2.5 px-4 rounded mb-3 flex items-center justify-center gap-2 transition-colors"
+        >
+          <MdComment className="text-xl" />
+          <span>{comentarios ? 'Editar comentarios' : 'Agregar comentarios'}</span>
+          {comentarios && (
+            <span className="ml-1 text-xs text-green-600 font-bold">✓</span>
+          )}
+        </button>
+
+        {/* Botón Enviar Orden */}
         <button
           onClick={onEnviarOrden}
-          className="w-full bg-orange-400 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded"
+          disabled={orden.length === 0}
+          className="w-full bg-orange-400 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded transition-colors"
         >
           Enviar Orden
         </button>

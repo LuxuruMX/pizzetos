@@ -10,6 +10,7 @@ import ProductModal from '@/components/ui/ProductModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
 import Select from 'react-select';
 import { PiPlusFill } from "react-icons/pi";
+import { MdComment } from "react-icons/md";
 import Link from 'next/link';
 
 const POS = () => {
@@ -32,6 +33,10 @@ const POS = () => {
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   
+  // Estados para comentarios
+  const [comentarios, setComentarios] = useState('');
+  const [modalComentarios, setModalComentarios] = useState(false);
+
   // Estados para el modal de productos
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
@@ -91,8 +96,9 @@ const POS = () => {
     }
 
     try {
-      await enviarOrdenAPI(orden, idCliente);
+      await enviarOrdenAPI(orden, idCliente, comentarios);
       limpiarCarrito();
+      setComentarios('');
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -240,6 +246,8 @@ const POS = () => {
           onUpdateQuantity={actualizarCantidad}
           onRemove={eliminarDelCarrito}
           onEnviarOrden={handleEnviarOrden}
+          comentarios={comentarios}
+          onAbrirComentarios={() => setModalComentarios(true)}
         />
         
         <ProductsSection
@@ -261,6 +269,48 @@ const POS = () => {
           variantes={variantesProducto}
           onSeleccionar={handleSeleccionarVariante}
         />
+      )}
+
+      {/* Modal de Comentarios */}
+      {modalComentarios && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <MdComment className="text-2xl text-yellow-500" />
+              <h2 className="text-2xl font-bold text-gray-800">Comentarios de la orden</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Agrega instrucciones especiales para esta orden (opcional)
+            </p>
+            <textarea
+              value={comentarios}
+              onChange={(e) => setComentarios(e.target.value)}
+              placeholder="Ejemplo: Sin cebolla, extra queso, bien cocida..."
+              maxLength={500}
+              rows={5}
+              className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none"
+            />
+            <div className="flex justify-between items-center mt-2 mb-4">
+              <span className="text-xs text-gray-500">
+                {comentarios.length}/500 caracteres
+              </span>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setModalComentarios(false)}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => setModalComentarios(false)}
+                className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg transition-colors"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modales de Paquetes */}

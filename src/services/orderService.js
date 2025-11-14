@@ -62,7 +62,7 @@ export const fetchProductosPorCategoria = async () => {
   }
 };
 
-export const enviarOrdenAPI = async (orden, id_cliente) => {
+export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
   if (orden.length === 0) {
     throw new Error('La orden está vacía');
   }
@@ -135,6 +135,11 @@ export const enviarOrdenAPI = async (orden, id_cliente) => {
     total,
     items,
   };
+
+  // Agregar comentarios solo si existen
+  if (comentarios && comentarios.trim()) {
+    ordenParaEnviar.comentarios = comentarios.trim();
+  }
 
   try {
     const response = await api.post('/pos/', ordenParaEnviar);
