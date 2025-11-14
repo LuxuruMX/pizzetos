@@ -286,13 +286,13 @@ const POS = () => {
               value={comentarios}
               onChange={(e) => setComentarios(e.target.value)}
               placeholder="Ejemplo: Sin cebolla, extra queso, bien cocida..."
-              maxLength={500}
+              maxLength={255}
               rows={5}
               className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none"
             />
             <div className="flex justify-between items-center mt-2 mb-4">
               <span className="text-xs text-gray-500">
-                {comentarios.length}/500 caracteres
+                {comentarios.length}/255 caracteres
               </span>
             </div>
             <div className="flex gap-3">
