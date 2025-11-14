@@ -1,5 +1,5 @@
 import CartItem from '@/components/ui/CartItem';
-import { MdComment } from "react-icons/md";
+import { MdComment, MdBrightness1 } from "react-icons/md";
 
 const CartSection = ({ 
   orden, 
@@ -53,7 +53,7 @@ const CartSection = ({
           <MdComment className="text-xl" />
           <span>{comentarios ? 'Editar comentarios' : 'Agregar comentarios'}</span>
           {comentarios && (
-            <span className="ml-1 text-xs text-green-600 font-bold">✓</span>
+            <span className="ml-1 text-xs text-green-600 font-bold"><MdBrightness1 /></span>
           )}
         </button>
 

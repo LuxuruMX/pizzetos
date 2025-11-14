@@ -5,7 +5,8 @@ import Card from '@/components/ui/PedidosCard'
 import { IoMailOpenSharp, IoSend, IoReload, IoClose } from "react-icons/io5";
 import { FaClock } from "react-icons/fa";
 import { PiCookingPotFill } from "react-icons/pi";
-import api from '@/services/api'; // Asumiendo que tienes este archivo de configuración de axios
+import { MdComment } from "react-icons/md";
+import api from '@/services/api';
 
 export default function App() {
     const [loading, setLoading] = useState(false);
@@ -17,7 +18,6 @@ export default function App() {
     const [pedidoDetalle, setPedidoDetalle] = useState(null);
     const [loadingDetalle, setLoadingDetalle] = useState(false);
 
-    // Función para obtener los pedidos del backend
     const fetchPedidos = async () => {
       setLoading(true);
       setError(null);
@@ -167,6 +167,19 @@ export default function App() {
               </p>
             </div>
 
+            {/* Sección de comentarios en la card */}
+            {pedido.comentarios && (
+              <div className="mb-3 pb-2 border-b bg-yellow-50 p-2 rounded">
+                <p className="flex items-center gap-2 font-semibold text-sm mb-1">
+                  <MdComment className="text-yellow-600" />
+                  Comentarios:
+                </p>
+                <p className="text-xs text-gray-700 italic pl-6">
+                  "{pedido.comentarios}"
+                </p>
+              </div>
+            )}
+
             <div className="mb-2">
               <p className="font-bold mb-2">Productos ({pedido.cantidad_items} items):</p>
               {pedido.productos.map((prod, idx) => (
@@ -308,6 +321,23 @@ export default function App() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Sección de comentarios en el modal */}
+                  {pedidoDetalle.comentarios && (
+                    <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                      <div className="flex items-start gap-3">
+                        <MdComment className="text-2xl text-yellow-600 flex-shrink-0 mt-1" />
+                        <div className="flex-1">
+                          <h4 className="font-bold text-lg text-black mb-2">
+                            Comentarios especiales
+                          </h4>
+                          <p className="text-gray-800 italic">
+                            "{pedidoDetalle.comentarios}"
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mb-6">
                     <h3 className="text-xl font-bold mb-4 text-black">
