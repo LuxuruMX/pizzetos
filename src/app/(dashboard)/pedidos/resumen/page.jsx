@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import Table from '@/components/ui/Table';
 import { IoReload } from "react-icons/io5";
-import { FaClock } from "react-icons/fa";
+import { FaEdit, FaTrash } from 'react-icons/fa';
+import Popconfirm from '@/components/ui/Popconfirm';
+import api from '@/services/api';
 
 export default function TodosPedidosPage() {
   const [loading, setLoading] = useState(false);
@@ -14,36 +16,30 @@ export default function TodosPedidosPage() {
   const [statusFiltro, setStatusFiltro] = useState(null);
   const [idSuc, setIdSuc] = useState(null);
 
-  // Función para obtener todos los pedidos
-  const fetchTodosPedidos = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      let url = `http://localhost:8000/pos/pedidos-resumen?filtro=${filtro}`;
-      
-      if (statusFiltro !== null && statusFiltro !== '') {
-        url += `&status=${statusFiltro}`;
-      }
-      
-      if (idSuc) {
-        url += `&id_suc=${idSuc}`;
-      }
-      
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error('Error al obtener los pedidos');
-      }
-      
-      const data = await response.json();
-      setPedidos(data.pedidos);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error:', err);
-    } finally {
-      setLoading(false);
+const fetchTodosPedidos = async () => {
+  setLoading(true);
+  setError(null);
+  try {
+    let params = { filtro };
+
+    if (statusFiltro !== null && statusFiltro !== '') {
+      params.status = statusFiltro;
     }
-  };
+
+    if (idSuc) {
+      params.id_suc = idSuc;
+    }
+
+    const response = await api.get('/pos/pedidos-resumen', { params });
+
+    setPedidos(response.data.pedidos);
+  } catch (err) {
+    setError(err.message || 'Error al obtener los pedidos');
+    console.error('Error:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Cargar pedidos al montar el componente
   useEffect(() => {
@@ -115,6 +111,37 @@ export default function TodosPedidosPage() {
         }`}>
           {row.status_texto}
         </span>
+      )
+    },
+    {
+      header: 'ACCIONES',
+      accessor: 'actions',
+      render: (row) => (
+        <div className="flex justify-center gap-2">
+
+            <button
+              onClick={() => handleEdit(row)}
+              className="text-blue-600 hover:text-blue-800 transition-colors"
+              title="Editar"
+            >
+              <FaEdit size={18} />
+            </button>
+    
+            <Popconfirm
+              title="¿Seguro que quiere eliminar?"
+              okText="Sí"
+              cancelText="No"
+              onConfirm={() => handleDelete(row)}
+            >
+              <button
+                className="text-red-600 hover:text-red-800 transition-colors"
+                title="Eliminar"
+              >
+                <FaTrash size={18} />
+              </button>
+            </Popconfirm>
+
+        </div>
       )
     }
   ];
