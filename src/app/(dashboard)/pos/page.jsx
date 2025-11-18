@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { catalogsService } from '@/services/catalogsService'; 
+import { catalogsService } from '@/services/catalogsService';
 import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS } from '@/services/orderService';
-import { useCart } from '@/hooks/useCart';
+import { useCart } from '@/hooks/useCart'; // Asegúrate de importar el hook modificado
 import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
 import ProductModal from '@/components/ui/ProductModal';
@@ -13,7 +13,39 @@ import { PiPlusFill } from "react-icons/pi";
 import { MdComment } from "react-icons/md";
 import Link from 'next/link';
 
+// Función para decodificar el carrito desde la URL
+const decodeCartFromUrl = () => {
+  if (typeof window !== 'undefined' && window.location.search) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const encodedCart = urlParams.get('cart');
+    try {
+      if (encodedCart) {
+        const decodedString = decodeURIComponent(escape(atob(encodedCart)));
+        const parsed = JSON.parse(decodedString);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    } catch (e) {
+      console.error('Error al decodificar el carrito desde la URL:', e);
+    }
+  }
+  return [];
+};
+
 const POS = () => {
+  // Decodificar el carrito desde la URL al cargar el componente
+  const initialCartFromUrl = decodeCartFromUrl();
+
+  // Usar el carrito inicial decodificado
+  const {
+    orden,
+    total,
+    agregarAlCarrito,
+    agregarPaquete,
+    actualizarCantidad,
+    eliminarDelCarrito,
+    limpiarCarrito,
+  } = useCart(initialCartFromUrl); // Pasa el carrito inicial aquí
+
   const [productos, setProductos] = useState({
     hamburguesas: [],
     alitas: [],
@@ -32,7 +64,7 @@ const POS = () => {
   const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  
+
   // Estados para comentarios
   const [comentarios, setComentarios] = useState('');
   const [modalComentarios, setModalComentarios] = useState(false);
@@ -47,23 +79,13 @@ const POS = () => {
   const [modalPaquete2, setModalPaquete2] = useState(false);
   const [modalPaquete3, setModalPaquete3] = useState(false);
 
-  const {
-    orden,
-    total,
-    agregarAlCarrito,
-    agregarPaquete,
-    actualizarCantidad,
-    eliminarDelCarrito,
-    limpiarCarrito,
-  } = useCart();
-
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
         const [productosData, clientesData] = await Promise.all([
           fetchProductosPorCategoria(),
-          catalogsService.getNombresClientes() 
+          catalogsService.getNombresClientes()
         ]);
 
         setProductos(productosData);
@@ -97,7 +119,7 @@ const POS = () => {
 
     try {
       await enviarOrdenAPI(orden, idCliente, comentarios);
-      limpiarCarrito();
+      limpiarCarrito(); // Esto limpiará la URL también
       setComentarios('');
     } catch (error) {
       console.error('Error al enviar la orden:', error);
@@ -116,7 +138,7 @@ const POS = () => {
     if (categoriasConModal.includes(categoriaActiva)) {
       const productosCategoria = productos[categoriaActiva];
       const variantes = productosCategoria.filter(p => p.nombre === producto.nombre);
-      
+
       setProductoSeleccionado(producto.nombre);
       setVariantesProducto(variantes);
       setModalAbierto(true);
@@ -165,7 +187,7 @@ const POS = () => {
 
   const procesarProductos = () => {
     const productosCategoria = productos[categoriaActiva] || [];
-    
+
     if (categoriasConModal.includes(categoriaActiva)) {
       const nombresUnicos = {};
       productosCategoria.forEach(producto => {
@@ -175,7 +197,7 @@ const POS = () => {
       });
       return Object.values(nombresUnicos);
     }
-    
+
     return productosCategoria;
   };
 
@@ -196,19 +218,19 @@ const POS = () => {
 
         {/* Sección de Paquetes */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
-          <button 
+          <button
             onClick={() => setModalPaquete1(true)}
             className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow"
           >
             Paquete 1
           </button>
-          <button 
+          <button
             onClick={() => setModalPaquete2(true)}
             className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow"
           >
             Paquete 2
           </button>
-          <button 
+          <button
             onClick={() => setModalPaquete3(true)}
             className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow"
           >
@@ -220,8 +242,8 @@ const POS = () => {
         <div className="w-full md:w-1/3">
           <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Cliente</label>
           <div className="flex items-center gap-2">
-            <Link 
-              href="/clientes/agregar" 
+            <Link
+              href="/clientes/agregar"
               className='text-yellow-400 text-4xl hover:text-yellow-500 transition-colors'
             >
               <PiPlusFill />
@@ -238,7 +260,7 @@ const POS = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="flex flex-1">
         <CartSection
           orden={orden}
@@ -249,7 +271,7 @@ const POS = () => {
           comentarios={comentarios}
           onAbrirComentarios={() => setModalComentarios(true)}
         />
-        
+
         <ProductsSection
           categorias={categorias}
           categoriaActiva={categoriaActiva}

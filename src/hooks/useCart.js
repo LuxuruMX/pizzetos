@@ -1,7 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export const useCart = () => {
-  const [orden, setOrden] = useState([]);
+// Funciones de codificación/descodificación
+const encodeCart = (cart) => {
+  if (!cart || !Array.isArray(cart)) return '';
+  const jsonString = JSON.stringify(cart);
+  // Codificar a Base64 para URL
+  return typeof window !== 'undefined' ? btoa(unescape(encodeURIComponent(jsonString))) : '';
+};
+
+// Función para actualizar la URL en un efecto secundario
+const updateUrl = (newCart) => {
+  if (typeof window !== 'undefined') {
+    const encodedCart = encodeCart(newCart);
+    const newUrl = new URL(window.location);
+    if (encodedCart) {
+      newUrl.searchParams.set('cart', encodedCart);
+    } else {
+      newUrl.searchParams.delete('cart'); // Elimina el parámetro si el carrito está vacío
+    }
+    // Usar replaceState para actualizar la URL sin recargar la página
+    window.history.replaceState({}, '', newUrl);
+  }
+};
+
+export const useCart = (initialCartFromUrl = []) => {
+  const [orden, setOrden] = useState(initialCartFromUrl);
+
+  // Cargar carrito inicial desde la URL si no se pasa como parámetro
+  useEffect(() => {
+    if (initialCartFromUrl.length === 0 && typeof window !== 'undefined' && window.location.search) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const encodedCart = urlParams.get('cart');
+      if (encodedCart) {
+        try {
+          // Decodificar desde Base64
+          const decodedString = decodeURIComponent(escape(atob(encodedCart)));
+          const parsed = JSON.parse(decodedString);
+          const initialCart = Array.isArray(parsed) ? parsed : [];
+          setOrden(initialCart);
+        } catch (e) {
+          console.error('Error al decodificar el carrito desde la URL:', e);
+          // Opcional: Puedes decidir qué hacer si la URL está malformada
+          // Por ejemplo, podrías dejar el carrito vacío o mostrar un mensaje
+          setOrden([]); // Dejar vacío por defecto
+        }
+      }
+    }
+    // Solo se ejecuta una vez si initialCartFromUrl es vacío
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Agregar '[]' para que se ejecute solo en el montaje
+
+  // Efecto para actualizar la URL cuando 'orden' cambia
+  useEffect(() => {
+    // Esta función se ejecuta después de que el DOM se haya actualizado
+    // y 'orden' tenga su nuevo valor.
+    updateUrl(orden);
+  }, [orden]); // Se ejecuta cada vez que 'orden' cambia
 
   // Función para calcular el precio y subtotal con descuento
   const calcularPrecioYSubtotal = (precioBase, cantidad) => {
@@ -9,7 +63,7 @@ export const useCart = () => {
     const sueltos = cantidad % 2;
     const subtotal = (pares * precioBase) + (sueltos * precioBase * 0.6);
     const precioUnitario = subtotal / cantidad;
-    
+
     return {
       precioUnitario,
       subtotal
@@ -28,7 +82,7 @@ export const useCart = () => {
       }
 
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
-      
+
       if (!categoriasConDescuento.includes(item.tipoId)) {
         return {
           ...item,
@@ -41,7 +95,7 @@ export const useCart = () => {
         item.precioOriginal,
         item.cantidad
       );
-      
+
       return {
         ...item,
         precioUnitario,
@@ -54,7 +108,7 @@ export const useCart = () => {
   const agregarPaquete = (paquete) => {
     setOrden((prevOrden) => {
       const idUnico = `paquete_${paquete.numeroPaquete}_${Date.now()}`;
-      
+
       const nuevoPaquete = {
         id: idUnico,
         tipoId: 'paquete',
@@ -77,6 +131,7 @@ export const useCart = () => {
         }
       };
 
+      // No llamar a updateUrl aquí
       return recalcularPrecios([...prevOrden, nuevoPaquete]);
     });
   };
@@ -89,7 +144,7 @@ export const useCart = () => {
 
     setOrden((prevOrden) => {
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
-      
+
       if (categoriasConDescuento.includes(tipoId)) {
         const itemMismoTamano = prevOrden.find(
           (item) => item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete
@@ -101,7 +156,7 @@ export const useCart = () => {
           nuevaOrden = prevOrden.map((item) => {
             if (item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete) {
               const productoExistente = item.productos.find(p => p.id === id);
-              
+
               if (productoExistente) {
                 return {
                   ...item,
@@ -138,6 +193,7 @@ export const useCart = () => {
           ];
         }
 
+        // No llamar a updateUrl aquí
         return recalcularPrecios(nuevaOrden);
       } else {
         const itemExistente = prevOrden.find(
@@ -169,7 +225,7 @@ export const useCart = () => {
             },
           ];
         }
-
+        // No llamar a updateUrl aquí
         return recalcularPrecios(nuevaOrden);
       }
     });
@@ -186,7 +242,7 @@ export const useCart = () => {
         if (item.id === id && item.tipoId === tipoId) {
           if (productoId && item.productos) {
             const diferencia = nuevaCantidad - item.productos.find(p => p.id === productoId).cantidad;
-            
+
             return {
               ...item,
               cantidad: item.cantidad + diferencia,
@@ -201,6 +257,7 @@ export const useCart = () => {
         return item;
       });
 
+      // No llamar a updateUrl aquí
       return recalcularPrecios(nuevaOrden);
     });
   };
@@ -214,11 +271,11 @@ export const useCart = () => {
           if (item.id === id && item.tipoId === tipoId && item.productos) {
             const productoAEliminar = item.productos.find(p => p.id === productoId);
             const nuevosProductos = item.productos.filter(p => p.id !== productoId);
-            
+
             if (nuevosProductos.length === 0) {
               return null;
             }
-            
+
             return {
               ...item,
               cantidad: item.cantidad - productoAEliminar.cantidad,
@@ -233,12 +290,15 @@ export const useCart = () => {
         );
       }
 
+      // No llamar a updateUrl aquí
       return recalcularPrecios(nuevaOrden);
     });
   };
 
   const limpiarCarrito = () => {
     setOrden([]);
+    // La actualización de la URL se manejará automáticamente por el useEffect
+    // cuando 'orden' cambie a []
   };
 
   const total = orden.reduce((acc, item) => acc + item.subtotal, 0);
