@@ -183,7 +183,12 @@ export default function App() {
             <div className="mb-2">
               <p className="font-bold mb-2">Productos ({pedido.cantidad_items} items):</p>
               {pedido.productos.map((prod, idx) => (
-                <div key={idx} className="mb-2 pl-2 border-l-2 border-blue-300">
+                <div key={idx} className={`mb-2 pl-2 border-l-2 rounded ${
+                  prod.status === 0 ? 'bg-red-100 border-red-300' :
+                  prod.status === 1 ? 'bg-gray-100 border-gray-300' :
+                  prod.status === 2 ? 'bg-green-100 border-green-300' :
+                  'bg-gray-50 border-gray-200'
+                }`}>
                   <p className="font-semibold text-sm">
                     {prod.cantidad}x {prod.nombre || 'Producto sin nombre'}
                   </p>
@@ -288,7 +293,7 @@ export default function App() {
                   <IoClose />
                 </button>
               </div>
-
+                
               {loadingDetalle ? (
                 <div className="p-6 text-center">
                   <p>Cargando detalle del pedido...</p>
@@ -321,7 +326,7 @@ export default function App() {
                       </p>
                     </div>
                   </div>
-
+                    
                   {/* Sección de comentarios en el modal */}
                   {pedidoDetalle.comentarios && (
                     <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
@@ -338,14 +343,36 @@ export default function App() {
                       </div>
                     </div>
                   )}
-
+        
                   <div className="mb-6">
                     <h3 className="text-xl font-bold mb-4 text-black">
                       Productos ({pedidoDetalle.cantidad_items} items)
                     </h3>
+                
+                    {/* Leyenda de estado de productos */}
+                    <div className="mb-4 flex flex-wrap gap-3 text-xs text-black">
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 rounded border border-red-500 bg-red-50"></div>
+                        <span>Cancelado</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 rounded border border-gray-300 bg-gray-50"></div>
+                        <span>En espera</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 rounded border border-green-500 bg-green-50"></div>
+                        <span>Cocinado</span>
+                      </div>
+                    </div>
+                
                     <div className="space-y-3">
                       {pedidoDetalle.productos.map((prod, idx) => (
-                        <div key={idx} className="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 rounded text-black">
+                        <div key={idx} className={`border-l-4 rounded pl-4 py-2 text-black ${
+                          prod.status === 0 ? 'bg-red-50 border-red-500' :
+                          prod.status === 1 ? 'bg-gray-50 border-gray-300' :
+                          prod.status === 2 ? 'bg-green-50 border-green-500' :
+                          'bg-gray-100 border-gray-200'
+                        }`}>
                           <div className="flex justify-between items-start">
                             <div>
                               <p className="font-bold text-lg">
@@ -358,7 +385,7 @@ export default function App() {
                       ))}
                     </div>
                   </div>
-
+                    
                   <div className="border-t pt-4">
                     <p className="text-sm text-gray-500">
                       Fecha: {new Date(pedidoDetalle.fecha_hora).toLocaleString('es-MX')}
