@@ -6,12 +6,11 @@ const CATEGORIAS = ['pizzas', 'hamburguesas', 'alitas', 'costillas', 'spaguetty'
 // Estado de la caché
 let cachedData = null;
 let lastFetchTime = null;
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 horas en milisegundos (ajusta según necesites)
+const CACHE_DURATION = 24 * 60 * 60 * 1000;
 
 export const fetchProductosPorCategoria = async (force = false) => {
   const now = Date.now();
 
-  // Validar si la caché es válida y no se fuerza la actualización
   if (cachedData && lastFetchTime && !force) {
     if (now - lastFetchTime < CACHE_DURATION) {
       console.log('Usando datos de caché');

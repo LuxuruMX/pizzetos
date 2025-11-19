@@ -1,17 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { catalogsService } from '@/services/catalogsService';
-import { fetchProductosPorCategoria, fetchDetalleVenta, actualizarPedidoCocina, CATEGORIAS } from '@/services/orderService';
-import { useCartEdit } from '@/hooks/useCartEdit';
-import CartSection from '@/components/ui/CartSection';
-import ProductsSection from '@/components/ui/ProductsSection';
-import ProductModal from '@/components/ui/ProductModal';
-import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
-import Select from 'react-select';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { catalogsService } from "@/services/catalogsService";
+import {
+  fetchProductosPorCategoria,
+  fetchDetalleVenta,
+  actualizarPedidoCocina,
+  CATEGORIAS,
+} from "@/services/orderService";
+import { useCartEdit } from "@/hooks/useCartEdit";
+import CartSection from "@/components/ui/CartSection";
+import ProductsSection from "@/components/ui/ProductsSection";
+import ProductModal from "@/components/ui/ProductModal";
+import {
+  ModalPaquete1,
+  ModalPaquete2,
+  ModalPaquete3,
+} from "@/components/ui/PaquetesModal";
+import Select from "react-select";
 import { MdComment, MdArrowBack } from "react-icons/md";
-import Link from 'next/link';
+import Link from "next/link";
 
 const POSEdit = () => {
   const params = useParams();
@@ -32,7 +41,7 @@ const POSEdit = () => {
     mariscos: [],
     refrescos: [],
     magno: [],
-    pizzas: []
+    pizzas: [],
   });
 
   const {
@@ -43,17 +52,18 @@ const POSEdit = () => {
     actualizarCantidad,
     eliminarDelCarrito,
     getProductosModificados,
+    cargarProductosOriginales,
     statusPrincipal,
-    setStatusPrincipal
+    setStatusPrincipal,
   } = useCartEdit();
 
   const [categorias] = useState(CATEGORIAS);
-  const [categoriaActiva, setCategoriaActiva] = useState('pizzas');
+  const [categoriaActiva, setCategoriaActiva] = useState("pizzas");
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
 
   // Estados para comentarios
-  const [comentarios, setComentarios] = useState('');
+  const [comentarios, setComentarios] = useState("");
   const [modalComentarios, setModalComentarios] = useState(false);
 
   // Estados para el modal de productos
@@ -67,72 +77,78 @@ const POSEdit = () => {
   const [modalPaquete3, setModalPaquete3] = useState(false);
 
   // Cargar datos iniciales
-  useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        setLoading(true);
-        const [detalleData, productosData, clientesData] = await Promise.all([
-          fetchDetalleVenta(idVenta),
-          fetchProductosPorCategoria(),
-          catalogsService.getNombresClientes()
-        ]);
+   useEffect(() => {
+      const cargarDatos = async () => {
+         try {
+            setLoading(true);
+            const [detalleData, productosData, clientesData] = await Promise.all([
+               fetchDetalleVenta(idVenta), // <-- Asume que aquí viene detalleVenta.productos
+               fetchProductosPorCategoria(),
+               catalogsService.getNombresClientes()
+            ]);
 
-        setDetalleVenta(detalleData);
-        setProductos(productosData);
-        setComentarios(detalleData.comentarios || '');
-        setStatusPrincipal(detalleData.status);
+            setDetalleVenta(detalleData);
+            setProductos(productosData);
+            setComentarios(detalleData.comentarios || '');
+            setStatusPrincipal(detalleData.status);
 
-        // Configurar cliente
-        const opcionesClientes = clientesData.map(cliente => ({
-          value: cliente.id_clie,
-          label: cliente.nombre || cliente.razon_social || 'Nombre no disponible',
-        }));
-        setClientes(opcionesClientes);
+            if (detalleData.productos && Array.isArray(detalleData.productos)) {
+               cargarProductosOriginales(detalleData.productos); // Llama a la función del hook
+            } else {
+               console.warn("detalleVenta.productos no encontrado o no es un array:", detalleData);
+               setOrden([]); // Opcional: Limpiar carrito si no hay productos
+            }
 
-        // Buscar y seleccionar el cliente
-        const clienteEncontrado = opcionesClientes.find(
-          c => c.label === detalleData.cliente
-        );
-        if (clienteEncontrado) {
-          setClienteSeleccionado(clienteEncontrado);
-        }
 
-      } catch (error) {
-        console.error('Error al cargar datos:', error);
-        alert('Error al cargar el detalle del pedido');
-      } finally {
-        setLoading(false);
+            const opcionesClientes = clientesData.map(cliente => ({
+               value: cliente.id_clie,
+               label: cliente.nombre || cliente.razon_social || 'Nombre no disponible',
+            }));
+            setClientes(opcionesClientes);
+
+            const clienteEncontrado = opcionesClientes.find(
+               c => c.label === detalleData.cliente
+            );
+            if (clienteEncontrado) {
+               setClienteSeleccionado(clienteEncontrado);
+            }
+
+         } catch (error) {
+            console.error('Error al cargar datos:', error);
+            alert('Error al cargar el detalle del pedido');
+         } finally {
+            setLoading(false);
+         }
+      };
+
+      if (idVenta) {
+         cargarDatos();
       }
-    };
-
-    if (idVenta) {
-      cargarDatos();
-    }
-  }, [idVenta]);
+   }, [idVenta, cargarProductosOriginales]);
 
   const handleActualizarPedido = async () => {
     if (!clienteSeleccionado) {
-      alert('Por favor, selecciona un cliente antes de actualizar el pedido.');
+      alert("Por favor, selecciona un cliente antes de actualizar el pedido.");
       return;
     }
 
     try {
       const productosModificados = getProductosModificados();
-      
+
       // Si el status principal es 2, cambiarlo a 1
       const nuevoStatusPrincipal = statusPrincipal === 2 ? 1 : statusPrincipal;
 
       await actualizarPedidoCocina(idVenta, {
         productos: productosModificados,
         status: nuevoStatusPrincipal,
-        comentarios: comentarios.trim() || null
+        comentarios: comentarios.trim() || null,
       });
 
-      alert('Pedido actualizado exitosamente');
-      router.push('/pos'); // O redirigir a donde necesites
+      alert("Pedido actualizado exitosamente");
+      router.push("/pos"); // O redirigir a donde necesites
     } catch (error) {
-      console.error('Error al actualizar pedido:', error);
-      alert(error.message || 'Hubo un error al actualizar el pedido.');
+      console.error("Error al actualizar pedido:", error);
+      alert(error.message || "Hubo un error al actualizar el pedido.");
     }
   };
 
@@ -141,12 +157,14 @@ const POSEdit = () => {
   };
 
   // Categorías que requieren modal
-  const categoriasConModal = ['pizzas', 'refrescos', 'mariscos'];
+  const categoriasConModal = ["pizzas", "refrescos", "mariscos"];
 
   const handleProductoClick = (producto, tipoId) => {
     if (categoriasConModal.includes(categoriaActiva)) {
       const productosCategoria = productos[categoriaActiva];
-      const variantes = productosCategoria.filter(p => p.nombre === producto.nombre);
+      const variantes = productosCategoria.filter(
+        (p) => p.nombre === producto.nombre
+      );
 
       setProductoSeleccionado(producto.nombre);
       setVariantesProducto(variantes);
@@ -167,7 +185,7 @@ const POSEdit = () => {
       numeroPaquete: 1,
       precio: 295,
       detallePaquete: "4,8",
-      idRefresco: 17
+      idRefresco: 17,
     });
     setModalPaquete1(false);
   };
@@ -176,10 +194,10 @@ const POSEdit = () => {
     agregarPaquete({
       numeroPaquete: 2,
       precio: 265,
-      idHamb: seleccion.tipo === 'hamburguesa' ? seleccion.idProducto : null,
-      idAlis: seleccion.tipo === 'alitas' ? seleccion.idProducto : null,
+      idHamb: seleccion.tipo === "hamburguesa" ? seleccion.idProducto : null,
+      idAlis: seleccion.tipo === "alitas" ? seleccion.idProducto : null,
       idPizza: seleccion.idPizza,
-      idRefresco: 17
+      idRefresco: 17,
     });
     setModalPaquete2(false);
   };
@@ -188,8 +206,8 @@ const POSEdit = () => {
     agregarPaquete({
       numeroPaquete: 3,
       precio: 395,
-      detallePaquete: pizzasSeleccionadas.join(','),
-      idRefresco: 17
+      detallePaquete: pizzasSeleccionadas.join(","),
+      idRefresco: 17,
     });
     setModalPaquete3(false);
   };
@@ -199,7 +217,7 @@ const POSEdit = () => {
 
     if (categoriasConModal.includes(categoriaActiva)) {
       const nombresUnicos = {};
-      productosCategoria.forEach(producto => {
+      productosCategoria.forEach((producto) => {
         if (!nombresUnicos[producto.nombre]) {
           nombresUnicos[producto.nombre] = producto;
         }
@@ -234,14 +252,20 @@ const POSEdit = () => {
             <MdArrowBack className="text-2xl" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-black">Editar Pedido #{idVenta}</h1>
+            <h1 className="text-3xl font-bold text-black">
+              Editar Pedido #{idVenta}
+            </h1>
             <p className="text-sm text-gray-600">
-              {detalleVenta.cliente} - {detalleVenta.sucursal} - 
-              <span className={`ml-2 font-semibold ${
-                detalleVenta.status === 0 ? 'text-red-600' :
-                detalleVenta.status === 1 ? 'text-yellow-600' :
-                'text-green-600'
-              }`}>
+              {detalleVenta.cliente} - {detalleVenta.sucursal} -
+              <span
+                className={`ml-2 font-semibold ${
+                  detalleVenta.status === 0
+                    ? "text-red-600"
+                    : detalleVenta.status === 1
+                    ? "text-yellow-600"
+                    : "text-green-600"
+                }`}
+              >
                 {detalleVenta.status_texto}
               </span>
             </p>
@@ -272,7 +296,9 @@ const POSEdit = () => {
 
         {/* Sección de Cliente */}
         <div className="w-full md:w-1/3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Cliente
+          </label>
           <Select
             options={clientes}
             value={clienteSeleccionado}
@@ -325,7 +351,9 @@ const POSEdit = () => {
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
             <div className="flex items-center gap-2 mb-4">
               <MdComment className="text-2xl text-yellow-500" />
-              <h2 className="text-2xl font-bold text-gray-800">Comentarios del pedido</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Comentarios del pedido
+              </h2>
             </div>
             <p className="text-sm text-gray-600 mb-4">
               Modifica las instrucciones especiales para este pedido (opcional)
