@@ -1,50 +1,10 @@
 import { useState, useEffect } from 'react';
 
-const encodeCart = (cart) => {
-  if (!cart || !Array.isArray(cart)) return '';
-  const jsonString = JSON.stringify(cart);
-  // Codificar a Base64 para URL
-  return typeof window !== 'undefined' ? btoa(unescape(encodeURIComponent(jsonString))) : '';
-};
-
-// Función para actualizar la URL en un efecto secundario
-const updateUrl = (newCart) => {
-  if (typeof window !== 'undefined') {
-    const encodedCart = encodeCart(newCart);
-    const newUrl = new URL(window.location);
-    if (encodedCart) {
-      newUrl.searchParams.set('cart', encodedCart);
-    } else {
-      newUrl.searchParams.delete('cart');
-    }
-    window.history.replaceState({}, '', newUrl);
-  }
-};
-
-export const useCart = (initialCartFromUrl = []) => {
-  const [orden, setOrden] = useState(initialCartFromUrl);
-
-  useEffect(() => {
-    if (initialCartFromUrl.length === 0 && typeof window !== 'undefined' && window.location.search) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const encodedCart = urlParams.get('cart');
-      if (encodedCart) {
-        try {
-          const decodedString = decodeURIComponent(escape(atob(encodedCart)));
-          const parsed = JSON.parse(decodedString);
-          const initialCart = Array.isArray(parsed) ? parsed : [];
-          setOrden(initialCart);
-        } catch (e) {
-          console.error('Error al decodificar el carrito desde la URL:', e);
-          setOrden([]);
-        }
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    updateUrl(orden);
-  }, [orden]);
+export const useCartEdit = () => {
+  const [orden, setOrden] = useState([]);
+  const [productosOriginales, setProductosOriginales] = useState([]);
+  const [productosEliminados, setProductosEliminados] = useState([]);
+  const [statusPrincipal, setStatusPrincipal] = useState(1);
 
   const calcularPrecioYSubtotal = (precioBase, cantidad) => {
     const pares = Math.floor(cantidad / 2);
@@ -58,10 +18,8 @@ export const useCart = (initialCartFromUrl = []) => {
     };
   };
 
-  // Función para recalcular todos los precios del carrito
   const recalcularPrecios = (nuevaOrden) => {
     return nuevaOrden.map(item => {
-      // Los paquetes no tienen descuento 2x1
       if (item.esPaquete) {
         return {
           ...item,
@@ -92,6 +50,28 @@ export const useCart = (initialCartFromUrl = []) => {
     });
   };
 
+  const cargarProductosOriginales = (productos) => {
+    // Convertir los productos del backend al formato del carrito
+    const productosConvertidos = productos.map((prod, index) => ({
+      id: `original_${index}`,
+      tipoId: prod.tipo_id || 'id_pizza',
+      nombre: prod.nombre,
+      precioOriginal: prod.precio || 0,
+      precioUnitario: prod.precio || 0,
+      cantidad: prod.cantidad,
+      subtotal: (prod.precio || 0) * prod.cantidad,
+      tamano: prod.tamano || 'N/A',
+      productos: null,
+      esPaquete: prod.tipo.includes('Paquete'),
+      esOriginal: true,
+      statusOriginal: prod.status,
+      idProductoBackend: prod.id_producto // Si el backend lo proporciona
+    }));
+
+    setProductosOriginales(productosConvertidos);
+    setOrden(recalcularPrecios(productosConvertidos));
+  };
+
   const agregarPaquete = (paquete) => {
     setOrden((prevOrden) => {
       const idUnico = `paquete_${paquete.numeroPaquete}_${Date.now()}`;
@@ -107,6 +87,8 @@ export const useCart = (initialCartFromUrl = []) => {
         cantidad: 1,
         subtotal: paquete.precio,
         tamano: 'N/A',
+        esOriginal: false,
+        esNuevo: true,
         datoPaquete: {
           id_paquete: paquete.numeroPaquete,
           id_refresco: paquete.idRefresco,
@@ -140,7 +122,7 @@ export const useCart = (initialCartFromUrl = []) => {
         if (itemMismoTamano) {
           nuevaOrden = prevOrden.map((item) => {
             if (item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete) {
-              const productoExistente = item.productos.find(p => p.id === id);
+              const productoExistente = item.productos?.find(p => p.id === id);
 
               if (productoExistente) {
                 return {
@@ -148,13 +130,15 @@ export const useCart = (initialCartFromUrl = []) => {
                   cantidad: item.cantidad + 1,
                   productos: item.productos.map(p =>
                     p.id === id ? { ...p, cantidad: p.cantidad + 1 } : p
-                  )
+                  ),
+                  esModificado: item.esOriginal ? true : item.esModificado
                 };
               } else {
                 return {
                   ...item,
                   cantidad: item.cantidad + 1,
-                  productos: [...item.productos, { id, nombre, cantidad: 1 }]
+                  productos: [...(item.productos || []), { id, nombre, cantidad: 1 }],
+                  esModificado: item.esOriginal ? true : item.esModificado
                 };
               }
             }
@@ -164,7 +148,7 @@ export const useCart = (initialCartFromUrl = []) => {
           nuevaOrden = [
             ...prevOrden,
             {
-              id: `${tipoId}_${tamano}`,
+              id: `${tipoId}_${tamano}_${Date.now()}`,
               tipoId,
               nombre: `${tipoId === 'id_pizza' ? 'Pizza' : 'Marisco'} ${tamano}`,
               precioOriginal,
@@ -173,7 +157,9 @@ export const useCart = (initialCartFromUrl = []) => {
               subtotal: precioOriginal * 0.6,
               tamano,
               productos: [{ id, nombre, cantidad: 1 }],
-              esPaquete: false
+              esPaquete: false,
+              esOriginal: false,
+              esNuevo: true
             },
           ];
         }
@@ -189,7 +175,11 @@ export const useCart = (initialCartFromUrl = []) => {
         if (itemExistente) {
           nuevaOrden = prevOrden.map((item) =>
             item.id === id && item.tipoId === tipoId && !item.esPaquete
-              ? { ...item, cantidad: item.cantidad + 1 }
+              ? { 
+                  ...item, 
+                  cantidad: item.cantidad + 1,
+                  esModificado: item.esOriginal ? true : item.esModificado
+                }
               : item
           );
         } else {
@@ -205,11 +195,12 @@ export const useCart = (initialCartFromUrl = []) => {
               subtotal: precioOriginal,
               tamano: 'N/A',
               productos: null,
-              esPaquete: false
+              esPaquete: false,
+              esOriginal: false,
+              esNuevo: true
             },
           ];
         }
-        // No llamar a updateUrl aquí
         return recalcularPrecios(nuevaOrden);
       }
     });
@@ -232,10 +223,15 @@ export const useCart = (initialCartFromUrl = []) => {
               cantidad: item.cantidad + diferencia,
               productos: item.productos.map(p =>
                 p.id === productoId ? { ...p, cantidad: nuevaCantidad } : p
-              )
+              ),
+              esModificado: item.esOriginal ? true : item.esModificado
             };
           } else {
-            return { ...item, cantidad: nuevaCantidad };
+            return { 
+              ...item, 
+              cantidad: nuevaCantidad,
+              esModificado: item.esOriginal ? true : item.esModificado
+            };
           }
         }
         return item;
@@ -256,30 +252,74 @@ export const useCart = (initialCartFromUrl = []) => {
             const nuevosProductos = item.productos.filter(p => p.id !== productoId);
 
             if (nuevosProductos.length === 0) {
+              // Si era un producto original, marcarlo como eliminado
+              if (item.esOriginal) {
+                setProductosEliminados(prev => [...prev, {
+                  ...item,
+                  statusNuevo: 0 // Cancelado
+                }]);
+              }
               return null;
             }
 
             return {
               ...item,
               cantidad: item.cantidad - productoAEliminar.cantidad,
-              productos: nuevosProductos
+              productos: nuevosProductos,
+              esModificado: item.esOriginal ? true : item.esModificado
             };
           }
           return item;
         }).filter(item => item !== null);
       } else {
+        // Si es un producto original, marcarlo como eliminado (status 0)
+        const itemAEliminar = prevOrden.find(
+          (item) => item.id === id && item.tipoId === tipoId
+        );
+
+        if (itemAEliminar && itemAEliminar.esOriginal) {
+          setProductosEliminados(prev => [...prev, {
+            ...itemAEliminar,
+            statusNuevo: 0 // Cancelado
+          }]);
+        }
+
         nuevaOrden = prevOrden.filter(
           (item) => !(item.id === id && item.tipoId === tipoId)
         );
       }
 
-      // No llamar a updateUrl aquí
       return recalcularPrecios(nuevaOrden);
     });
   };
 
-  const limpiarCarrito = () => {
-    setOrden([]);
+  const getProductosModificados = () => {
+    const modificados = [];
+
+    // Agregar productos eliminados con status 0
+    productosEliminados.forEach(prod => {
+      modificados.push({
+        id_producto: prod.idProductoBackend,
+        status: 0,
+        cantidad: prod.cantidad
+      });
+    });
+
+    // Agregar productos nuevos (que no existían originalmente)
+    orden.forEach(item => {
+      if (item.esNuevo) {
+        modificados.push({
+          id_producto: item.id,
+          status: 1, // Status por defecto para nuevos
+          cantidad: item.cantidad,
+          tipo: item.tipoId,
+          nombre: item.nombre,
+          precio: item.precioUnitario
+        });
+      }
+    });
+
+    return modificados;
   };
 
   const total = orden.reduce((acc, item) => acc + item.subtotal, 0);
@@ -291,6 +331,9 @@ export const useCart = (initialCartFromUrl = []) => {
     agregarPaquete,
     actualizarCantidad,
     eliminarDelCarrito,
-    limpiarCarrito,
+    cargarProductosOriginales,
+    getProductosModificados,
+    statusPrincipal,
+    setStatusPrincipal
   };
 };

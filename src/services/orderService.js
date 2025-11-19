@@ -62,6 +62,60 @@ export const fetchProductosPorCategoria = async () => {
   }
 };
 
+
+export const fetchDetalleVenta = async (idVenta) => {
+  try {
+    const response = await api.get(`/pos/pedidos-cocina/${idVenta}/detalle`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener detalle de venta:', error);
+    throw new Error('No se pudo cargar el detalle del pedido');
+  }
+};
+
+
+
+export const actualizarPedidoCocina = async (idVenta, datos) => {
+  try {
+    const payload = {
+      status: datos.status,
+      productos: datos.productos.map(prod => ({
+        id_producto: prod.id_producto,
+        status: prod.status,
+        cantidad: prod.cantidad,
+        // Incluir otros campos según tu backend
+        ...(prod.tipo && { tipo: prod.tipo }),
+        ...(prod.nombre && { nombre: prod.nombre }),
+        ...(prod.precio && { precio: prod.precio })
+      }))
+    };
+
+    // Agregar comentarios solo si existen
+    if (datos.comentarios && datos.comentarios.trim()) {
+      payload.comentarios = datos.comentarios.trim();
+    }
+
+    const response = await api.patch(`/pos/pedidos-cocina/${idVenta}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar pedido:', error.response?.data || error.message);
+    
+    if (error.response?.data?.detail) {
+      const detalles = error.response.data.detail;
+      if (Array.isArray(detalles)) {
+        console.error('Errores de validación:');
+        detalles.forEach(err => {
+          console.error(`- Campo: ${err.loc?.join(' > ')}`);
+          console.error(`  Mensaje: ${err.msg}`);
+        });
+      }
+    }
+    
+    throw new Error(error.response?.data?.message || 'Error al actualizar el pedido');
+  }
+};
+
+
 export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
   if (orden.length === 0) {
     throw new Error('La orden está vacía');
