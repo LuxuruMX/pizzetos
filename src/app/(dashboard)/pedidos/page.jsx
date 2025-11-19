@@ -109,7 +109,7 @@ export default function App() {
     useEffect(() => {
       fetchPedidos();
       // Auto-refresh cada 30 segundos
-      const interval = setInterval(fetchPedidos, 60000);
+      const interval = setInterval(fetchPedidos, 10000);
       return () => clearInterval(interval);
     }, [filtro, statusFiltro]);
 
