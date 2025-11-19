@@ -3,9 +3,28 @@ import {getSucursalFromToken} from '@/services/jwt';
 
 const CATEGORIAS = ['pizzas', 'hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'refrescos', 'magno'];
 
-export const fetchProductosPorCategoria = async () => {
+// Estado de la caché
+let cachedData = null;
+let lastFetchTime = null;
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 horas en milisegundos (ajusta según necesites)
+
+export const fetchProductosPorCategoria = async (force = false) => {
+  const now = Date.now();
+
+  // Validar si la caché es válida y no se fuerza la actualización
+  if (cachedData && lastFetchTime && !force) {
+    if (now - lastFetchTime < CACHE_DURATION) {
+      console.log('Usando datos de caché');
+      return cachedData;
+    }
+  }
+
+  console.log('Actualizando datos desde la API...');
   try {
-    const [ResPizza, resHamb, resAlis, resCos, resSpag, resPapa, ResRec, ResBarr, ResMar, ResRefr, ResMag ] = await Promise.all([
+    const [
+      ResPizza, resHamb, resAlis, resCos, resSpag, resPapa,
+      ResRec, ResBarr, ResMar, ResRefr, ResMag
+    ] = await Promise.all([
       api.get('/prices/pizzas'),
       api.get('/prices/hamburguesas'),
       api.get('/prices/alitas'),
@@ -31,7 +50,7 @@ export const fetchProductosPorCategoria = async () => {
     const magno = Array.isArray(ResMag.data) ? ResMag.data : [];
     const pizzas = Array.isArray(ResPizza.data) ? ResPizza.data : [];
 
-    return {
+    cachedData = {
       hamburguesas,
       alitas,
       costillas,
@@ -44,8 +63,16 @@ export const fetchProductosPorCategoria = async () => {
       magno,
       pizzas
     };
+
+    lastFetchTime = now;
+
+    return cachedData;
   } catch (error) {
     console.error('Error al cargar productos:', error);
+    if (cachedData) {
+      console.warn('Devuelta datos de caché debido a error.');
+      return cachedData; // Devolver caché si falla la actualización
+    }
     return {
       hamburguesas: [],
       alitas: [],
@@ -60,6 +87,13 @@ export const fetchProductosPorCategoria = async () => {
       pizzas: []
     };
   }
+};
+
+// Opcional: función para invalidar la caché manualmente
+export const invalidateCache = () => {
+  cachedData = null;
+  lastFetchTime = null;
+  console.log('Caché invalidada.');
 };
 
 
