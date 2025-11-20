@@ -77,54 +77,56 @@ const POSEdit = () => {
   const [modalPaquete3, setModalPaquete3] = useState(false);
 
   // Cargar datos iniciales
-   useEffect(() => {
-      const cargarDatos = async () => {
-         try {
-            setLoading(true);
-            const [detalleData, productosData, clientesData] = await Promise.all([
-               fetchDetalleVenta(idVenta), // <-- Asume que aquí viene detalleVenta.productos
-               fetchProductosPorCategoria(),
-               catalogsService.getNombresClientes()
-            ]);
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        setLoading(true);
+        const [detalleData, productosData, clientesData] = await Promise.all([
+          fetchDetalleVenta(idVenta), // <-- Asume que aquí viene detalleVenta.productos
+          fetchProductosPorCategoria(),
+          catalogsService.getNombresClientes(),
+        ]);
 
-            setDetalleVenta(detalleData);
-            setProductos(productosData);
-            setComentarios(detalleData.comentarios || '');
-            setStatusPrincipal(detalleData.status);
+        setDetalleVenta(detalleData);
+        setProductos(productosData);
+        setComentarios(detalleData.comentarios || "");
+        setStatusPrincipal(detalleData.status);
 
-            if (detalleData.productos && Array.isArray(detalleData.productos)) {
-               cargarProductosOriginales(detalleData.productos); // Llama a la función del hook
-            } else {
-               console.warn("detalleVenta.productos no encontrado o no es un array:", detalleData);
-               setOrden([]); // Opcional: Limpiar carrito si no hay productos
-            }
+        if (detalleData.productos && Array.isArray(detalleData.productos)) {
+          cargarProductosOriginales(detalleData.productos); // Llama a la función del hook
+        } else {
+          console.warn(
+            "detalleVenta.productos no encontrado o no es un array:",
+            detalleData
+          );
+          setOrden([]); // Opcional: Limpiar carrito si no hay productos
+        }
 
+        const opcionesClientes = clientesData.map((cliente) => ({
+          value: cliente.id_clie,
+          label:
+            cliente.nombre || cliente.razon_social || "Nombre no disponible",
+        }));
+        setClientes(opcionesClientes);
 
-            const opcionesClientes = clientesData.map(cliente => ({
-               value: cliente.id_clie,
-               label: cliente.nombre || cliente.razon_social || 'Nombre no disponible',
-            }));
-            setClientes(opcionesClientes);
-
-            const clienteEncontrado = opcionesClientes.find(
-               c => c.label === detalleData.cliente
-            );
-            if (clienteEncontrado) {
-               setClienteSeleccionado(clienteEncontrado);
-            }
-
-         } catch (error) {
-            console.error('Error al cargar datos:', error);
-            alert('Error al cargar el detalle del pedido');
-         } finally {
-            setLoading(false);
-         }
-      };
-
-      if (idVenta) {
-         cargarDatos();
+        const clienteEncontrado = opcionesClientes.find(
+          (c) => c.label === detalleData.cliente
+        );
+        if (clienteEncontrado) {
+          setClienteSeleccionado(clienteEncontrado);
+        }
+      } catch (error) {
+        console.error("Error al cargar datos:", error);
+        alert("Error al cargar el detalle del pedido");
+      } finally {
+        setLoading(false);
       }
-   }, [idVenta, cargarProductosOriginales]);
+    };
+
+    if (idVenta) {
+      cargarDatos();
+    }
+  }, [idVenta]);
 
   const handleActualizarPedido = async () => {
     if (!clienteSeleccionado) {

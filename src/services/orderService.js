@@ -98,7 +98,7 @@ export const invalidateCache = () => {
 
 export const fetchDetalleVenta = async (idVenta) => {
   try {
-    const response = await api.get(`/pos/pedidos-cocina/${idVenta}/detalle`);
+    const response = await api.get(`/pos/edit/${idVenta}/detalle`);
     return response.data;
   } catch (error) {
     console.error('Error al obtener detalle de venta:', error);
