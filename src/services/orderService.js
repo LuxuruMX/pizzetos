@@ -70,7 +70,7 @@ export const fetchProductosPorCategoria = async (force = false) => {
     console.error('Error al cargar productos:', error);
     if (cachedData) {
       console.warn('Devuelta datos de caché debido a error.');
-      return cachedData; // Devolver caché si falla la actualización
+      return cachedData;
     }
     return {
       hamburguesas: [],
@@ -88,14 +88,16 @@ export const fetchProductosPorCategoria = async (force = false) => {
   }
 };
 
-// Opcional: función para invalidar la caché manualmente
 export const invalidateCache = () => {
   cachedData = null;
   lastFetchTime = null;
   console.log('Caché invalidada.');
 };
 
-
+/**
+ * Obtener detalle de una venta para edición
+ * El backend devuelve: { id_venta, fecha_hora, cliente, sucursal, status, comentarios, status_texto, productos: [] }
+ */
 export const fetchDetalleVenta = async (idVenta) => {
   try {
     const response = await api.get(`/pos/edit/${idVenta}/detalle`);
@@ -106,20 +108,22 @@ export const fetchDetalleVenta = async (idVenta) => {
   }
 };
 
-
-
+/**
+ * Actualizar un pedido existente
+ * Recibe el payload generado por getPayloadActualizacion() del hook
+ */
 export const actualizarPedidoCocina = async (idVenta, datos) => {
   try {
     const payload = {
       status: datos.status,
       productos: datos.productos.map(prod => ({
-        id_producto: prod.id_producto,
-        status: prod.status,
+        id: prod.id,
         cantidad: prod.cantidad,
-        // Incluir otros campos según tu backend
-        ...(prod.tipo && { tipo: prod.tipo }),
-        ...(prod.nombre && { nombre: prod.nombre }),
-        ...(prod.precio && { precio: prod.precio })
+        tipo: prod.tipo,
+        nombre: prod.nombre,
+        precio_unitario: prod.precio_unitario,
+        status: prod.status,
+        ...(prod.tamaño && { tamaño: prod.tamaño })
       }))
     };
 
@@ -148,7 +152,9 @@ export const actualizarPedidoCocina = async (idVenta, datos) => {
   }
 };
 
-
+/**
+ * Enviar una nueva orden
+ */
 export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
   if (orden.length === 0) {
     throw new Error('La orden está vacía');
@@ -158,7 +164,7 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
 
   // Construir el array de items según el formato del backend
   const items = orden.flatMap(item => {
-    // Si es un paquete, manejar de manera especial
+    // Si es un paquete
     if (item.esPaquete) {
       const itemData = {
         cantidad: parseInt(item.cantidad),
@@ -167,7 +173,7 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
         id_refresco: item.datoPaquete.id_refresco
       };
 
-      // Agregar campos opcionales solo si existen
+      // Agregar campos opcionales
       if (item.datoPaquete.detalle_paquete) {
         itemData.detalle_paquete = item.datoPaquete.detalle_paquete;
       }
@@ -184,30 +190,29 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
       return itemData;
     }
     
-    // Verificar si es un item agrupado (pizzas o mariscos con productos múltiples)
+    // Si es un item agrupado (pizzas/mariscos con productos múltiples)
     if (item.productos && Array.isArray(item.productos)) {
-      // Expandir cada producto del grupo en un item separado
       return item.productos.map(producto => {
         const itemData = {
           cantidad: parseInt(producto.cantidad),
           precio_unitario: parseFloat(item.precioUnitario),
-          [item.tipoId]: parseInt(producto.id)
+          [item.tipo]: parseInt(producto.id)
         };
         return itemData;
       });
     } else {
       // Item normal (no agrupado)
-      const itemId = parseInt(item.id);
+      const itemId = parseInt(item.idProducto);
       
       if (isNaN(itemId)) {
         console.error('ID inválido encontrado:', item);
-        throw new Error(`El ID del producto "${item.nombre}" no es válido: ${item.id}`);
+        throw new Error(`El ID del producto "${item.nombre}" no es válido: ${item.idProducto}`);
       }
 
       const itemData = {
         cantidad: parseInt(item.cantidad),
         precio_unitario: parseFloat(item.precioUnitario),
-        [item.tipoId]: itemId
+        [item.tipo]: itemId
       };
       return itemData;
     }
@@ -234,7 +239,6 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
   } catch (error) {
     console.error('Error al enviar orden:', error.response?.data || error.message);
     
-    // Mostrar detalles del error de validación
     if (error.response?.data?.detail) {
       const detalles = error.response.data.detail;
       if (Array.isArray(detalles)) {

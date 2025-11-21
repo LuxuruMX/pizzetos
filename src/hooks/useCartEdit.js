@@ -3,7 +3,6 @@ import { useState } from 'react';
 export const useCartEdit = () => {
   const [orden, setOrden] = useState([]);
   const [productosOriginales, setProductosOriginales] = useState([]);
-  const [productosEliminados, setProductosEliminados] = useState([]);
   const [statusPrincipal, setStatusPrincipal] = useState(1);
 
   const calcularPrecioYSubtotal = (precioBase, cantidad) => {
@@ -27,9 +26,10 @@ export const useCartEdit = () => {
         };
       }
 
+      // Categorías con descuento 2x1
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
 
-      if (!categoriasConDescuento.includes(item.tipoId)) {
+      if (!categoriasConDescuento.includes(item.tipo)) {
         return {
           ...item,
           precioUnitario: item.precioOriginal,
@@ -37,6 +37,7 @@ export const useCartEdit = () => {
         };
       }
 
+      // Aplicar descuento para pizzas/mariscos
       const { precioUnitario, subtotal } = calcularPrecioYSubtotal(
         item.precioOriginal,
         item.cantidad
@@ -50,75 +51,297 @@ export const useCartEdit = () => {
     });
   };
 
-  const cargarProductosOriginales = (productosBackend) => {
-    // Convertir los productos del backend al formato del carrito
-    // Asume que detalleVenta.productos es un array de objetos con: id_producto, tipo_id, nombre, precio, cantidad, status, tamano, etc.
+  // Cargar productos desde el backend y completar con datos de la caché
+  const cargarProductosOriginales = (productosBackend, productosCache) => {
+    // Mapear tipo del backend al nombre de categoría
+    const tipoMap = {
+      'id_pizza': 'pizzas',
+      'id_hamb': 'hamburguesas',
+      'id_alis': 'alitas',
+      'id_cos': 'costillas',
+      'id_spag': 'spaguetty',
+      'id_papa': 'papas',
+      'id_rect': 'rectangular',
+      'id_barr': 'barra',
+      'id_maris': 'mariscos',
+      'id_refresco': 'refrescos',
+      'id_paquete': 'paquetes'
+    };
+
     const productosConvertidos = productosBackend.map((prod, index) => {
-      // Suponiendo que el backend devuelve un campo tipo_id como 'id_pizza', 'id_hamb', etc.
-      const tipoId = prod.tipo_id; // Ajusta según tu estructura real de detalleVenta.productos
+      const esPaquete = prod.tipo === 'id_paquete';
+      
+      let nombre = `Producto ${prod.id}`;
+      let precio = 0;
 
-      // Ajustar el nombre si es un paquete
-      const esPaquete = prod.tipo && prod.tipo.toLowerCase().includes('paquete');
-      const nombre = esPaquete ? prod.nombre || `Paquete ${prod.numero_paquete || 'Desconocido'}` : prod.nombre;
+      // Buscar en la caché de productos
+      const categoria = tipoMap[prod.tipo];
+      if (categoria && productosCache[categoria]) {
+        const categoriaProductos = productosCache[categoria];
 
-      // Asumiendo que el backend devuelve el precio unitario original
-      const precioOriginal = prod.precio_unitario || prod.precio || 0;
+        // Buscar producto por ID
+        let producto = categoriaProductos.find(p => p.id === prod.id);
 
-      // Generar un ID único para el carrito (importante para el manejo de estado)
-      // Si no hay un ID único del backend para la línea del pedido, usamos un temporal
-      const idCarrito = `original_${prod.id_producto}_${index}`; // Ajusta según tu estructura
+        // Si no se encuentra por ID, intentar con id_pizza, id_hamb, etc.
+        if (!producto) {
+          const tipoId = prod.tipo.replace('id_', '');
+          producto = categoriaProductos.find(p => p[tipoId] === prod.id);
+        }
+
+        if (producto) {
+          // Si es una pizza/marisco, buscar por tamaño si es necesario
+          if (['id_pizza', 'id_maris'].includes(prod.tipo) && prod.tamaño) {
+            // Buscar variante con el tamaño específico
+            const variante = categoriaProductos.find(p => 
+              (p.id === prod.id || p[prod.tipo.replace('id_', '')] === prod.id) && 
+              (p.tamaño === prod.tamaño || p.subcategoria === prod.tamaño)
+            );
+            if (variante) {
+              nombre = variante.nombre;
+              precio = parseFloat(variante.precio);
+            } else {
+              nombre = producto.nombre;
+              precio = parseFloat(producto.precio);
+            }
+          } else {
+            nombre = producto.nombre;
+            precio = parseFloat(producto.precio);
+          }
+        }
+      }
+
+      // Crear ID único para el carrito
+      const idCarrito = `original_${prod.tipo}_${prod.id || index}_${prod.tamaño || 'std'}`;
 
       return {
-        id: idCarrito, // ID interno para el carrito
-        idProductoBackend: prod.id_producto, // ID real del producto para el backend
-        tipoId: tipoId,
+        // IDs
+        id: idCarrito,
+        idProducto: prod.id, // ID real del producto
+        tipo: prod.tipo, // 'id_pizza', 'id_hamb', etc.
+        
+        // Información del producto
         nombre: nombre,
-        precioOriginal: precioOriginal,
-        precioUnitario: precioOriginal, // Se recalcula si aplica descuento
-        cantidad: prod.cantidad || 1,
-        subtotal: (precioOriginal * (prod.cantidad || 1)),
-        tamano: prod.tamano || prod.subcategoria || 'N/A', // Ajusta según tu estructura
-        productos: null, // No se usa para items simples, pero inicializamos
+        tamano: prod.tamaño || 'N/A',
+        
+        // Precios (obtenidos de la caché)
+        precioOriginal: precio,
+        precioUnitario: precio,
+        
+        // Cantidad y cálculos
+        cantidad: prod.cantidad,
+        subtotal: precio * prod.cantidad,
+        
+        // Estado
+        status: prod.status,
         esPaquete: esPaquete,
-        esOriginal: true, // Marcar como original
-        statusOriginal: prod.status, // Guardar el status original si aplica
-        // Campos específicos de paquetes, si aplica
-        ...(esPaquete && {
-          numeroPaquete: prod.numero_paquete,
-          datoPaquete: {
-            id_paquete: prod.numero_paquete,
-            id_refresco: prod.id_refresco,
-            detalle_paquete: prod.detalle_paquete,
-            id_pizza: prod.id_pizza,
-            id_hamb: prod.id_hamb,
-            id_alis: prod.id_alis,
-          }
-        })
+        esOriginal: true,
+        esModificado: false,
+        
+        // Para items agrupados (pizzas del mismo tamaño)
+        productos: null
       };
     });
 
-    setProductosOriginales(productosConvertidos); // Guardar originales
-    setOrden(recalcularPrecios(productosConvertidos)); // Cargarlos en el carrito y recalcular
-    setProductosEliminados([]); // Reiniciar eliminados al cargar originales
+    // Agrupar pizzas/mariscos del mismo tamaño
+    const productosAgrupados = agruparProductosPorTamano(productosConvertidos);
+
+    setProductosOriginales(productosConvertidos);
+    setOrden(recalcularPrecios(productosAgrupados));
   };
 
+  // Agrupar pizzas/mariscos del mismo tamaño en un solo item del carrito
+  const agruparProductosPorTamano = (productos) => {
+    const agrupados = [];
+    const categoriasAgrupables = ['id_pizza', 'id_maris'];
+    const yaAgrupados = new Set();
+
+    productos.forEach((prod, index) => {
+      if (yaAgrupados.has(index)) return;
+
+      if (categoriasAgrupables.includes(prod.tipo)) {
+        // Buscar todos los productos del mismo tipo y tamaño
+        const grupo = productos.filter((p, i) => 
+          !yaAgrupados.has(i) &&
+          p.tipo === prod.tipo && 
+          p.tamano === prod.tamano &&
+          !p.esPaquete
+        );
+
+        grupo.forEach((p, i) => {
+          const idx = productos.findIndex(item => 
+            item.id === p.id && !yaAgrupados.has(productos.indexOf(item))
+          );
+          if (idx !== -1) yaAgrupados.add(idx);
+        });
+
+        if (grupo.length > 1) {
+          // Crear item agrupado
+          const cantidadTotal = grupo.reduce((sum, p) => sum + p.cantidad, 0);
+          const productosDetalle = grupo.map(p => ({
+            id: p.idProducto,
+            nombre: p.nombre,
+            cantidad: p.cantidad
+          }));
+
+          agrupados.push({
+            id: `${prod.tipo}_${prod.tamano}_${Date.now()}`,
+            idProducto: null, // No hay un ID único cuando está agrupado
+            tipo: prod.tipo,
+            nombre: `${prod.tipo === 'id_pizza' ? 'Pizzas' : 'Mariscos'} ${prod.tamano}`,
+            tamano: prod.tamano,
+            precioOriginal: prod.precioOriginal,
+            precioUnitario: prod.precioOriginal * 0.6, // Primera es suelta
+            cantidad: cantidadTotal,
+            subtotal: 0, // Se recalcula
+            status: prod.status,
+            esPaquete: false,
+            esOriginal: true,
+            esModificado: false,
+            productos: productosDetalle
+          });
+        } else {
+          agrupados.push(prod);
+        }
+      } else {
+        agrupados.push(prod);
+      }
+    });
+
+    return agrupados;
+  };
+
+  // Agregar producto al carrito
+  const agregarAlCarrito = (producto, tipoId) => {
+    const id = producto[tipoId];
+    const precioOriginal = parseFloat(producto.precio);
+    const tamano = producto.subcategoria || producto.tamano || producto.tamaño || 'N/A';
+    const nombre = producto.nombre;
+
+    setOrden((prevOrden) => {
+      const categoriasConDescuento = ['id_pizza', 'id_maris'];
+
+      if (categoriasConDescuento.includes(tipoId)) {
+        // Buscar grupo del mismo tamaño
+        const itemMismoTamano = prevOrden.find(
+          (item) => item.tipo === tipoId && item.tamano === tamano && !item.esPaquete
+        );
+
+        let nuevaOrden;
+
+        if (itemMismoTamano) {
+          // Agregar al grupo existente
+          nuevaOrden = prevOrden.map((item) => {
+            if (item.tipo === tipoId && item.tamano === tamano && !item.esPaquete) {
+              const productoExistente = item.productos?.find(p => p.id === id);
+
+              if (productoExistente) {
+                // Incrementar cantidad del producto existente
+                return {
+                  ...item,
+                  cantidad: item.cantidad + 1,
+                  productos: item.productos.map(p =>
+                    p.id === id ? { ...p, cantidad: p.cantidad + 1 } : p
+                  ),
+                  esModificado: item.esOriginal
+                };
+              } else {
+                // Agregar nuevo producto al grupo
+                return {
+                  ...item,
+                  cantidad: item.cantidad + 1,
+                  productos: [...(item.productos || []), { id, nombre, cantidad: 1 }],
+                  esModificado: item.esOriginal
+                };
+              }
+            }
+            return item;
+          });
+        } else {
+          // Crear nuevo grupo
+          nuevaOrden = [
+            ...prevOrden,
+            {
+              id: `${tipoId}_${tamano}_${Date.now()}`,
+              idProducto: id,
+              tipo: tipoId,
+              nombre: `${tipoId === 'id_pizza' ? 'Pizza' : 'Marisco'} ${tamano}`,
+              tamano,
+              precioOriginal,
+              precioUnitario: precioOriginal * 0.6,
+              cantidad: 1,
+              subtotal: precioOriginal * 0.6,
+              status: 1,
+              esPaquete: false,
+              esOriginal: false,
+              esNuevo: true,
+              productos: [{ id, nombre, cantidad: 1 }]
+            },
+          ];
+        }
+
+        return recalcularPrecios(nuevaOrden);
+      } else {
+        // Productos sin agrupación
+        const itemExistente = prevOrden.find(
+          (item) => item.idProducto === id && item.tipo === tipoId && !item.esPaquete
+        );
+
+        let nuevaOrden;
+
+        if (itemExistente) {
+          nuevaOrden = prevOrden.map((item) =>
+            item.idProducto === id && item.tipo === tipoId && !item.esPaquete
+              ? { 
+                  ...item, 
+                  cantidad: item.cantidad + 1,
+                  esModificado: item.esOriginal
+                }
+              : item
+          );
+        } else {
+          nuevaOrden = [
+            ...prevOrden,
+            {
+              id: `${tipoId}_${id}_${Date.now()}`,
+              idProducto: id,
+              tipo: tipoId,
+              nombre,
+              tamano: 'N/A',
+              precioOriginal,
+              precioUnitario: precioOriginal,
+              cantidad: 1,
+              subtotal: precioOriginal,
+              status: 1,
+              esPaquete: false,
+              esOriginal: false,
+              esNuevo: true,
+              productos: null
+            },
+          ];
+        }
+        return recalcularPrecios(nuevaOrden);
+      }
+    });
+  };
+
+  // Agregar paquete
   const agregarPaquete = (paquete) => {
     setOrden((prevOrden) => {
-      const idUnico = `paquete_${paquete.numeroPaquete}_${Date.now()}`;
-
       const nuevoPaquete = {
-        id: idUnico,
-        tipoId: 'paquete',
-        esPaquete: true,
-        numeroPaquete: paquete.numeroPaquete,
+        id: `paquete_${paquete.numeroPaquete}_${Date.now()}`,
+        idProducto: null, // Los paquetes no tienen ID de producto individual
+        tipo: 'id_paquete',
         nombre: `Paquete ${paquete.numeroPaquete}`,
+        tamano: 'N/A',
         precioOriginal: paquete.precio,
         precioUnitario: paquete.precio,
         cantidad: 1,
         subtotal: paquete.precio,
-        tamano: 'N/A',
+        status: 1,
+        esPaquete: true,
         esOriginal: false,
         esNuevo: true,
+        productos: null,
         datoPaquete: {
           id_paquete: paquete.numeroPaquete,
           id_refresco: paquete.idRefresco,
@@ -133,109 +356,7 @@ export const useCartEdit = () => {
     });
   };
 
-  const agregarAlCarrito = (producto, tipoId) => {
-    const id = producto[tipoId];
-    const precioOriginal = parseFloat(producto.precio);
-    const tamano = producto.subcategoria || producto.tamano || producto.tamaño || 'N/A';
-    const nombre = producto.nombre;
-
-    setOrden((prevOrden) => {
-      const categoriasConDescuento = ['id_pizza', 'id_maris'];
-
-      if (categoriasConDescuento.includes(tipoId)) {
-        const itemMismoTamano = prevOrden.find(
-          (item) => item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete
-        );
-
-        let nuevaOrden;
-
-        if (itemMismoTamano) {
-          nuevaOrden = prevOrden.map((item) => {
-            if (item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete) {
-              const productoExistente = item.productos?.find(p => p.id === id);
-
-              if (productoExistente) {
-                return {
-                  ...item,
-                  cantidad: item.cantidad + 1,
-                  productos: item.productos.map(p =>
-                    p.id === id ? { ...p, cantidad: p.cantidad + 1 } : p
-                  ),
-                  esModificado: item.esOriginal ? true : item.esModificado
-                };
-              } else {
-                return {
-                  ...item,
-                  cantidad: item.cantidad + 1,
-                  productos: [...(item.productos || []), { id, nombre, cantidad: 1 }],
-                  esModificado: item.esOriginal ? true : item.esModificado
-                };
-              }
-            }
-            return item;
-          });
-        } else {
-          nuevaOrden = [
-            ...prevOrden,
-            {
-              id: `${tipoId}_${tamano}_${Date.now()}`,
-              tipoId,
-              nombre: `${tipoId === 'id_pizza' ? 'Pizza' : 'Marisco'} ${tamano}`,
-              precioOriginal,
-              precioUnitario: precioOriginal * 0.6,
-              cantidad: 1,
-              subtotal: precioOriginal * 0.6,
-              tamano,
-              productos: [{ id, nombre, cantidad: 1 }],
-              esPaquete: false,
-              esOriginal: false,
-              esNuevo: true
-            },
-          ];
-        }
-
-        return recalcularPrecios(nuevaOrden);
-      } else {
-        const itemExistente = prevOrden.find(
-          (item) => item.id === id && item.tipoId === tipoId && !item.esPaquete
-        );
-
-        let nuevaOrden;
-
-        if (itemExistente) {
-          nuevaOrden = prevOrden.map((item) =>
-            item.id === id && item.tipoId === tipoId && !item.esPaquete
-              ? { 
-                  ...item, 
-                  cantidad: item.cantidad + 1,
-                  esModificado: item.esOriginal ? true : item.esModificado
-                }
-              : item
-          );
-        } else {
-          nuevaOrden = [
-            ...prevOrden,
-            {
-              id,
-              tipoId,
-              nombre,
-              precioOriginal,
-              precioUnitario: precioOriginal,
-              cantidad: 1,
-              subtotal: precioOriginal,
-              tamano: 'N/A',
-              productos: null,
-              esPaquete: false,
-              esOriginal: false,
-              esNuevo: true
-            },
-          ];
-        }
-        return recalcularPrecios(nuevaOrden);
-      }
-    });
-  };
-
+  // Actualizar cantidad
   const actualizarCantidad = (id, tipoId, nuevaCantidad, productoId = null) => {
     if (nuevaCantidad <= 0) {
       eliminarDelCarrito(id, tipoId, productoId);
@@ -244,9 +365,11 @@ export const useCartEdit = () => {
 
     setOrden((prevOrden) => {
       const nuevaOrden = prevOrden.map((item) => {
-        if (item.id === id && item.tipoId === tipoId) {
+        if (item.id === id && item.tipo === tipoId) {
           if (productoId && item.productos) {
-            const diferencia = nuevaCantidad - item.productos.find(p => p.id === productoId).cantidad;
+            // Actualizar cantidad de un producto específico en un grupo
+            const productoActual = item.productos.find(p => p.id === productoId);
+            const diferencia = nuevaCantidad - productoActual.cantidad;
 
             return {
               ...item,
@@ -254,13 +377,14 @@ export const useCartEdit = () => {
               productos: item.productos.map(p =>
                 p.id === productoId ? { ...p, cantidad: nuevaCantidad } : p
               ),
-              esModificado: item.esOriginal ? true : item.esModificado
+              esModificado: item.esOriginal
             };
           } else {
+            // Actualizar cantidad del item completo
             return { 
               ...item, 
               cantidad: nuevaCantidad,
-              esModificado: item.esOriginal ? true : item.esModificado
+              esModificado: item.esOriginal
             };
           }
         }
@@ -271,51 +395,35 @@ export const useCartEdit = () => {
     });
   };
 
+  // Eliminar del carrito
   const eliminarDelCarrito = (id, tipoId, productoId = null) => {
     setOrden((prevOrden) => {
       let nuevaOrden;
 
       if (productoId) {
+        // Eliminar producto específico de un grupo
         nuevaOrden = prevOrden.map((item) => {
-          if (item.id === id && item.tipoId === tipoId && item.productos) {
+          if (item.id === id && item.tipo === tipoId && item.productos) {
             const productoAEliminar = item.productos.find(p => p.id === productoId);
             const nuevosProductos = item.productos.filter(p => p.id !== productoId);
 
             if (nuevosProductos.length === 0) {
-              // Si era un producto original, marcarlo como eliminado
-              if (item.esOriginal) {
-                setProductosEliminados(prev => [...prev, {
-                  ...item,
-                  statusNuevo: 0 // Cancelado
-                }]);
-              }
-              return null;
+              return null; // Eliminar el item completo
             }
 
             return {
               ...item,
               cantidad: item.cantidad - productoAEliminar.cantidad,
               productos: nuevosProductos,
-              esModificado: item.esOriginal ? true : item.esModificado
+              esModificado: item.esOriginal
             };
           }
           return item;
         }).filter(item => item !== null);
       } else {
-        // Si es un producto original, marcarlo como eliminado (status 0)
-        const itemAEliminar = prevOrden.find(
-          (item) => item.id === id && item.tipoId === tipoId
-        );
-
-        if (itemAEliminar && itemAEliminar.esOriginal) {
-          setProductosEliminados(prev => [...prev, {
-            ...itemAEliminar,
-            statusNuevo: 0 // Cancelado
-          }]);
-        }
-
+        // Eliminar item completo
         nuevaOrden = prevOrden.filter(
-          (item) => !(item.id === id && item.tipoId === tipoId)
+          (item) => !(item.id === id && item.tipo === tipoId)
         );
       }
 
@@ -323,71 +431,72 @@ export const useCartEdit = () => {
     });
   };
 
-  const getProductosModificados = () => {
-    const modificados = [];
+  // Generar payload para actualizar el pedido
+  const getPayloadActualizacion = () => {
+    const productosParaBackend = [];
 
-    // 1. Productos eliminados (estaban originalmente, ahora no)
-    const idsActuales = orden.filter(item => !item.esNuevo).map(item => item.idProductoBackend).filter(Boolean);
-    productosOriginales.forEach(prodOrig => {
-      if (!idsActuales.includes(prodOrig.idProductoBackend)) {
-        modificados.push({
-          id_producto: prodOrig.idProductoBackend,
-          status: 0, // Cancelado
-          cantidad: 0 // o la cantidad original si el backend lo requiere
-        });
-      }
-    });
-
-    // 2. Productos modificados (cantidad cambiada)
+    // Procesar productos actuales del carrito
     orden.forEach(item => {
-      if (item.esOriginal) {
-        const original = productosOriginales.find(orig => orig.idProductoBackend === item.idProductoBackend);
-        if (original && original.cantidad !== item.cantidad) {
-          modificados.push({
-            id_producto: item.idProductoBackend,
-            status: 1, // Activo
-            cantidad: item.cantidad
-          });
-        }
-      }
-    });
-
-    // 3. Productos nuevos agregados
-    orden.forEach(item => {
-      if (item.esNuevo && item.idProductoBackend) { // Asegurar que tiene ID si es nuevo
-        modificados.push({
-          id_producto: item.idProductoBackend,
-          status: 1, // Activo
+      if (item.esPaquete) {
+        // Paquetes
+        productosParaBackend.push({
+          id: item.idProducto,
           cantidad: item.cantidad,
-          tipo_id: item.tipoId, // Ajusta según estructura backend
+          tipo: item.tipo,
           nombre: item.nombre,
-          precio_unitario: item.precioUnitario
+          precio_unitario: item.precioUnitario,
+          status: item.status || 1
+        });
+      } else if (item.productos && item.productos.length > 0) {
+        // Items agrupados (pizzas/mariscos del mismo tamaño)
+        item.productos.forEach(prod => {
+          productosParaBackend.push({
+            id: prod.id,
+            cantidad: prod.cantidad,
+            tipo: item.tipo,
+            nombre: prod.nombre,
+            tamaño: item.tamano,
+            precio_unitario: item.precioUnitario,
+            status: item.status || 1
+          });
+        });
+      } else {
+        // Items individuales
+        productosParaBackend.push({
+          id: item.idProducto,
+          cantidad: item.cantidad,
+          tipo: item.tipo,
+          nombre: item.nombre,
+          tamaño: item.tamano !== 'N/A' ? item.tamano : null,
+          precio_unitario: item.precioUnitario,
+          status: item.status || 1
         });
       }
     });
 
-    // 4. Paquetes nuevos (si no tienen idProductoBackend, se manejan diferente si aplica)
-    orden.forEach(item => {
-      if (item.esPaquete && item.esNuevo) {
-         // Si tu backend maneja paquetes como items separados o con un id_producto específico, ajusta aquí
-         // Por ahora, asumimos que pueden tener un idProductoBackend o se manejan como items especiales
-         // Si no, podrías necesitar una lógica específica para paquetes en el payload de actualización
-         if(item.idProductoBackend) {
-            modificados.push({
-                id_producto: item.idProductoBackend,
-                status: 1,
-                cantidad: item.cantidad,
-                tipo_id: 'paquete', // o como lo maneje tu backend
-                nombre: item.nombre,
-                precio_unitario: item.precioUnitario,
-                // ... otros campos específicos de paquete
-            });
-         }
-         // Si no tienen idProductoBackend, el backend debe saber cómo manejarlo
+    // Marcar productos eliminados con status 0
+    productosOriginales.forEach(prodOrig => {
+      const existeEnOrden = orden.some(item => {
+        if (item.productos) {
+          return item.productos.some(p => p.id === prodOrig.idProducto);
+        }
+        return item.idProducto === prodOrig.idProducto;
+      });
+
+      if (!existeEnOrden) {
+        productosParaBackend.push({
+          id: prodOrig.idProducto,
+          cantidad: 0,
+          tipo: prodOrig.tipo,
+          nombre: prodOrig.nombre,
+          tamaño: prodOrig.tamano !== 'N/A' ? prodOrig.tamano : null,
+          precio_unitario: prodOrig.precioOriginal,
+          status: 0 // Cancelado
+        });
       }
     });
 
-    return modificados;
+    return productosParaBackend;
   };
 
   const total = orden.reduce((acc, item) => acc + item.subtotal, 0);
@@ -400,7 +509,7 @@ export const useCartEdit = () => {
     actualizarCantidad,
     eliminarDelCarrito,
     cargarProductosOriginales,
-    getProductosModificados,
+    getPayloadActualizacion,
     statusPrincipal,
     setStatusPrincipal
   };

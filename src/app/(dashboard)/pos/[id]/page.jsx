@@ -51,7 +51,7 @@ const POSEdit = () => {
     agregarPaquete,
     actualizarCantidad,
     eliminarDelCarrito,
-    getProductosModificados,
+    getPayloadActualizacion,
     cargarProductosOriginales,
     statusPrincipal,
     setStatusPrincipal,
@@ -82,26 +82,28 @@ const POSEdit = () => {
       try {
         setLoading(true);
         const [detalleData, productosData, clientesData] = await Promise.all([
-          fetchDetalleVenta(idVenta), // <-- Asume que aquí viene detalleVenta.productos
+          fetchDetalleVenta(idVenta),
           fetchProductosPorCategoria(),
           catalogsService.getNombresClientes(),
         ]);
+
+        console.log("Detalle de venta recibido:", detalleData);
 
         setDetalleVenta(detalleData);
         setProductos(productosData);
         setComentarios(detalleData.comentarios || "");
         setStatusPrincipal(detalleData.status);
 
+        // Cargar productos originales
+        // Dentro del useEffect en POSEdit.js
         if (detalleData.productos && Array.isArray(detalleData.productos)) {
-          cargarProductosOriginales(detalleData.productos); // Llama a la función del hook
+          cargarProductosOriginales(detalleData.productos, productosData); // Pasar productosData
         } else {
-          console.warn(
-            "detalleVenta.productos no encontrado o no es un array:",
-            detalleData
-          );
-          setOrden([]); // Opcional: Limpiar carrito si no hay productos
+          console.warn("No se encontraron productos en el detalle de venta");
+          cargarProductosOriginales([], productosData); // Pasar array vacío con productosData
         }
 
+        // Configurar clientes
         const opcionesClientes = clientesData.map((cliente) => ({
           value: cliente.id_clie,
           label:
@@ -135,19 +137,25 @@ const POSEdit = () => {
     }
 
     try {
-      const productosModificados = getProductosModificados();
+      const productosActualizados = getPayloadActualizacion();
 
-      // Si el status principal es 2, cambiarlo a 1
+      // Si el status principal es 2 (Listo), cambiarlo a 1 (En preparación)
       const nuevoStatusPrincipal = statusPrincipal === 2 ? 1 : statusPrincipal;
 
+      console.log("Enviando actualización:", {
+        productos: productosActualizados,
+        status: nuevoStatusPrincipal,
+        comentarios: comentarios.trim() || null,
+      });
+
       await actualizarPedidoCocina(idVenta, {
-        productos: productosModificados,
+        productos: productosActualizados,
         status: nuevoStatusPrincipal,
         comentarios: comentarios.trim() || null,
       });
 
       alert("Pedido actualizado exitosamente");
-      router.push("/pos"); // O redirigir a donde necesites
+      router.push("/pos");
     } catch (error) {
       console.error("Error al actualizar pedido:", error);
       alert(error.message || "Hubo un error al actualizar el pedido.");
