@@ -40,7 +40,7 @@ export const useCart = (initialCartFromUrl = []) => {
         }
       }
     }
-  }, []);
+  }, [initialCartFromUrl]);
 
   useEffect(() => {
     updateUrl(orden);

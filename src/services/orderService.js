@@ -155,6 +155,8 @@ export const actualizarPedidoCocina = async (idVenta, datos) => {
 /**
  * Enviar una nueva orden
  */
+// En orderService.js, reemplaza la función enviarOrdenAPI con esta versión corregida:
+
 export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
   if (orden.length === 0) {
     throw new Error('La orden está vacía');
@@ -196,23 +198,24 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
         const itemData = {
           cantidad: parseInt(producto.cantidad),
           precio_unitario: parseFloat(item.precioUnitario),
-          [item.tipo]: parseInt(producto.id)
+          [item.tipoId]: parseInt(producto.id)  // Usa tipoId del item padre
         };
         return itemData;
       });
     } else {
       // Item normal (no agrupado)
-      const itemId = parseInt(item.idProducto);
+      // CORRECCIÓN: Usar item.id en lugar de item.idProducto
+      const itemId = parseInt(item.id);
       
       if (isNaN(itemId)) {
         console.error('ID inválido encontrado:', item);
-        throw new Error(`El ID del producto "${item.nombre}" no es válido: ${item.idProducto}`);
+        throw new Error(`El ID del producto "${item.nombre}" no es válido: ${item.id}`);
       }
 
       const itemData = {
         cantidad: parseInt(item.cantidad),
         precio_unitario: parseFloat(item.precioUnitario),
-        [item.tipo]: itemId
+        [item.tipoId]: itemId  // Usa item.tipoId como clave (ej: id_alis, id_hamb)
       };
       return itemData;
     }
