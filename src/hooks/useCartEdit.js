@@ -19,6 +19,14 @@ export const useCartEdit = () => {
 
   const recalcularPrecios = (nuevaOrden) => {
     return nuevaOrden.map((item) => {
+      // Si el item está cancelado (status 0), su subtotal es 0
+      if (item.status === 0) {
+        return {
+          ...item,
+          subtotal: 0,
+        };
+      }
+
       if (item.esPaquete) {
         return {
           ...item,
@@ -37,10 +45,18 @@ export const useCartEdit = () => {
         };
       }
 
+      // Para items agrupados, filtrar los que tienen status 0 antes de calcular pares
+      let cantidadParaCalculo = item.cantidad;
+      if (item.productos) {
+        cantidadParaCalculo = item.productos.reduce((acc, p) => {
+          return p.status === 0 ? acc : acc + p.cantidad;
+        }, 0);
+      }
+
       // Aplicar descuento para pizzas/mariscos
       const { precioUnitario, subtotal } = calcularPrecioYSubtotal(
         item.precioOriginal,
-        item.cantidad
+        cantidadParaCalculo
       );
 
       return {
@@ -425,25 +441,43 @@ export const useCartEdit = () => {
     });
   };
 
-  // Eliminar del carrito
+  // Eliminar del carrito (o cambiar status a 0 si es original)
   const eliminarDelCarrito = (id, tipoId, productoId = null) => {
     setOrden((prevOrden) => {
       let nuevaOrden;
 
       if (productoId) {
-        // Eliminar producto específico de un grupo
-        nuevaOrden = prevOrden
-          .map((item) => {
-            if (item.id === id && item.tipo === tipoId && item.productos) {
-              const productoAEliminar = item.productos.find(
-                (p) => p.id === productoId
-              );
+        // Eliminar/Cancelar producto específico de un grupo
+        nuevaOrden = prevOrden.map((item) => {
+          if (item.id === id && item.tipo === tipoId && item.productos) {
+            const productoAEliminar = item.productos.find(
+              (p) => p.id === productoId
+            );
+
+            // Verificar si es un producto original
+            const esOriginal = productosOriginales.some(
+              (p) => p.idProducto === productoId && p.tipo === tipoId
+            );
+
+            if (esOriginal) {
+              // Toggle status: si es 0 pasa a 1, si es otro pasa a 0
+              const nuevoStatus = productoAEliminar.status === 0 ? 1 : 0;
+              
+              return {
+                ...item,
+                productos: item.productos.map((p) =>
+                  p.id === productoId ? { ...p, status: nuevoStatus } : p
+                ),
+                esModificado: true,
+              };
+            } else {
+              // Si no es original, eliminarlo físicamente
               const nuevosProductos = item.productos.filter(
                 (p) => p.id !== productoId
               );
 
               if (nuevosProductos.length === 0) {
-                return null; // Eliminar el item completo
+                return null; // Eliminar el item completo si no quedan productos
               }
 
               return {
@@ -453,14 +487,28 @@ export const useCartEdit = () => {
                 esModificado: item.esOriginal,
               };
             }
-            return item;
-          })
-          .filter((item) => item !== null);
+          }
+          return item;
+        }).filter(Boolean); // Filtrar nulos
       } else {
-        // Eliminar item completo
-        nuevaOrden = prevOrden.filter(
-          (item) => !(item.id === id && item.tipo === tipoId)
-        );
+        // Eliminar/Cancelar item completo
+        nuevaOrden = prevOrden.map((item) => {
+          if (item.id === id && item.tipo === tipoId) {
+            if (item.esOriginal) {
+              // Toggle status
+              const nuevoStatus = item.status === 0 ? 1 : 0;
+              return {
+                ...item,
+                status: nuevoStatus,
+                esModificado: true
+              };
+            } else {
+              // Marcar para eliminar
+              return null;
+            }
+          }
+          return item;
+        }).filter(Boolean);
       }
 
       return recalcularPrecios(nuevaOrden);
@@ -493,7 +541,7 @@ export const useCartEdit = () => {
             nombre: prod.nombre,
             tamaño: item.tamano,
             precio_unitario: item.precioUnitario,
-            status: item.status || 1,
+            status: prod.status !== undefined ? prod.status : (item.status || 1),
           });
         });
       } else {
