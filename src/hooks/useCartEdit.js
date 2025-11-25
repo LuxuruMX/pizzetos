@@ -192,6 +192,7 @@ export const useCartEdit = () => {
             id: p.idProducto,
             nombre: p.nombre,
             cantidad: p.cantidad,
+            status: p.status
           }));
 
           agrupados.push({
@@ -272,7 +273,7 @@ export const useCartEdit = () => {
                   cantidad: item.cantidad + 1,
                   productos: [
                     ...(item.productos || []),
-                    { id, nombre, cantidad: 1 },
+                    { id, nombre, cantidad: 1, status: 1 },
                   ],
                   esModificado: item.esOriginal,
                 };

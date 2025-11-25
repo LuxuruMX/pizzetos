@@ -1,11 +1,22 @@
+// CartItem.js
 import { FaTrash, FaMinus, FaPlus } from "react-icons/fa";
 
-
 const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
+  // Función para determinar la clase de color basada en el status
+  const getStatusClass = (status) => {
+    switch (status) {
+      case 0: return 'border-red-500 bg-red-50';
+      case 2: return 'border-green-500 bg-green-50';
+      case 1:
+      default: return 'border-gray-200 bg-gray-50';
+    }
+  };
+
   // Si es un paquete, renderizar de manera especial
   if (item.esPaquete) {
+    const statusClass = getStatusClass(item.status); // Usa el status del paquete
     return (
-      <li className="flex flex-col bg-gray-50 p-3 rounded border border-gray-200">
+      <li className={`flex flex-col p-3 rounded border ${statusClass}`}>
         <div className="flex justify-between items-start mb-2">
           <div className="flex-1">
             <h3 className="font-semibold text-gray-800">{item.nombre}</h3>
@@ -50,8 +61,9 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
   }
 
   if (item.productos && Array.isArray(item.productos)) {
+    // En este caso, el contenedor del grupo puede tener un estilo base
     return (
-      <li className="flex flex-col bg-gray-50 p-3 rounded border border-gray-200">
+      <li className="flex flex-col p-3 rounded border border-gray-300 bg-white">
         <div className="flex justify-between items-start mb-2">
           <div className="flex-1">
             <h3 className="font-semibold text-gray-800">{item.nombre}</h3>
@@ -71,37 +83,40 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
 
         {/* Lista de productos */}
         <div className="space-y-2 mt-2 pt-2 border-t border-gray-200">
-          {item.productos.map((producto) => (
-            <div key={producto.id} className="flex items-center justify-between text-sm bg-white p-2 rounded">
-              <div className="flex-1">
-                <p className="text-gray-700">{producto.nombre}</p>
+          {item.productos.map((producto) => {
+            const statusClass = getStatusClass(producto.status);
+            return (
+              <div key={producto.id} className={`flex items-center justify-between text-sm p-2 rounded border ${statusClass}`}>
+                <div className="flex-1">
+                  <p className="text-gray-700">{producto.nombre}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onUpdateQuantity(item.id, item.tipoId, producto.cantidad - 1, producto.id)}
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded p-1 transition-colors"
+                  >
+                    <FaMinus size={14} />
+                  </button>
+                  <span className="font-medium text-gray-800 min-w-[25px] text-center">
+                    {producto.cantidad}
+                  </span>
+                  <button
+                    onClick={() => onUpdateQuantity(item.id, item.tipoId, producto.cantidad + 1, producto.id)}
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded p-1 transition-colors"
+                  >
+                    <FaPlus size={14} />
+                  </button>
+                  <button
+                    onClick={() => onRemove(item.id, item.tipoId, producto.id)}
+                    className="text-red-500 hover:text-red-700 transition-colors ml-2"
+                    title="Eliminar este producto"
+                  >
+                    <FaTrash size={17} />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onUpdateQuantity(item.id, item.tipoId, producto.cantidad - 1, producto.id)}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded p-1 transition-colors"
-                >
-                  <FaMinus size={14} />
-                </button>
-                <span className="font-medium text-gray-800 min-w-[25px] text-center">
-                  {producto.cantidad}
-                </span>
-                <button
-                  onClick={() => onUpdateQuantity(item.id, item.tipoId, producto.cantidad + 1, producto.id)}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded p-1 transition-colors"
-                >
-                  <FaPlus size={14} />
-                </button>
-                <button
-                  onClick={() => onRemove(item.id, item.tipoId, producto.id)}
-                  className="text-red-500 hover:text-red-700 transition-colors ml-2"
-                  title="Eliminar este producto"
-                >
-                  <FaTrash size={17} />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Subtotal del grupo */}
@@ -115,8 +130,9 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
   }
 
   // Item normal (no agrupado)
+  const statusClass = getStatusClass(item.status); // Usa el status del ítem individual
   return (
-    <li className="flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-200">
+    <li className={`flex items-center justify-between p-3 rounded border ${statusClass}`}>
       <div className="flex-1">
         <h3 className="font-semibold text-gray-800">{item.nombre}</h3>
         <p className="text-sm text-gray-600">
