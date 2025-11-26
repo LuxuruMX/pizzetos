@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }) {
 
         {/* Espacio para el NavBarTop fijo */}
         <div className="pt-16"> {/* Ajusta el padding según la altura de tu NavBarTop */}
-          <main className="flex-1 overflow-auto p-4 ml-0 md:ml-64"> {/* Ajusta el margen izquierdo para el sidebar */}
+          <main className="flex-1 overflow-auto p-4 ml-0"> {/* Ajusta el margen izquierdo para el sidebar */}
             {children}
           </main>
         </div>
