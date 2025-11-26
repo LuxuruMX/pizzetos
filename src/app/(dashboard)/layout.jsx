@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NavBar from '@/components/layout/NavBar';
 import NavBarTop from '@/components/layout/NavBarTop';
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -16,13 +17,23 @@ export default function DashboardLayout({ children }) {
   }, [router]);
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      <NavBar />
-      <div className="flex-1 flex flex-col">
-        <NavBarTop />
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+    <div className="min-h-screen bg-gray-100">
+      {/* El sidebar sigue igual */}
+      <NavBar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+      {/* Contenedor principal */}
+      <div className="flex flex-col min-h-screen">
+        {/* NavBarTop fijo */}
+        <header className="fixed top-0 left-0 right-0 z-40 bg-white shadow-md">
+          <NavBarTop onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+        </header>
+
+        {/* Espacio para el NavBarTop fijo */}
+        <div className="pt-16"> {/* Ajusta el padding según la altura de tu NavBarTop */}
+          <main className="flex-1 overflow-auto p-4 ml-0 md:ml-64"> {/* Ajusta el margen izquierdo para el sidebar */}
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );

@@ -25,5 +25,18 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.hide-scrollbar::-webkit-scrollbar { display: none; }
-.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+
+  scrollbar-width: none;
+}

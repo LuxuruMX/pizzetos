@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import {jwtDecode} from 'jwt-decode';
 import { useAuth } from '@/hooks/useAuth';
-import { FaSignOutAlt, FaUser, FaCog } from 'react-icons/fa';
+import { FaSignOutAlt, FaUser, FaCog, FaBars } from 'react-icons/fa';
 
-export default function NavBarTop() {
+export default function NavBarTop({ onToggle }) {
   const { logout } = useAuth();
   const [nickname, setNickname] = useState('Usuario');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -48,10 +48,19 @@ export default function NavBarTop() {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="flex items-center justify-between px-6 py-4">
-        {/* Título */}
-        <h2 className="text-xl font-semibold text-gray-800">
-          Panel de Administración
-        </h2>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onToggle}
+            className="text-gray-600 hover:text-gray-900 focus:outline-none p-2 rounded-md hover:bg-gray-100 transition-colors"
+            title="Abrir menú lateral"
+          >
+            <FaBars className="text-xl" />
+          </button>
+          {/* Título */}
+          <h2 className="text-xl font-semibold text-gray-800">
+            Panel de Administración
+          </h2>
+        </div>
 
         {/* Menú de usuario */}
         <div className="relative" ref={menuRef}>

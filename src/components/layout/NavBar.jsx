@@ -86,7 +86,7 @@ const menuConfig = [
   }
 ];
 
-export default function NavBar() {
+export default function NavBar({ isOpen, onClose }) {
   const pathname = usePathname();
   const [openMenus, setOpenMenus] = useState({});
   const [mounted, setMounted] = useState(false);
@@ -124,8 +124,8 @@ export default function NavBar() {
   // Mostrar loading mientras se carga el token
   if (!mounted || userPermisos === null) {
     return (
-      <aside className="w-64 bg-gray-900 text-white min-h-screen p-4">
-        <div className="mb-8 text-center">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-4 mb-8 text-center">
           <h1 className="text-2xl font-bold text-yellow-400">Pizzetos</h1>
           <p className="text-sm text-gray-400">Cargando...</p>
         </div>
@@ -134,67 +134,80 @@ export default function NavBar() {
   }
 
   return (
-    <aside className="w-64 bg-gray-900 text-white min-h-screen p-4">
-      <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-yellow-400">Pizzetos</h1>
-        <p className="text-sm text-gray-400">Admin Panel</p>
-      </div>
+    <>
+      {/* Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/70 z-40 transition-opacity bg-opacity-50"
+          onClick={onClose}
+        />
+      )}
 
-      <nav className="space-y-2">
-        {visibleMenus.map((item) => (
-          <div key={item.name}>
-            {item.submenu ? (
-              <div>
-                <button
-                  onClick={() => toggleMenu(item.name)}
-                  className="w-full flex items-center justify-between gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  <div className="flex items-center gap-3">
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} overflow-y-auto scrollbar-hidden`}>
+        <div className="p-4">
+          <div className="mb-8 text-center">
+            <h1 className="text-2xl font-bold text-yellow-400">Pizzetos</h1>
+            <p className="text-sm text-gray-400">Admin Panel</p>
+          </div>
+
+          <nav className="space-y-2">
+            {visibleMenus.map((item) => (
+              <div key={item.name}>
+                {item.submenu ? (
+                  <div>
+                    <button
+                      onClick={() => toggleMenu(item.name)}
+                      className="w-full flex items-center justify-between gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className="text-lg" />
+                        <span>{item.name}</span>
+                      </div>
+                      {openMenus[item.name] ? (
+                        <FaChevronDown className="text-sm" />
+                      ) : (
+                        <FaChevronRight className="text-sm" />
+                      )}
+                    </button>
+                    
+                    {openMenus[item.name] && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {item.submenu.map((subitem) => (
+                          <Link
+                            key={subitem.path}
+                            href={subitem.path}
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                              pathname === subitem.path
+                                ? 'bg-yellow-500 text-white'
+                                : 'text-gray-300 hover:bg-gray-800'
+                            }`}
+                          >
+                            <subitem.icon className="text-sm" />
+                            <span className="text-sm">{subitem.name}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href={item.path}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                      pathname === item.path
+                        ? 'bg-yellow-500 text-white'
+                        : 'text-gray-300 hover:bg-gray-800'
+                    }`}
+                  >
                     <item.icon className="text-lg" />
                     <span>{item.name}</span>
-                  </div>
-                  {openMenus[item.name] ? (
-                    <FaChevronDown className="text-sm" />
-                  ) : (
-                    <FaChevronRight className="text-sm" />
-                  )}
-                </button>
-                
-                {openMenus[item.name] && (
-                  <div className="ml-4 mt-1 space-y-1">
-                    {item.submenu.map((subitem) => (
-                      <Link
-                        key={subitem.path}
-                        href={subitem.path}
-                        className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                          pathname === subitem.path
-                            ? 'bg-yellow-500 text-white'
-                            : 'text-gray-300 hover:bg-gray-800'
-                        }`}
-                      >
-                        <subitem.icon className="text-sm" />
-                        <span className="text-sm">{subitem.name}</span>
-                      </Link>
-                    ))}
-                  </div>
+                  </Link>
                 )}
               </div>
-            ) : (
-              <Link
-                href={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  pathname === item.path
-                    ? 'bg-yellow-500 text-white'
-                    : 'text-gray-300 hover:bg-gray-800'
-                }`}
-              >
-                <item.icon className="text-lg" />
-                <span>{item.name}</span>
-              </Link>
-            )}
-          </div>
-        ))}
-      </nav>
-    </aside>
+            ))}
+          </nav>
+        </div>
+      </aside>
+    </>
   );
 }
