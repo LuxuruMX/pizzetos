@@ -201,37 +201,36 @@ export const useCartEdit = () => {
           if (idx !== -1) yaAgrupados.add(idx);
         });
 
-        if (grupo.length > 1) {
-          // Crear item agrupado
-          const cantidadTotal = grupo.reduce((sum, p) => sum + p.cantidad, 0);
-          const productosDetalle = grupo.map((p) => ({
-            id: p.idProducto,
-            nombre: p.nombre,
-            cantidad: p.cantidad,
-            status: p.status
-          }));
+        // SIEMPRE crear item agrupado para pizzas y mariscos
+        const cantidadTotal = grupo.reduce((sum, p) => sum + p.cantidad, 0);
+        const productosDetalle = grupo.map((p) => ({
+          id: p.idProducto,
+          nombre: p.nombre,
+          cantidad: p.cantidad,
+          status: p.status
+        }));
 
-          agrupados.push({
-            id: `${prod.tipo}_${prod.tamano}_${Date.now()}`,
-            idProducto: null, // No hay un ID único cuando está agrupado
-            tipo: prod.tipo,
-            nombre: `${prod.tipo === "id_pizza" ? "Pizzas" : "Mariscos"} ${
-              prod.tamano
-            }`,
-            tamano: prod.tamano,
-            precioOriginal: prod.precioOriginal,
-            precioUnitario: prod.precioOriginal * 0.6, // Primera es suelta
-            cantidad: cantidadTotal,
-            subtotal: 0, // Se recalcula
-            status: prod.status,
-            esPaquete: false,
-            esOriginal: true,
-            esModificado: false,
-            productos: productosDetalle,
-          });
-        } else {
-          agrupados.push(prod);
-        }
+        // El status del grupo es 1 si al menos uno de los productos tiene status 1
+        const statusGrupo = grupo.some(p => p.status === 1) ? 1 : 0;
+
+        agrupados.push({
+          id: `${prod.tipo}_${prod.tamano}_${Date.now()}_${Math.random()}`,
+          idProducto: null, // No hay un ID único cuando está agrupado
+          tipo: prod.tipo,
+          nombre: `${prod.tipo === "id_pizza" ? "Pizzas" : "Mariscos"} ${
+            prod.tamano
+          }`,
+          tamano: prod.tamano,
+          precioOriginal: prod.precioOriginal,
+          precioUnitario: prod.precioOriginal * 0.6, // Primera es suelta
+          cantidad: cantidadTotal,
+          subtotal: 0, // Se recalcula
+          status: statusGrupo,
+          esPaquete: false,
+          esOriginal: true,
+          esModificado: false,
+          productos: productosDetalle,
+        });
       } else {
         agrupados.push(prod);
       }
@@ -277,8 +276,9 @@ export const useCartEdit = () => {
                 return {
                   ...item,
                   cantidad: item.cantidad + 1,
+                  status: 1, // Reactivar grupo si estaba cancelado
                   productos: item.productos.map((p) =>
-                    p.id === id ? { ...p, cantidad: p.cantidad + 1 } : p
+                    p.id === id ? { ...p, cantidad: p.cantidad + 1, status: 1 } : p
                   ),
                   esModificado: item.esOriginal,
                 };
@@ -287,6 +287,7 @@ export const useCartEdit = () => {
                 return {
                   ...item,
                   cantidad: item.cantidad + 1,
+                  status: 1, // Reactivar grupo
                   productos: [
                     ...(item.productos || []),
                     { id, nombre, cantidad: 1, status: 1 },
@@ -317,7 +318,7 @@ export const useCartEdit = () => {
               esPaquete: false,
               esOriginal: false,
               esNuevo: true,
-              productos: [{ id, nombre, cantidad: 1 }],
+              productos: [{ id, nombre, cantidad: 1, status: 1 }],
             },
           ];
         }
@@ -338,6 +339,7 @@ export const useCartEdit = () => {
               ? {
                   ...item,
                   cantidad: item.cantidad + 1,
+                  status: 1, // Reactivar si estaba cancelado
                   esModificado: item.esOriginal,
                 }
               : item
@@ -431,6 +433,7 @@ export const useCartEdit = () => {
               ...item,
               cantidad: nuevaCantidad,
               esModificado: item.esOriginal,
+              status: 1 // Asegurar status 1 al editar cantidad
             };
           }
         }
@@ -463,11 +466,17 @@ export const useCartEdit = () => {
               // Toggle status: si es 0 pasa a 1, si es otro pasa a 0
               const nuevoStatus = productoAEliminar.status === 0 ? 1 : 0;
               
+              const nuevosProductos = item.productos.map((p) =>
+                p.id === productoId ? { ...p, status: nuevoStatus } : p
+              );
+
+              // Actualizar status del grupo: si todos están en 0, grupo en 0. Si hay alguno en 1, grupo en 1.
+              const algunActivo = nuevosProductos.some(p => p.status === 1);
+
               return {
                 ...item,
-                productos: item.productos.map((p) =>
-                  p.id === productoId ? { ...p, status: nuevoStatus } : p
-                ),
+                status: algunActivo ? 1 : 0,
+                productos: nuevosProductos,
                 esModificado: true,
               };
             } else {
@@ -497,9 +506,20 @@ export const useCartEdit = () => {
             if (item.esOriginal) {
               // Toggle status
               const nuevoStatus = item.status === 0 ? 1 : 0;
+              
+              // Si es un grupo, propagar el status a todos los hijos
+              let productosActualizados = item.productos;
+              if (item.productos) {
+                productosActualizados = item.productos.map(p => ({
+                  ...p,
+                  status: nuevoStatus
+                }));
+              }
+
               return {
                 ...item,
                 status: nuevoStatus,
+                productos: productosActualizados,
                 esModificado: true
               };
             } else {
