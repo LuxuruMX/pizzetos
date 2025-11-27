@@ -19,8 +19,8 @@ export const useCartEdit = () => {
 
   const recalcularPrecios = (nuevaOrden) => {
     return nuevaOrden.map((item) => {
-      // Si el item está cancelado (status 0), su subtotal es 0
-      if (item.status === 0) {
+      // Si el item está cancelado (status 0) y no es un grupo, su subtotal es 0
+      if (item.status === 0 && !item.productos) {
         return {
           ...item,
           subtotal: 0,
@@ -37,7 +37,7 @@ export const useCartEdit = () => {
       // Categorías con descuento 2x1
       const categoriasConDescuento = ["id_pizza", "id_maris"];
 
-      if (!categoriasConDescuento.includes(item.tipo)) {
+      if (!categoriasConDescuento.includes(item.tipoId)) {
         return {
           ...item,
           precioUnitario: item.precioOriginal,
@@ -142,7 +142,7 @@ export const useCartEdit = () => {
         // IDs
         id: idCarrito,
         idProducto: prod.id, // ID real del producto
-        tipo: prod.tipo, // 'id_pizza', 'id_hamb', etc.
+        tipoId: prod.tipo, // 'id_pizza', 'id_hamb', etc.
         
         // Información del producto
         nombre: nombre,
@@ -183,12 +183,12 @@ export const useCartEdit = () => {
     productos.forEach((prod, index) => {
       if (yaAgrupados.has(index)) return;
 
-      if (categoriasAgrupables.includes(prod.tipo)) {
+      if (categoriasAgrupables.includes(prod.tipoId)) {
         // Buscar todos los productos del mismo tipo y tamaño
         const grupo = productos.filter(
           (p, i) =>
             !yaAgrupados.has(i) &&
-            p.tipo === prod.tipo &&
+            p.tipoId === prod.tipoId &&
             p.tamano === prod.tamano &&
             !p.esPaquete
         );
@@ -207,17 +207,18 @@ export const useCartEdit = () => {
           id: p.idProducto,
           nombre: p.nombre,
           cantidad: p.cantidad,
-          status: p.status
+          status: p.status,
+          esOriginal: p.esOriginal
         }));
 
-        // El status del grupo es 1 si al menos uno de los productos tiene status 1
-        const statusGrupo = grupo.some(p => p.status === 1) ? 1 : 0;
+        // El status del grupo es 1 si al menos uno de los productos es activo (no 0)
+        const statusGrupo = grupo.some(p => p.status !== 0) ? 1 : 0;
 
         agrupados.push({
-          id: `${prod.tipo}_${prod.tamano}_${Date.now()}_${Math.random()}`,
+          id: `${prod.tipoId}_${prod.tamano}_${Date.now()}_${Math.random()}`,
           idProducto: null, // No hay un ID único cuando está agrupado
-          tipo: prod.tipo,
-          nombre: `${prod.tipo === "id_pizza" ? "Pizzas" : "Mariscos"} ${
+          tipoId: prod.tipoId,
+          nombre: `${prod.tipoId === "id_pizza" ? "Pizzas" : "Mariscos"} ${
             prod.tamano
           }`,
           tamano: prod.tamano,
@@ -254,7 +255,7 @@ export const useCartEdit = () => {
         // Buscar grupo del mismo tamaño
         const itemMismoTamano = prevOrden.find(
           (item) =>
-            item.tipo === tipoId && item.tamano === tamano && !item.esPaquete
+            item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete
         );
 
         let nuevaOrden;
@@ -263,7 +264,7 @@ export const useCartEdit = () => {
           // Agregar al grupo existente
           nuevaOrden = prevOrden.map((item) => {
             if (
-              item.tipo === tipoId &&
+              item.tipoId === tipoId &&
               item.tamano === tamano &&
               !item.esPaquete
             ) {
@@ -290,7 +291,7 @@ export const useCartEdit = () => {
                   status: 1, // Reactivar grupo
                   productos: [
                     ...(item.productos || []),
-                    { id, nombre, cantidad: 1, status: 1 },
+                    { id, nombre, cantidad: 1, status: 1, esOriginal: false },
                   ],
                   esModificado: item.esOriginal,
                 };
@@ -305,7 +306,7 @@ export const useCartEdit = () => {
             {
               id: `${tipoId}_${tamano}_${Date.now()}`,
               idProducto: id,
-              tipo: tipoId,
+              tipoId: tipoId,
               nombre: `${
                 tipoId === "id_pizza" ? "Pizza" : "Marisco"
               } ${tamano}`,
@@ -318,7 +319,7 @@ export const useCartEdit = () => {
               esPaquete: false,
               esOriginal: false,
               esNuevo: true,
-              productos: [{ id, nombre, cantidad: 1, status: 1 }],
+              productos: [{ id, nombre, cantidad: 1, status: 1, esOriginal: false }],
             },
           ];
         }
@@ -328,14 +329,14 @@ export const useCartEdit = () => {
         // Productos sin agrupación
         const itemExistente = prevOrden.find(
           (item) =>
-            item.idProducto === id && item.tipo === tipoId && !item.esPaquete
+            item.idProducto === id && item.tipoId === tipoId && !item.esPaquete
         );
 
         let nuevaOrden;
 
         if (itemExistente) {
           nuevaOrden = prevOrden.map((item) =>
-            item.idProducto === id && item.tipo === tipoId && !item.esPaquete
+            item.idProducto === id && item.tipoId === tipoId && !item.esPaquete
               ? {
                   ...item,
                   cantidad: item.cantidad + 1,
@@ -350,7 +351,7 @@ export const useCartEdit = () => {
             {
               id: `${tipoId}_${id}_${Date.now()}`,
               idProducto: id,
-              tipo: tipoId,
+              tipoId: tipoId,
               nombre,
               tamano: "N/A",
               precioOriginal,
@@ -376,7 +377,7 @@ export const useCartEdit = () => {
       const nuevoPaquete = {
         id: `paquete_${paquete.numeroPaquete}_${Date.now()}`,
         idProducto: null, // Los paquetes no tienen ID de producto individual
-        tipo: "id_paquete",
+        tipoId: "id_paquete",
         nombre: `Paquete ${paquete.numeroPaquete}`,
         tamano: "N/A",
         precioOriginal: paquete.precio,
@@ -411,12 +412,16 @@ export const useCartEdit = () => {
 
     setOrden((prevOrden) => {
       const nuevaOrden = prevOrden.map((item) => {
-        if (item.id === id && item.tipo === tipoId) {
+        if (item.id === id && item.tipoId === tipoId) {
           if (productoId && item.productos) {
             // Actualizar cantidad de un producto específico en un grupo
             const productoActual = item.productos.find(
               (p) => p.id === productoId
             );
+
+            // Si el producto tiene status 2, no permitir cambios
+            if (productoActual.status === 2) return item;
+
             const diferencia = nuevaCantidad - productoActual.cantidad;
 
             return {
@@ -433,7 +438,7 @@ export const useCartEdit = () => {
               ...item,
               cantidad: nuevaCantidad,
               esModificado: item.esOriginal,
-              status: 1 // Asegurar status 1 al editar cantidad
+              status: item.status === 2 ? 2 : 1 // Mantener status 2 si ya lo tiene
             };
           }
         }
@@ -452,15 +457,16 @@ export const useCartEdit = () => {
       if (productoId) {
         // Eliminar/Cancelar producto específico de un grupo
         nuevaOrden = prevOrden.map((item) => {
-          if (item.id === id && item.tipo === tipoId && item.productos) {
+          if (item.id === id && item.tipoId === tipoId && item.productos) {
             const productoAEliminar = item.productos.find(
               (p) => p.id === productoId
             );
 
-            // Verificar si es un producto original
-            const esOriginal = productosOriginales.some(
-              (p) => p.idProducto === productoId && p.tipo === tipoId
-            );
+            // Si el producto tiene status 2, no permitir eliminar
+            if (productoAEliminar.status === 2) return item;
+
+            // Verificar si es un producto original usando la propiedad del objeto
+            const esOriginal = productoAEliminar.esOriginal;
 
             if (esOriginal) {
               // Toggle status: si es 0 pasa a 1, si es otro pasa a 0
@@ -470,8 +476,8 @@ export const useCartEdit = () => {
                 p.id === productoId ? { ...p, status: nuevoStatus } : p
               );
 
-              // Actualizar status del grupo: si todos están en 0, grupo en 0. Si hay alguno en 1, grupo en 1.
-              const algunActivo = nuevosProductos.some(p => p.status === 1);
+              // Actualizar status del grupo: si todos están en 0, grupo en 0. Si hay alguno activo (no 0), grupo en 1.
+              const algunActivo = nuevosProductos.some(p => p.status !== 0);
 
               return {
                 ...item,
@@ -502,7 +508,10 @@ export const useCartEdit = () => {
       } else {
         // Eliminar/Cancelar item completo
         nuevaOrden = prevOrden.map((item) => {
-          if (item.id === id && item.tipo === tipoId) {
+          if (item.id === id && item.tipoId === tipoId) {
+            // Si el item tiene status 2, no permitir eliminar
+            if (item.status === 2) return item;
+
             if (item.esOriginal) {
               // Toggle status
               const nuevoStatus = item.status === 0 ? 1 : 0;
@@ -546,7 +555,7 @@ export const useCartEdit = () => {
         productosParaBackend.push({
           id: item.idProducto,
           cantidad: item.cantidad,
-          tipo: item.tipo,
+          tipo: item.tipoId,
           nombre: item.nombre,
           precio_unitario: item.precioUnitario,
           status: item.status || 1,
@@ -557,7 +566,7 @@ export const useCartEdit = () => {
           productosParaBackend.push({
             id: prod.id,
             cantidad: prod.cantidad,
-            tipo: item.tipo,
+            tipo: item.tipoId,
             nombre: prod.nombre,
             tamaño: item.tamano,
             precio_unitario: item.precioUnitario,
@@ -569,7 +578,7 @@ export const useCartEdit = () => {
         productosParaBackend.push({
           id: item.idProducto,
           cantidad: item.cantidad,
-          tipo: item.tipo,
+          tipo: item.tipoId,
           nombre: item.nombre,
           tamaño: item.tamano !== "N/A" ? item.tamano : null,
           precio_unitario: item.precioUnitario,
