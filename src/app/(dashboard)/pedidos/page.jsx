@@ -8,11 +8,9 @@ import { PiCookingPotFill } from "react-icons/pi";
 import { MdComment } from "react-icons/md";
 import api from '@/services/api';
 
-export default function App() {
+export default function Pedidos() {
     const [loading, setLoading] = useState(false);
     const [pedidos, setPedidos] = useState([]);
-    const [filtro, setFiltro] = useState('todos');
-    const [statusFiltro, setStatusFiltro] = useState(null);
     const [error, setError] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [pedidoDetalle, setPedidoDetalle] = useState(null);
@@ -22,12 +20,8 @@ export default function App() {
       setLoading(true);
       setError(null);
       try {
-        let params = { filtro };
-        if (statusFiltro !== null) {
-          params.status = statusFiltro;
-        }
-        
-        const response = await api.get('/pos/pedidos-cocina', { params });
+        // Ya no enviamos filtros, traemos todo lo activo
+        const response = await api.get('/pos/pedidos-cocina');
         setPedidos(response.data.pedidos);
       } catch (err) {
         setError(err.message);
@@ -43,7 +37,6 @@ export default function App() {
         const response = await api.patch(`/pos/${id_venta}/toggle-preparacion`);
         
         if (response.status === 200) {
-          const data = response.data;
           fetchPedidos();
         } else {
           const error = response.data;
@@ -66,7 +59,6 @@ export default function App() {
         const response = await api.patch(`/pos/${id_venta}/completar`);
         
         if (response.status === 200) {
-          const data = response.data;
           fetchPedidos();
         } else {
           const error = response.data;
@@ -108,107 +100,115 @@ export default function App() {
     // Cargar pedidos al montar el componente
     useEffect(() => {
       fetchPedidos();
-      // Auto-refresh cada 30 segundos
+      // Auto-refresh cada 10 segundos
       const interval = setInterval(fetchPedidos, 10000);
       return () => clearInterval(interval);
-    }, [filtro, statusFiltro]);
+    }, []);
 
-    // Mapear los pedidos a formato de cards
-    const cardsData = pedidos.map((pedido) => {
+    // Función auxiliar para renderizar una card
+    const renderCard = (pedido) => {
       const colorTiempo = pedido.tiempo_transcurrido_minutos > 30 
         ? 'text-red-600' 
         : pedido.tiempo_transcurrido_minutos > 15 
         ? 'text-yellow-600' 
         : 'text-green-600';
 
-      // Definir acciones con estado habilitado/deshabilitado
       const actions = [
         { 
           icon: <PiCookingPotFill />, 
           onClick: () => togglePreparacion(pedido.id_venta),
-          disabled: false // Siempre habilitado para toggle
+          disabled: false 
         },
         { 
           icon: <IoMailOpenSharp />, 
           onClick: () => verDetalle(pedido.id_venta),
-          disabled: false // Siempre habilitado
+          disabled: false 
         },
         { 
           icon: <IoSend />, 
           onClick: () => completarPedido(pedido.id_venta, pedido.status),
-          disabled: pedido.status !== 1 // Solo habilitado si está en preparación
+          disabled: pedido.status !== 1 
         }
       ];
 
-      return {
-        id: pedido.id_venta,
-        title: `Pedido #${pedido.id_venta} - ${pedido.cliente}`,
-        description: (
-          <>
-            <div className="mb-3 pb-2 border-b">
-              <p className="mb-1 flex items-center gap-2">
-                <FaClock className={colorTiempo} />
-                <b>Tiempo:</b> 
-                <span className={colorTiempo}>
-                  {pedido.tiempo_transcurrido_minutos} min
-                </span>
+      const description = (
+        <>
+          <div className="mb-3 pb-2 border-b">
+            <p className="mb-1 flex items-center gap-2">
+              <FaClock className={colorTiempo} />
+              <b>Tiempo:</b> 
+              <span className={colorTiempo}>
+                {pedido.tiempo_transcurrido_minutos} min
+              </span>
+            </p>
+            <p className="mb-1"><b>Sucursal:</b> {pedido.sucursal}</p>
+            <p className="mb-1">
+              <b>Estado:</b> 
+              <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                pedido.status === 0 ? 'bg-gray-200 text-black' :
+                pedido.status === 1 ? 'bg-yellow-200 text-yellow-800' :
+                pedido.status === 2 ? 'bg-green-200 text-green-800':
+                'bg-red-200 text-red-800'
+              }`}>
+                {pedido.status_texto}
+              </span>
+            </p>
+          </div>
+
+          {pedido.comentarios && (
+            <div className="mb-3 pb-2 border-b bg-yellow-50 p-2 rounded">
+              <p className="flex items-center gap-2 font-semibold text-sm mb-1">
+                <MdComment className="text-yellow-600" />
+                Comentarios:
               </p>
-              <p className="mb-1"><b>Sucursal:</b> {pedido.sucursal}</p>
-              <p className="mb-1">
-                <b>Estado:</b> 
-                <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                  pedido.status === 0 ? 'bg-gray-200 text-black' :
-                  pedido.status === 1 ? 'bg-yellow-200 text-yellow-800' :
-                  pedido.status === 2 ? 'bg-green-200 text-green-800':
-                  'bg-red-200 text-red-800'
-                }`}>
-                  {pedido.status_texto}
-                </span>
+              <p className="text-xs text-gray-700 italic pl-6">
+                "{pedido.comentarios}"
               </p>
             </div>
+          )}
 
-            {/* Sección de comentarios en la card */}
-            {pedido.comentarios && (
-              <div className="mb-3 pb-2 border-b bg-yellow-50 p-2 rounded">
-                <p className="flex items-center gap-2 font-semibold text-sm mb-1">
-                  <MdComment className="text-yellow-600" />
-                  Comentarios:
+          <div className="mb-2">
+            <p className="font-bold mb-2">Productos ({pedido.cantidad_items} items):</p>
+            {pedido.productos.map((prod, idx) => (
+              <div key={idx} className={`mb-2 pl-2 border-l-2 rounded ${
+                prod.status === 0 ? 'bg-red-100 border-red-300' :
+                prod.status === 1 ? 'bg-gray-100 border-gray-300' :
+                prod.status === 2 ? 'bg-green-100 border-green-300' :
+                'bg-gray-50 border-gray-200'
+              }`}>
+                <p className="font-semibold text-sm">
+                  {prod.cantidad}x {prod.nombre || 'Producto sin nombre'}
                 </p>
-                <p className="text-xs text-gray-700 italic pl-6">
-                  "{pedido.comentarios}"
+                <p className="text-xs text-gray-600">
+                  {prod.tipo}
                 </p>
               </div>
-            )}
+            ))}
+          </div>
 
-            <div className="mb-2">
-              <p className="font-bold mb-2">Productos ({pedido.cantidad_items} items):</p>
-              {pedido.productos.map((prod, idx) => (
-                <div key={idx} className={`mb-2 pl-2 border-l-2 rounded ${
-                  prod.status === 0 ? 'bg-red-100 border-red-300' :
-                  prod.status === 1 ? 'bg-gray-100 border-gray-300' :
-                  prod.status === 2 ? 'bg-green-100 border-green-300' :
-                  'bg-gray-50 border-gray-200'
-                }`}>
-                  <p className="font-semibold text-sm">
-                    {prod.cantidad}x {prod.nombre || 'Producto sin nombre'}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {prod.tipo}
-                  </p>
-                </div>
-              ))}
-            </div>
+          <div className="mt-3 pt-2 border-t">
+            <p className="text-xs text-gray-500">
+              {new Date(pedido.fecha_hora).toLocaleString('es-MX')}
+            </p>
+          </div>
+        </>
+      );
 
-            <div className="mt-3 pt-2 border-t">
-              <p className="text-xs text-gray-500">
-                {new Date(pedido.fecha_hora).toLocaleString('es-MX')}
-              </p>
-            </div>
-          </>
-        ),
-        actions: actions
-      };
-    });
+      return (
+        <Card
+          key={pedido.id_venta}
+          title={`Pedido #${pedido.id_venta} - ${pedido.cliente}`}
+          description={description}
+          actions={actions}
+          loading={loading}
+          maxHeight={200}
+        />
+      );
+    };
+
+    // Filtrar pedidos
+    const pedidosEnEspera = pedidos.filter(p => p.status === 0);
+    const pedidosPreparando = pedidos.filter(p => p.status === 1);
 
     return (
       <div className="min-h-screen bg-gray-100 p-8">
@@ -216,30 +216,18 @@ export default function App() {
           <div className="flex justify-between items-center mb-6">
             <h1 className='text-3xl font-bold text-black'>Pedidos de Cocina</h1>
             
-            <div className="flex gap-4 items-center">
-              <select 
-                value={statusFiltro ?? ''} 
-                onChange={(e) => setStatusFiltro(e.target.value === '' ? null : parseInt(e.target.value))}
-                className="px-4 py-2 border rounded bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              >
-                <option value="">Todos los estados</option>
-                <option value="0">Esperando</option>
-                <option value="1">Preparando</option>
-              </select>
-
-              <button 
-                onClick={fetchPedidos}
-                className="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 flex items-center gap-2"
-                disabled={loading}
-              >
-                {loading ? 'Cargando...' : (
-                  <>
-                    <IoReload />
-                    <span>Actualizar</span>
-                  </>
-                )}
-              </button>
-            </div>
+            <button 
+              onClick={fetchPedidos}
+              className="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 flex items-center gap-2"
+              disabled={loading}
+            >
+              {loading ? 'Cargando...' : (
+                <>
+                  <IoReload />
+                  <span>Actualizar</span>
+                </>
+              )}
+            </button>
           </div>
 
           {error && (
@@ -248,28 +236,35 @@ export default function App() {
             </div>
           )}
 
-          {loading && pedidos.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-600">Cargando pedidos...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Columna En Espera */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 min-h-[500px]">
+              <h2 className="text-xl font-bold mb-4 text-gray-700 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                En Espera ({pedidosEnEspera.length})
+              </h2>
+              <div className="space-y-4">
+                {pedidosEnEspera.map(renderCard)}
+                {pedidosEnEspera.length === 0 && (
+                  <p className="text-gray-500 text-center py-8">No hay pedidos en espera</p>
+                )}
+              </div>
             </div>
-          ) : cardsData.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-600">No hay pedidos para mostrar</p>
+
+            {/* Columna Preparando */}
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 min-h-[500px]">
+              <h2 className="text-xl font-bold mb-4 text-yellow-800 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                Preparando ({pedidosPreparando.length})
+              </h2>
+              <div className="space-y-4">
+                {pedidosPreparando.map(renderCard)}
+                {pedidosPreparando.length === 0 && (
+                  <p className="text-gray-500 text-center py-8">No hay pedidos en preparación</p>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-4 gap-4 items-start">
-              {cardsData.map((card) => (
-                <Card
-                  key={card.id}
-                  title={card.title}
-                  description={card.description}
-                  actions={card.actions}
-                  loading={loading}
-                  maxHeight={200}
-                />
-              ))}
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Modal de detalle con efecto blur */}
