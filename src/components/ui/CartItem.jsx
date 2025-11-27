@@ -25,7 +25,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
             </p>
           </div>
           <button
-            onClick={() => onRemove(item.id, item.tipo)}
+            onClick={() => onRemove(item.id, item.tipoId)}
             className="text-red-500 hover:text-red-700 transition-colors ml-2"
             title="Eliminar paquete"
           >
@@ -37,7 +37,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
         <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => onUpdateQuantity(item.id, item.tipo, item.cantidad - 1)}
+              onClick={() => onUpdateQuantity(item.id, item.tipoId, item.cantidad - 1)}
               className="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded p-1 transition-colors"
             >
               <FaMinus size={16} />
@@ -46,7 +46,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
               {item.cantidad}
             </span>
             <button
-              onClick={() => onUpdateQuantity(item.id, item.tipo, item.cantidad + 1)}
+              onClick={() => onUpdateQuantity(item.id, item.tipoId, item.cantidad + 1)}
               className="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded p-1 transition-colors"
             >
               <FaPlus size={16} />
@@ -73,7 +73,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
             </p>
           </div>
           <button
-            onClick={() => onRemove(item.id, item.tipo)}
+            onClick={() => onRemove(item.id, item.tipoId)}
             className="text-red-500 hover:text-red-700 transition-colors ml-2"
             title="Eliminar todo el grupo"
           >
@@ -92,7 +92,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => onUpdateQuantity(item.id, item.tipo, producto.cantidad - 1, producto.id)}
+                    onClick={() => onUpdateQuantity(item.id, item.tipoId, producto.cantidad - 1, producto.id)}
                     className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded p-1 transition-colors"
                   >
                     <FaMinus size={14} />
@@ -101,13 +101,13 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
                     {producto.cantidad}
                   </span>
                   <button
-                    onClick={() => onUpdateQuantity(item.id, item.tipo, producto.cantidad + 1, producto.id)}
+                    onClick={() => onUpdateQuantity(item.id, item.tipoId, producto.cantidad + 1, producto.id)}
                     className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded p-1 transition-colors"
                   >
                     <FaPlus size={14} />
                   </button>
                   <button
-                    onClick={() => onRemove(item.id, item.tipo, producto.id)}
+                    onClick={() => onRemove(item.id, item.tipoId, producto.id)}
                     className="text-red-500 hover:text-red-700 transition-colors ml-2"
                     title="Eliminar este producto"
                   >
@@ -142,7 +142,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onUpdateQuantity(item.id, item.tipo, item.cantidad - 1)}
+            onClick={() => onUpdateQuantity(item.id, item.tipoId, item.cantidad - 1)}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded p-1 transition-colors"
           >
             <FaMinus size={16} />
@@ -151,7 +151,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
             {item.cantidad}
           </span>
           <button
-            onClick={() => onUpdateQuantity(item.id, item.tipo, item.cantidad + 1)}
+            onClick={() => onUpdateQuantity(item.id, item.tipoId, item.cantidad + 1)}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded p-1 transition-colors"
           >
             <FaPlus size={16} />
@@ -161,7 +161,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
           ${item.subtotal.toFixed(2)}
         </span>
         <button
-          onClick={() => onRemove(item.id, item.tipo)}
+          onClick={() => onRemove(item.id, item.tipoId)}
           className="text-red-500 hover:text-red-700 transition-colors"
           title="Eliminar"
         >

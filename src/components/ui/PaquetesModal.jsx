@@ -19,7 +19,7 @@ export const ModalPaquete1 = ({ isOpen, onClose, onConfirmar }) => {
         <div className="mb-6">
           <p className="text-gray-700 mb-4">Este paquete incluye:</p>
           <ul className="list-disc list-inside text-gray-600 space-y-2">
-            <li>2 Pizzas Medianas (Hawaiana y Pepperoni)</li>
+            <li>2 Pizzas Grandes (Hawaiana y Pepperoni)</li>
             <li>1 Refresco de 2L Jarrito</li>
           </ul>
           <p className="text-xl font-bold text-green-600 mt-4">Precio: $295.00</p>

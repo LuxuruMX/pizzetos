@@ -24,7 +24,7 @@ const CartSection = ({
               <ul className="mb-4 space-y-2 px-6">
                 {orden.map((item) => (
                   <CartItem
-                    key={`${item.tipo}-${item.id}`}
+                    key={`${item.tipoId}-${item.id}`}
                     item={item}
                     onUpdateQuantity={onUpdateQuantity}
                     onRemove={onRemove}
