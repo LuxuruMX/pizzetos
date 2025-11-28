@@ -137,22 +137,23 @@ const POSEdit = () => {
     }
 
     try {
-      const productosActualizados = getPayloadActualizacion();
+      const items = getPayloadActualizacion();
 
       // Si el status principal es 2 (Listo), cambiarlo a 1 (En preparación)
       const nuevoStatusPrincipal = statusPrincipal === 2 ? 1 : statusPrincipal;
 
-      console.log("Enviando actualización:", {
-        productos: productosActualizados,
-        status: nuevoStatusPrincipal,
+      const payload = {
+        id_suc: detalleVenta.id_suc || 1, // Fallback a 1 si no viene
+        id_cliente: clienteSeleccionado.value,
+        total: total,
         comentarios: comentarios.trim() || null,
-      });
+        status: nuevoStatusPrincipal,
+        items: items
+      };
 
-      await actualizarPedidoCocina(idVenta, {
-        productos: productosActualizados,
-        status: nuevoStatusPrincipal,
-        comentarios: comentarios.trim() || null,
-      });
+      console.log("Enviando actualización:", payload);
+
+      await actualizarPedidoCocina(idVenta, payload);
 
       alert("Pedido actualizado exitosamente");
       router.push("/pos");

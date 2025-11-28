@@ -114,26 +114,10 @@ export const fetchDetalleVenta = async (idVenta) => {
  */
 export const actualizarPedidoCocina = async (idVenta, datos) => {
   try {
-    const payload = {
-      status: datos.status,
-      productos: datos.productos.map(prod => ({
-        id: prod.id,
-        cantidad: prod.cantidad,
-        tipo: prod.tipo,
-        nombre: prod.nombre,
-        precio_unitario: prod.precio_unitario,
-        status: prod.status,
-        ...(prod.tamaño && { tamaño: prod.tamaño })
-      }))
-    };
-
-    // Agregar comentarios solo si existen
-    if (datos.comentarios && datos.comentarios.trim()) {
-      payload.comentarios = datos.comentarios.trim();
-    }
-
-    const response = await api.patch(`/pos/pedidos-cocina/${idVenta}`, payload);
+    const response = await api.put(`/pos/${idVenta}`, datos);
     return response.data;
+
+
   } catch (error) {
     console.error('Error al actualizar pedido:', error.response?.data || error.message);
     

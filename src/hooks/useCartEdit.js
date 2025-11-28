@@ -567,42 +567,56 @@ export const useCartEdit = () => {
 
   // Generar payload para actualizar el pedido
   const getPayloadActualizacion = () => {
-    const productosParaBackend = [];
+    const items = [];
 
     // Procesar productos actuales del carrito
     orden.forEach((item) => {
       if (item.esPaquete) {
         // Paquetes
-        productosParaBackend.push({
-          id: item.idProducto,
+        const paqueteData = {
           cantidad: item.cantidad,
-          tipo: item.tipoId,
-          nombre: item.nombre,
           precio_unitario: item.precioUnitario,
+          id_paquete: item.datoPaquete.id_paquete,
           status: item.status || 1,
-        });
+        };
+
+        // Si es nuevo, incluir detalles de composición
+        if (!item.esOriginal) {
+           if (item.datoPaquete.detalle_paquete) {
+             paqueteData.detalle_paquete = item.datoPaquete.detalle_paquete;
+           }
+           if (item.datoPaquete.id_pizza) {
+             paqueteData.id_pizza = item.datoPaquete.id_pizza;
+           }
+           if (item.datoPaquete.id_hamb) {
+             paqueteData.id_hamb = item.datoPaquete.id_hamb;
+           }
+           if (item.datoPaquete.id_alis) {
+             paqueteData.id_alis = item.datoPaquete.id_alis;
+           }
+           if (item.datoPaquete.id_refresco) {
+             paqueteData.id_refresco = item.datoPaquete.id_refresco;
+           }
+        }
+
+        items.push(paqueteData);
+
       } else if (item.productos && item.productos.length > 0) {
         // Items agrupados (pizzas/mariscos del mismo tamaño)
         item.productos.forEach((prod) => {
-          productosParaBackend.push({
-            id: prod.idProducto || prod.id, // Usar idProducto si existe (para agrupados), sino id
+          items.push({
             cantidad: prod.cantidad,
-            tipo: item.tipoId,
-            nombre: prod.nombre,
-            tamaño: item.tamano,
-            precio_unitario: item.precioUnitario,
+            precio_unitario: item.precioUnitario || 0,
+            [item.tipoId]: prod.idProducto || prod.id, // Usar idProducto si existe, sino id
             status: prod.status !== undefined ? prod.status : (item.status || 1),
           });
         });
       } else {
         // Items individuales
-        productosParaBackend.push({
-          id: item.idProducto,
+        items.push({
           cantidad: item.cantidad,
-          tipo: item.tipoId,
-          nombre: item.nombre,
-          tamaño: item.tamano !== "N/A" ? item.tamano : null,
-          precio_unitario: item.precioUnitario,
+          precio_unitario: item.precioUnitario || 0,
+          [item.tipoId]: item.idProducto,
           status: item.status || 1,
         });
       }
@@ -612,25 +626,39 @@ export const useCartEdit = () => {
     productosOriginales.forEach((prodOrig) => {
       const existeEnOrden = orden.some((item) => {
         if (item.productos) {
-          return item.productos.some((p) => p.id === prodOrig.idProducto);
+          // Verificar si el producto original existe en algún sub-item
+          // Nota: prodOrig.idProducto es el ID del catálogo
+          return item.productos.some((p) => p.idProducto === prodOrig.idProducto);
         }
         return item.idProducto === prodOrig.idProducto;
       });
 
+      // Si no existe en la orden actual, agregarlo como cancelado
+      // PERO cuidado: si se separó en múltiples líneas (una status 2, una status 1), 
+      // la lógica de "existeEnOrden" podría ser engañosa si no cuidamos los IDs únicos.
+      // Sin embargo, aquí estamos verificando si el PRODUCTO (catálogo) sigue presente.
+      // Si el usuario eliminó TODAS las instancias de ese producto, entonces sí se manda status 0.
+      // Si queda al menos una instancia (ej: la status 2), entonces no se manda este bloque de eliminación global.
+      // La eliminación individual (bajar cantidad o quitar un sub-item) ya se maneja en el loop de `orden` 
+      // si es que mantenemos los items con status 0 en `orden`.
+      // REVISIÓN: `eliminarDelCarrito` mantiene los items originales con status 0 en `orden`.
+      // Por lo tanto, `productosOriginales` solo es necesario si por alguna razón se eliminó físicamente del array `orden`.
+      // En la lógica actual, los items originales NO se eliminan de `orden`, solo cambian de status.
+      // Los items NUEVOS sí se eliminan físicamente.
+      // Así que este bloque de `productosOriginales` es redundante si garantizamos que los originales nunca salen de `orden`.
+      // Pero por seguridad, lo dejaremos, asegurando que use el formato correcto.
+
       if (!existeEnOrden) {
-        productosParaBackend.push({
-          id: prodOrig.idProducto,
+        items.push({
           cantidad: 0,
-          tipo: prodOrig.tipo,
-          nombre: prodOrig.nombre,
-          tamaño: prodOrig.tamano !== "N/A" ? prodOrig.tamano : null,
-          precio_unitario: prodOrig.precioOriginal,
+          precio_unitario: prodOrig.precioOriginal || 0,
+          [prodOrig.tipoId]: prodOrig.idProducto,
           status: 0, // Cancelado
         });
       }
     });
 
-    return productosParaBackend;
+    return items;
   };
 
   const total = orden.reduce((acc, item) => acc + item.subtotal, 0);
