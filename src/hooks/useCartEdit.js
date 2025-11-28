@@ -136,7 +136,8 @@ export const useCartEdit = () => {
       }
 
       // Crear ID único para el carrito
-      const idCarrito = `original_${prod.tipo}_${prod.id || index}_${prod.tamaño || 'std'}`;
+      // Usar index para garantizar unicidad si hay múltiples líneas del mismo producto
+      const idCarrito = `original_${prod.tipo}_${prod.id}_${index}_${prod.tamaño || 'std'}`;
 
       return {
         // IDs
@@ -204,7 +205,8 @@ export const useCartEdit = () => {
         // SIEMPRE crear item agrupado para pizzas y mariscos
         const cantidadTotal = grupo.reduce((sum, p) => sum + p.cantidad, 0);
         const productosDetalle = grupo.map((p) => ({
-          id: p.idProducto,
+          id: p.id, // Usar el ID único del item (no el del producto)
+          idProducto: p.idProducto, // Guardar ID del producto para referencia
           nombre: p.nombre,
           cantidad: p.cantidad,
           status: p.status,
@@ -269,29 +271,38 @@ export const useCartEdit = () => {
               !item.esPaquete
             ) {
               const productoExistente = item.productos?.find(
-                (p) => p.id === id
+                (p) => p.idProducto === id && (p.status === 1 || p.esNuevo)
               );
 
               if (productoExistente) {
-                // Incrementar cantidad del producto existente
+                // Incrementar cantidad del producto existente (solo si es editable)
                 return {
                   ...item,
                   cantidad: item.cantidad + 1,
                   status: 1, // Reactivar grupo si estaba cancelado
                   productos: item.productos.map((p) =>
-                    p.id === id ? { ...p, cantidad: p.cantidad + 1, status: 1 } : p
+                    p.id === productoExistente.id ? { ...p, cantidad: p.cantidad + 1, status: 1 } : p
                   ),
                   esModificado: item.esOriginal,
                 };
               } else {
-                // Agregar nuevo producto al grupo
+                // Agregar nuevo producto al grupo (nueva línea)
+                const nuevoIdSubItem = `${tipoId}_${id}_${Date.now()}`;
                 return {
                   ...item,
                   cantidad: item.cantidad + 1,
                   status: 1, // Reactivar grupo
                   productos: [
                     ...(item.productos || []),
-                    { id, nombre, cantidad: 1, status: 1, esOriginal: false },
+                    { 
+                      id: nuevoIdSubItem, 
+                      idProducto: id, 
+                      nombre, 
+                      cantidad: 1, 
+                      status: 1, 
+                      esOriginal: false,
+                      esNuevo: true 
+                    },
                   ],
                   esModificado: item.esOriginal,
                 };
@@ -319,7 +330,17 @@ export const useCartEdit = () => {
               esPaquete: false,
               esOriginal: false,
               esNuevo: true,
-              productos: [{ id, nombre, cantidad: 1, status: 1, esOriginal: false }],
+              esOriginal: false,
+              esNuevo: true,
+              productos: [{ 
+                id: `${tipoId}_${id}_${Date.now()}_sub`, 
+                idProducto: id, 
+                nombre, 
+                cantidad: 1, 
+                status: 1, 
+                esOriginal: false,
+                esNuevo: true 
+              }],
             },
           ];
         }
@@ -564,7 +585,7 @@ export const useCartEdit = () => {
         // Items agrupados (pizzas/mariscos del mismo tamaño)
         item.productos.forEach((prod) => {
           productosParaBackend.push({
-            id: prod.id,
+            id: prod.idProducto || prod.id, // Usar idProducto si existe (para agrupados), sino id
             cantidad: prod.cantidad,
             tipo: item.tipoId,
             nombre: prod.nombre,
