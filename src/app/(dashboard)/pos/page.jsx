@@ -7,6 +7,7 @@ import { useCart } from '@/hooks/useCart';
 import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
 import ProductModal from '@/components/ui/ProductModal';
+import PaymentModal from '@/components/ui/PaymentModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
 import Select from 'react-select';
 import { PiPlusFill } from "react-icons/pi";
@@ -32,10 +33,8 @@ const decodeCartFromUrl = () => {
 };
 
 const POS = () => {
-  // Decodificar el carrito desde la URL al cargar el componente
   const initialCartFromUrl = decodeCartFromUrl();
 
-  // Usar el carrito inicial decodificado
   const {
     orden,
     total,
@@ -64,6 +63,11 @@ const POS = () => {
   const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  
+  // Estado para tipo de servicio y pagos
+  const [tipoServicio, setTipoServicio] = useState(2);
+  const [pagos, setPagos] = useState([]);
+  const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
 
   // Estados para comentarios
   const [comentarios, setComentarios] = useState('');
@@ -117,10 +121,45 @@ const POS = () => {
       return;
     }
 
+    // Si el tipo de servicio es 1 (Con pago), abrir modal si no hay pagos
+    if (tipoServicio === 1 && pagos.length === 0) {
+      setModalPagosAbierto(true);
+      return;
+    }
+
     try {
-      await enviarOrdenAPI(orden, idCliente, comentarios);
+      // Preparar datos de pago según el tipo de servicio
+      const datosPagos = tipoServicio === 1 ? pagos : [];
+      
+      await enviarOrdenAPI(orden, idCliente, comentarios, tipoServicio, datosPagos);
+      
       limpiarCarrito(); // Esto limpiará la URL también
       setComentarios('');
+      setPagos([]);
+      setTipoServicio(2); // Reset a default
+    } catch (error) {
+      console.error('Error al enviar la orden:', error);
+      alert(error.message || 'Hubo un error al enviar la orden.');
+    }
+  };
+
+  const handleConfirmarPagos = (pagosConfirmados) => {
+    setPagos(pagosConfirmados);
+    setModalPagosAbierto(false);
+    // Intentar enviar la orden inmediatamente después de confirmar pagos
+    // Usamos un timeout pequeño para asegurar que el estado se actualizó (aunque en React 18+ el batching podría manejarlo, es más seguro pasar los pagos directamente)
+    enviarOrdenConPagos(pagosConfirmados);
+  };
+
+  const enviarOrdenConPagos = async (pagosConfirmados) => {
+    if (!clienteSeleccionado) return;
+    
+    try {
+      await enviarOrdenAPI(orden, clienteSeleccionado.value, comentarios, tipoServicio, pagosConfirmados);
+      limpiarCarrito();
+      setComentarios('');
+      setPagos([]);
+      setTipoServicio(2);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -270,6 +309,8 @@ const POS = () => {
           onEnviarOrden={handleEnviarOrden}
           comentarios={comentarios}
           onAbrirComentarios={() => setModalComentarios(true)}
+          tipoServicio={tipoServicio}
+          onTipoServicioChange={setTipoServicio}
         />
 
         <ProductsSection
@@ -356,6 +397,14 @@ const POS = () => {
         onClose={() => setModalPaquete3(false)}
         onConfirmar={handleConfirmarPaquete3}
         pizzas={productos.pizzas}
+      />
+
+      {/* Modal de Pagos */}
+      <PaymentModal
+        isOpen={modalPagosAbierto}
+        onClose={() => setModalPagosAbierto(false)}
+        total={total}
+        onConfirm={handleConfirmarPagos}
       />
     </div>
   );

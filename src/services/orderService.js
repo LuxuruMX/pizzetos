@@ -94,10 +94,7 @@ export const invalidateCache = () => {
   console.log('Caché invalidada.');
 };
 
-/**
- * Obtener detalle de una venta para edición
- * El backend devuelve: { id_venta, fecha_hora, cliente, sucursal, status, comentarios, status_texto, productos: [] }
- */
+
 export const fetchDetalleVenta = async (idVenta) => {
   try {
     const response = await api.get(`/pos/edit/${idVenta}/detalle`);
@@ -141,7 +138,7 @@ export const actualizarPedidoCocina = async (idVenta, datos) => {
  */
 // En orderService.js, reemplaza la función enviarOrdenAPI con esta versión corregida:
 
-export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
+export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '', tipo_servicio = 2, pagos = []) => {
   if (orden.length === 0) {
     throw new Error('La orden está vacía');
   }
@@ -156,7 +153,8 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
         cantidad: parseInt(item.cantidad),
         precio_unitario: parseFloat(item.precioUnitario),
         id_paquete: item.datoPaquete.id_paquete,
-        id_refresco: item.datoPaquete.id_refresco
+        id_refresco: item.datoPaquete.id_refresco,
+        status: 1
       };
 
       // Agregar campos opcionales
@@ -182,7 +180,8 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
         const itemData = {
           cantidad: parseInt(producto.cantidad),
           precio_unitario: parseFloat(item.precioUnitario),
-          [item.tipoId]: parseInt(producto.id)  // Usa tipoId del item padre
+          [item.tipoId]: parseInt(producto.id),  // Usa tipoId del item padre
+          status: 1
         };
         return itemData;
       });
@@ -199,7 +198,8 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
       const itemData = {
         cantidad: parseInt(item.cantidad),
         precio_unitario: parseFloat(item.precioUnitario),
-        [item.tipoId]: itemId  // Usa item.tipoId como clave (ej: id_alis, id_hamb)
+        [item.tipoId]: itemId,  // Usa item.tipoId como clave (ej: id_alis, id_hamb)
+        status: 1
       };
       return itemData;
     }
@@ -212,6 +212,12 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '') => {
     id_suc: parseInt(id_suc),
     id_cliente: parseInt(id_cliente),
     total,
+    status: 0,
+    tipo_servicio: parseInt(tipo_servicio),
+    pagos: pagos.map(p => ({
+      id_metpago: parseInt(p.id_metpago),
+      monto: parseFloat(p.monto)
+    })),
     items,
   };
 
