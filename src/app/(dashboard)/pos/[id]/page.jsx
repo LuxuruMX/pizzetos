@@ -112,7 +112,7 @@ const POSEdit = () => {
         setClientes(opcionesClientes);
 
         const clienteEncontrado = opcionesClientes.find(
-          (c) => c.label === detalleData.cliente
+          (c) => c.value === detalleData.cliente
         );
         if (clienteEncontrado) {
           setClienteSeleccionado(clienteEncontrado);
@@ -267,13 +267,13 @@ const POSEdit = () => {
               Editar Pedido #{idVenta}
             </h1>
             <p className="text-sm text-gray-600">
-              {detalleVenta.cliente} - {detalleVenta.sucursal} -
+              {detalleVenta.sucursal} -
               <span
                 className={`ml-2 font-semibold ${
                   detalleVenta.status === 0
-                    ? "text-red-600"
+                    ? "text-gray-400"
                     : detalleVenta.status === 1
-                    ? "text-yellow-600"
+                    ? "text-yellow-400"
                     : "text-green-600"
                 }`}
               >

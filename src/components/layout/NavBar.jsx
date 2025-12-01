@@ -71,9 +71,9 @@ const menuConfig = [
     icon: MdPointOfSale,
     permiso: 'ver_venta',
     submenu: [
-      { name: 'Resume', path: '/pedidos/resumen', icon: FaBorderAll },
-      { name: 'POS', path: '/pos', icon: FaShoppingBasket},
-      { name: 'Gastos', path: '/gastos', icon: FaMoneyBills },
+      { name: 'Resume', path: '/pedidos/resumen', icon: FaBorderAll, permiso: 'ver_venta' },
+      { name: 'POS', path: '/pos', icon: FaShoppingBasket, permiso: ['ver_venta', 'crear_venta'] },
+      { name: 'Gastos', path: '/gastos', icon: FaMoneyBills, permiso: ['ver_venta', 'editar_venta', 'eliminar_venta'] },
       { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
       { name: 'Pedidos', path: '/pedidos', icon:IoIosAlbums }
     ]
@@ -115,11 +115,17 @@ export default function NavBar({ isOpen, onClose }) {
     }));
   };
 
+  // Helper para verificar permisos (soporta string o array)
+  const hasPermission = (permiso) => {
+    if (!permiso) return true;
+    if (Array.isArray(permiso)) {
+      return permiso.every(p => userPermisos?.[p] === true);
+    }
+    return userPermisos?.[permiso] === true;
+  };
+
   // Filtrar menús según permisos
-  const visibleMenus = menuConfig.filter(item => {
-    if (!item.permiso) return true; // Si no requiere permiso, siempre visible
-    return userPermisos?.[item.permiso] === true;
-  });
+  const visibleMenus = menuConfig.filter(item => hasPermission(item.permiso));
 
   // Mostrar loading mientras se carga el token
   if (!mounted || userPermisos === null) {
@@ -173,7 +179,7 @@ export default function NavBar({ isOpen, onClose }) {
                     
                     {openMenus[item.name] && (
                       <div className="ml-4 mt-1 space-y-1">
-                        {item.submenu.map((subitem) => (
+                        {item.submenu.filter(sub => hasPermission(sub.permiso)).map((subitem) => (
                           <Link
                             key={subitem.path}
                             href={subitem.path}
