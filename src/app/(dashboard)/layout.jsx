@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }) {
       <NavBar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Contenedor principal */}
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col">
         {/* NavBarTop fijo */}
         <header className="fixed top-0 left-0 right-0 z-40 bg-white shadow-md">
           <NavBarTop onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />

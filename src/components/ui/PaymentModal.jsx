@@ -156,7 +156,7 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
                         onClick={() => handleEliminarPago(index)}
                         className="text-red-400 hover:text-red-600 transition-colors"
                       >
-                        <FaTrash size={14} />
+                        <FaTrash size={20} />
                       </button>
                     </div>
                   </div>
