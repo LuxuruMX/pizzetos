@@ -63,11 +63,12 @@ const POS = () => {
   const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  
+
   // Estado para tipo de servicio y pagos
   const [tipoServicio, setTipoServicio] = useState(2);
   const [pagos, setPagos] = useState([]);
   const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
+  const [mesa, setMesa] = useState('');
 
   // Estados para comentarios
   const [comentarios, setComentarios] = useState('');
@@ -110,33 +111,50 @@ const POS = () => {
   }, []);
 
   const handleEnviarOrden = async () => {
-    if (!clienteSeleccionado) {
-      alert('Por favor, selecciona un cliente antes de enviar la orden.');
-      return;
-    }
-    const idCliente = clienteSeleccionado.value;
-    if (idCliente == null || idCliente === '') {
-      alert('El cliente seleccionado no tiene un ID válido.');
-      console.error("Objeto clienteSeleccionado recibido:", clienteSeleccionado);
-      return;
-    }
-
-    // Si el tipo de servicio es 1 (Con pago), abrir modal si no hay pagos
-    if (tipoServicio === 1 && pagos.length === 0) {
-      setModalPagosAbierto(true);
-      return;
+    // Validación por tipo de servicio
+    if (tipoServicio === 2) { // Domicilio
+      if (!clienteSeleccionado) {
+        alert('Por favor, selecciona un cliente para servicio a domicilio.');
+        return;
+      }
+      const idCliente = clienteSeleccionado.value;
+      if (idCliente == null || idCliente === '') {
+        alert('El cliente seleccionado no tiene un ID válido.');
+        return;
+      }
+    } else if (tipoServicio === 1) { // Para Llevar
+      // Validar pagos si es necesario (aunque el modal se abre si no hay pagos)
+      if (pagos.length === 0) {
+        setModalPagosAbierto(true);
+        return;
+      }
+    } else if (tipoServicio === 0) { // Comer Aquí
+      if (!mesa || mesa.trim() === '') {
+        alert('Por favor, ingresa el número de mesa.');
+        return;
+      }
     }
 
     try {
-      // Preparar datos de pago según el tipo de servicio
-      const datosPagos = tipoServicio === 1 ? pagos : [];
-      
-      await enviarOrdenAPI(orden, idCliente, comentarios, tipoServicio, datosPagos);
-      
-      limpiarCarrito(); // Esto limpiará la URL también
+      // Preparar datos adicionales según tipo de servicio
+      const datosExtra = {};
+
+      if (tipoServicio === 0) {
+        datosExtra.mesa = parseInt(mesa);
+      }
+
+      if (tipoServicio === 2) {
+        datosExtra.id_cliente = clienteSeleccionado.value;
+        // datosExtra.id_direccion = ... // Pendiente según requerimientos futuros
+      }
+
+      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
+
+      limpiarCarrito();
       setComentarios('');
       setPagos([]);
-      setTipoServicio(2); // Reset a default
+      setMesa('');
+      setTipoServicio(2); // Reset a default (o mantener el último usado si se prefiere)
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -152,13 +170,18 @@ const POS = () => {
   };
 
   const enviarOrdenConPagos = async (pagosConfirmados) => {
-    if (!clienteSeleccionado) return;
-    
+    // Esta función se llama principalmente para "Para Llevar" (tipo 1) después del modal
     try {
-      await enviarOrdenAPI(orden, clienteSeleccionado.value, comentarios, tipoServicio, pagosConfirmados);
+      const datosExtra = {};
+      // Para tipo 1 no necesitamos cliente ni mesa obligatoriamente según la nueva lógica
+      // pero si hubiera cliente seleccionado se podría enviar si el backend lo permitiera.
+      // Por ahora seguimos la regla: Type 1 -> Solo pagos.
+
+      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
       limpiarCarrito();
       setComentarios('');
       setPagos([]);
+      setMesa('');
       setTipoServicio(2);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
@@ -311,6 +334,8 @@ const POS = () => {
           onAbrirComentarios={() => setModalComentarios(true)}
           tipoServicio={tipoServicio}
           onTipoServicioChange={setTipoServicio}
+          mesa={mesa}
+          onMesaChange={setMesa}
         />
 
         <ProductsSection
