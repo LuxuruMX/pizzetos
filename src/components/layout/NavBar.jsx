@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
-import { 
-  FaHome, 
-  FaDrumstickBite, 
-  FaHamburger, 
+import {
+  FaHome,
+  FaDrumstickBite,
+  FaHamburger,
   FaFish,
   FaGlassWhiskey,
   FaUtensils,
@@ -31,14 +31,14 @@ import { IoIosAlbums, IoIosSettings } from "react-icons/io";
 // Configuración del menú con permisos asociados
 const menuConfig = [
   { name: 'Dashboard', path: '/dashboard', icon: FaHome, permiso: null },
-  { 
-    name: 'Empleados', 
-    path: '/empleados', 
+  {
+    name: 'Empleados',
+    path: '/empleados',
     icon: FaUser,
     permiso: 'ver_empleado'
   },
-  { 
-    name: 'Productos', 
+  {
+    name: 'Productos',
     icon: FaUtensils,
     permiso: 'ver_producto',
     submenu: [
@@ -62,20 +62,20 @@ const menuConfig = [
     permiso: 'ver_recurso',
     submenu: [
       { name: 'Categorias', path: '/recursos/categorias', icon: BiSolidCategoryAlt },
-      { name: 'Sucursales', path: '/recursos/sucursales',  icon: FaCodeBranch },
+      { name: 'Sucursales', path: '/recursos/sucursales', icon: FaCodeBranch },
       { name: 'Cargos', path: '/recursos/cargos', icon: TbHierarchy3 },
     ]
   },
   {
-    name:"Venta",
+    name: "Venta",
     icon: MdPointOfSale,
     permiso: 'ver_venta',
     submenu: [
       { name: 'Resume', path: '/pedidos/resumen', icon: FaBorderAll, permiso: 'ver_venta' },
       { name: 'POS', path: '/pos', icon: FaShoppingBasket, permiso: ['ver_venta', 'crear_venta'] },
-      { name: 'Gastos', path: '/gastos', icon: FaMoneyBills, permiso: ['ver_venta', 'editar_venta', 'eliminar_venta'] },
+      { name: 'Gastos', path: '/gastos', icon: FaMoneyBills, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
-      { name: 'Pedidos', path: '/pedidos', icon:IoIosAlbums }
+      { name: 'Pedidos', path: '/pedidos', icon: IoIosAlbums }
     ]
   },
   {
@@ -94,7 +94,7 @@ export default function NavBar({ isOpen, onClose }) {
 
   useEffect(() => {
     setMounted(true);
-    
+
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('access_token');
       if (token) {
@@ -143,7 +143,7 @@ export default function NavBar({ isOpen, onClose }) {
     <>
       {/* Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/70 z-40 transition-opacity bg-opacity-50"
           onClick={onClose}
         />
@@ -176,18 +176,17 @@ export default function NavBar({ isOpen, onClose }) {
                         <FaChevronRight className="text-sm" />
                       )}
                     </button>
-                    
+
                     {openMenus[item.name] && (
                       <div className="ml-4 mt-1 space-y-1">
                         {item.submenu.filter(sub => hasPermission(sub.permiso)).map((subitem) => (
                           <Link
                             key={subitem.path}
                             href={subitem.path}
-                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                              pathname === subitem.path
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${pathname === subitem.path
                                 ? 'bg-yellow-500 text-white'
                                 : 'text-gray-300 hover:bg-gray-800'
-                            }`}
+                              }`}
                           >
                             <subitem.icon className="text-sm" />
                             <span className="text-sm">{subitem.name}</span>
@@ -199,11 +198,10 @@ export default function NavBar({ isOpen, onClose }) {
                 ) : (
                   <Link
                     href={item.path}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      pathname === item.path
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${pathname === item.path
                         ? 'bg-yellow-500 text-white'
                         : 'text-gray-300 hover:bg-gray-800'
-                    }`}
+                      }`}
                   >
                     <item.icon className="text-lg" />
                     <span>{item.name}</span>
