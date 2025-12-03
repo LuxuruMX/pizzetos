@@ -211,7 +211,7 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
   const ordenParaEnviar = {
     id_suc: parseInt(id_suc),
     total,
-    status: 1, // El usuario indicó status 1 en el ejemplo
+    status: 0, // El usuario indicó status 1 en el ejemplo
     tipo_servicio: parseInt(tipo_servicio),
     items,
   };
