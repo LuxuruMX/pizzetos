@@ -38,5 +38,9 @@ export const catalogsService = {
   getNombresClientes: async () => {
     const response = await api.get('/clientes/posclientes');
     return response.data;
+  },
+  getClientesDirecciones: async (id_clie) => {
+    const response = await api.get(`/clientes/direccion/${id_clie}`);
+    return response.data;
   }
 };

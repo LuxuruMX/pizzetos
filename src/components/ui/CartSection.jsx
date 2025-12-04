@@ -3,16 +3,18 @@ import { MdComment, MdBrightness1 } from "react-icons/md";
 import { FaChevronDown, FaChevronUp, FaUtensils, FaMotorcycle, FaShoppingBag } from "react-icons/fa";
 import { useState, useRef, useEffect } from 'react';
 
-const CartSection = ({ 
-  orden, 
-  total, 
-  onUpdateQuantity, 
-  onRemove, 
+const CartSection = ({
+  orden,
+  total,
+  onUpdateQuantity,
+  onRemove,
   onEnviarOrden,
   comentarios,
   onAbrirComentarios,
   tipoServicio,
-  onTipoServicioChange
+  onTipoServicioChange,
+  mesa,
+  onMesaChange
 }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const menuRef = useRef(null);
@@ -39,8 +41,8 @@ const CartSection = ({
   const servicioActual = opcionesServicio.find(op => op.id === tipoServicio) || opcionesServicio[2];
 
   return (
-    <div className="w-1/3 bg-white rounded-lg shadow-lg flex flex-col" 
-         style={{ maxHeight: 'calc(100vh - 8rem)' }}>
+    <div className="w-1/3 bg-white rounded-lg shadow-lg flex flex-col"
+      style={{ maxHeight: 'calc(100vh - 8rem)' }}>
       {/* Sección superior: Título y Lista de Artículos (se desplaza) */}
       <div className="flex-1 overflow-y-auto">
         <div>
@@ -72,7 +74,21 @@ const CartSection = ({
             <span>${total.toFixed(2)}</span>
           </div>
         )}
-        
+
+        {/* Input de Mesa (Solo para Comedor - Tipo 0) */}
+        {tipoServicio === 0 && (
+          <div className="mb-4 text-black">
+            <label className="block text-sm font-bold mb-1">Mesa:</label>
+            <input
+              type="number"
+              value={mesa}
+              onChange={(e) => onMesaChange(e.target.value)}
+              placeholder="Número de mesa"
+              className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+          </div>
+        )}
+
         {/* Botón de Comentarios */}
         <button
           onClick={onAbrirComentarios}
@@ -109,9 +125,8 @@ const CartSection = ({
                       onTipoServicioChange(opcion.id);
                       setMenuAbierto(false);
                     }}
-                    className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-orange-50 transition-colors ${
-                      tipoServicio === opcion.id ? 'bg-orange-100 text-orange-700 font-medium' : 'text-gray-700'
-                    }`}
+                    className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-orange-50 transition-colors ${tipoServicio === opcion.id ? 'bg-orange-100 text-orange-700 font-medium' : 'text-gray-700'
+                      }`}
                   >
                     <span className={tipoServicio === opcion.id ? 'text-orange-600' : 'text-gray-500'}>
                       {opcion.icon}

@@ -138,7 +138,7 @@ export const actualizarPedidoCocina = async (idVenta, datos) => {
  */
 // En orderService.js, reemplaza la función enviarOrdenAPI con esta versión corregida:
 
-export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '', tipo_servicio = 2, pagos = []) => {
+export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', tipo_servicio = 2, pagos = []) => {
   if (orden.length === 0) {
     throw new Error('La orden está vacía');
   }
@@ -187,7 +187,6 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '', tipo_s
       });
     } else {
       // Item normal (no agrupado)
-      // CORRECCIÓN: Usar item.id en lugar de item.idProducto
       const itemId = parseInt(item.id);
       
       if (isNaN(itemId)) {
@@ -208,18 +207,39 @@ export const enviarOrdenAPI = async (orden, id_cliente, comentarios = '', tipo_s
   // Calcular el total
   const total = parseFloat(orden.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2));
 
+  // Construir payload base
   const ordenParaEnviar = {
     id_suc: parseInt(id_suc),
-    id_cliente: parseInt(id_cliente),
     total,
-    status: 0,
+    status: 0, // El usuario indicó status 1 en el ejemplo
     tipo_servicio: parseInt(tipo_servicio),
-    pagos: pagos.map(p => ({
-      id_metpago: parseInt(p.id_metpago),
-      monto: parseFloat(p.monto)
-    })),
     items,
   };
+
+  // Agregar campos según tipo de servicio
+  if (tipo_servicio === 0) { // Comer aquí
+    if (datosExtra.mesa) {
+      ordenParaEnviar.mesa = parseInt(datosExtra.mesa);
+    }
+    // No lleva pagos ni id_cliente obligatoriamente
+  } else if (tipo_servicio === 1) { // Para llevar
+    ordenParaEnviar.pagos = pagos.map(p => ({
+      id_metpago: parseInt(p.id_metpago),
+      monto: parseFloat(p.monto)
+    }));
+    // No lleva mesa ni id_cliente
+  } else if (tipo_servicio === 2) { // Domicilio
+    if (datosExtra.id_cliente) {
+      ordenParaEnviar.id_cliente = parseInt(datosExtra.id_cliente);
+    }
+    if (datosExtra.id_direccion) {
+      ordenParaEnviar.id_direccion = parseInt(datosExtra.id_direccion);
+    } else {
+      // Valor por defecto temporal si se requiere, o se omite si el backend lo permite
+      ordenParaEnviar.id_direccion = 1; // Hardcoded temporal según ejemplo del usuario
+    }
+    // No lleva mesa ni pagos
+  }
 
   // Agregar comentarios solo si existen
   if (comentarios && comentarios.trim()) {

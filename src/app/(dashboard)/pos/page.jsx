@@ -8,6 +8,7 @@ import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
 import ProductModal from '@/components/ui/ProductModal';
 import PaymentModal from '@/components/ui/PaymentModal';
+import AddressSelectionModal from '@/components/ui/AddressSelectionModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
 import Select from 'react-select';
 import { PiPlusFill } from "react-icons/pi";
@@ -63,11 +64,16 @@ const POS = () => {
   const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  
+
   // Estado para tipo de servicio y pagos
-  const [tipoServicio, setTipoServicio] = useState(2);
+  const [tipoServicio, setTipoServicio] = useState(0);
   const [pagos, setPagos] = useState([]);
   const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
+  const [mesa, setMesa] = useState('');
+
+  // Estados para dirección de domicilio
+  const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
+  const [modalDireccionAbierto, setModalDireccionAbierto] = useState(false);
 
   // Estados para comentarios
   const [comentarios, setComentarios] = useState('');
@@ -109,34 +115,50 @@ const POS = () => {
     cargarDatos();
   }, []);
 
-  const handleEnviarOrden = async () => {
-    if (!clienteSeleccionado) {
-      alert('Por favor, selecciona un cliente antes de enviar la orden.');
-      return;
-    }
-    const idCliente = clienteSeleccionado.value;
-    if (idCliente == null || idCliente === '') {
-      alert('El cliente seleccionado no tiene un ID válido.');
-      console.error("Objeto clienteSeleccionado recibido:", clienteSeleccionado);
-      return;
-    }
+  // El modal de dirección se abre manualmente al enviar orden, no automáticamente
 
-    // Si el tipo de servicio es 1 (Con pago), abrir modal si no hay pagos
-    if (tipoServicio === 1 && pagos.length === 0) {
-      setModalPagosAbierto(true);
-      return;
+  const handleEnviarOrden = async () => {
+    // Validación por tipo de servicio
+    if (tipoServicio === 2) { // Domicilio
+      // Abrir modal si no hay cliente o dirección seleccionada
+      if (!clienteSeleccionado || !direccionSeleccionada) {
+        setModalDireccionAbierto(true);
+        return;
+      }
+    } else if (tipoServicio === 1) { // Para Llevar
+      // Validar pagos si es necesario (aunque el modal se abre si no hay pagos)
+      if (pagos.length === 0) {
+        setModalPagosAbierto(true);
+        return;
+      }
+    } else if (tipoServicio === 0) { // Comer Aquí
+      if (!mesa || mesa.trim() === '') {
+        alert('Por favor, ingresa el número de mesa.');
+        return;
+      }
     }
 
     try {
-      // Preparar datos de pago según el tipo de servicio
-      const datosPagos = tipoServicio === 1 ? pagos : [];
-      
-      await enviarOrdenAPI(orden, idCliente, comentarios, tipoServicio, datosPagos);
-      
-      limpiarCarrito(); // Esto limpiará la URL también
+      // Preparar datos adicionales según tipo de servicio
+      const datosExtra = {};
+
+      if (tipoServicio === 0) {
+        datosExtra.mesa = parseInt(mesa);
+      }
+
+      if (tipoServicio === 2) {
+        datosExtra.id_cliente = clienteSeleccionado.value;
+        datosExtra.id_direccion = direccionSeleccionada;
+      }
+
+      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
+
+      limpiarCarrito();
       setComentarios('');
       setPagos([]);
-      setTipoServicio(2); // Reset a default
+      setMesa('');
+      setDireccionSeleccionada(null);
+      setTipoServicio(0); // Reset a Comedor
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -152,14 +174,41 @@ const POS = () => {
   };
 
   const enviarOrdenConPagos = async (pagosConfirmados) => {
-    if (!clienteSeleccionado) return;
-    
+    // Esta función se llama principalmente para "Para Llevar" (tipo 1) después del modal
     try {
-      await enviarOrdenAPI(orden, clienteSeleccionado.value, comentarios, tipoServicio, pagosConfirmados);
+      const datosExtra = {};
+      // Para tipo 1 no necesitamos cliente ni mesa obligatoriamente según la nueva lógica
+      // pero si hubiera cliente seleccionado se podría enviar si el backend lo permitiera.
+      // Por ahora seguimos la regla: Type 1 -> Solo pagos.
+
+      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
       limpiarCarrito();
       setComentarios('');
       setPagos([]);
-      setTipoServicio(2);
+      setMesa('');
+      setTipoServicio(0);
+    } catch (error) {
+      console.error('Error al enviar la orden:', error);
+      alert(error.message || 'Hubo un error al enviar la orden.');
+    }
+  };
+
+  const enviarOrdenDomicilio = async (cliente, idDireccion) => {
+    try {
+      const datosExtra = {
+        id_cliente: cliente.value,
+        id_direccion: idDireccion
+      };
+
+      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
+
+      limpiarCarrito();
+      setComentarios('');
+      setPagos([]);
+      setMesa('');
+      setDireccionSeleccionada(null);
+      setClienteSeleccionado(null);
+      setTipoServicio(0); // Reset a Comedor
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -224,6 +273,14 @@ const POS = () => {
     setModalPaquete3(false);
   };
 
+  const handleConfirmarDireccion = (cliente, idDireccion) => {
+    setClienteSeleccionado(cliente);
+    setDireccionSeleccionada(idDireccion);
+    setModalDireccionAbierto(false);
+    // Enviar la orden inmediatamente
+    enviarOrdenDomicilio(cliente, idDireccion);
+  };
+
   const procesarProductos = () => {
     const productosCategoria = productos[categoriaActiva] || [];
 
@@ -276,32 +333,11 @@ const POS = () => {
             Paquete 3
           </button>
         </div>
-
-        {/* Sección de Cliente */}
-        <div className="w-full md:w-1/3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Cliente</label>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/clientes/agregar"
-              className='text-yellow-400 text-4xl hover:text-yellow-500 transition-colors'
-            >
-              <PiPlusFill />
-            </Link>
-            <Select
-              options={clientes}
-              value={clienteSeleccionado}
-              onChange={setClienteSeleccionado}
-              placeholder="Buscar y seleccionar cliente..."
-              isClearable
-              isSearchable
-              className="w-full text-black"
-            />
-          </div>
-        </div>
       </div>
 
       <div className="flex flex-1">
         <CartSection
+          className="max-h-[calc(100vh-200px)]"
           orden={orden}
           total={total}
           onUpdateQuantity={actualizarCantidad}
@@ -311,6 +347,8 @@ const POS = () => {
           onAbrirComentarios={() => setModalComentarios(true)}
           tipoServicio={tipoServicio}
           onTipoServicioChange={setTipoServicio}
+          mesa={mesa}
+          onMesaChange={setMesa}
         />
 
         <ProductsSection
@@ -405,6 +443,16 @@ const POS = () => {
         onClose={() => setModalPagosAbierto(false)}
         total={total}
         onConfirm={handleConfirmarPagos}
+      />
+
+      {/* Modal de Dirección */}
+      <AddressSelectionModal
+        isOpen={modalDireccionAbierto}
+        onClose={() => setModalDireccionAbierto(false)}
+        onConfirm={handleConfirmarDireccion}
+        clientes={clientes}
+        clienteSeleccionado={clienteSeleccionado}
+        onClienteChange={setClienteSeleccionado}
       />
     </div>
   );
