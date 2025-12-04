@@ -193,6 +193,28 @@ const POS = () => {
     }
   };
 
+  const enviarOrdenDomicilio = async (cliente, idDireccion) => {
+    try {
+      const datosExtra = {
+        id_cliente: cliente.value,
+        id_direccion: idDireccion
+      };
+
+      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
+
+      limpiarCarrito();
+      setComentarios('');
+      setPagos([]);
+      setMesa('');
+      setDireccionSeleccionada(null);
+      setClienteSeleccionado(null);
+      setTipoServicio(0); // Reset a Comedor
+    } catch (error) {
+      console.error('Error al enviar la orden:', error);
+      alert(error.message || 'Hubo un error al enviar la orden.');
+    }
+  };
+
   const handleCategoriaChange = (categoria) => {
     setCategoriaActiva(categoria);
   };
@@ -255,6 +277,8 @@ const POS = () => {
     setClienteSeleccionado(cliente);
     setDireccionSeleccionada(idDireccion);
     setModalDireccionAbierto(false);
+    // Enviar la orden inmediatamente
+    enviarOrdenDomicilio(cliente, idDireccion);
   };
 
   const procesarProductos = () => {
