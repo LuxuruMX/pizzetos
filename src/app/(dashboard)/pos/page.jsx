@@ -8,6 +8,7 @@ import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
 import ProductModal from '@/components/ui/ProductModal';
 import PaymentModal from '@/components/ui/PaymentModal';
+import AddressSelectionModal from '@/components/ui/AddressSelectionModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
 import Select from 'react-select';
 import { PiPlusFill } from "react-icons/pi";
@@ -65,10 +66,14 @@ const POS = () => {
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
 
   // Estado para tipo de servicio y pagos
-  const [tipoServicio, setTipoServicio] = useState(2);
+  const [tipoServicio, setTipoServicio] = useState(0);
   const [pagos, setPagos] = useState([]);
   const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
   const [mesa, setMesa] = useState('');
+
+  // Estados para dirección de domicilio
+  const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
+  const [modalDireccionAbierto, setModalDireccionAbierto] = useState(false);
 
   // Estados para comentarios
   const [comentarios, setComentarios] = useState('');
@@ -110,16 +115,14 @@ const POS = () => {
     cargarDatos();
   }, []);
 
+  // El modal de dirección se abre manualmente al enviar orden, no automáticamente
+
   const handleEnviarOrden = async () => {
     // Validación por tipo de servicio
     if (tipoServicio === 2) { // Domicilio
-      if (!clienteSeleccionado) {
-        alert('Por favor, selecciona un cliente para servicio a domicilio.');
-        return;
-      }
-      const idCliente = clienteSeleccionado.value;
-      if (idCliente == null || idCliente === '') {
-        alert('El cliente seleccionado no tiene un ID válido.');
+      // Abrir modal si no hay cliente o dirección seleccionada
+      if (!clienteSeleccionado || !direccionSeleccionada) {
+        setModalDireccionAbierto(true);
         return;
       }
     } else if (tipoServicio === 1) { // Para Llevar
@@ -145,7 +148,7 @@ const POS = () => {
 
       if (tipoServicio === 2) {
         datosExtra.id_cliente = clienteSeleccionado.value;
-        // datosExtra.id_direccion = ... // Pendiente según requerimientos futuros
+        datosExtra.id_direccion = direccionSeleccionada;
       }
 
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
@@ -154,7 +157,8 @@ const POS = () => {
       setComentarios('');
       setPagos([]);
       setMesa('');
-      setTipoServicio(2); // Reset a default (o mantener el último usado si se prefiere)
+      setDireccionSeleccionada(null);
+      setTipoServicio(0); // Reset a Comedor
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -182,7 +186,7 @@ const POS = () => {
       setComentarios('');
       setPagos([]);
       setMesa('');
-      setTipoServicio(2);
+      setTipoServicio(0);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -247,6 +251,12 @@ const POS = () => {
     setModalPaquete3(false);
   };
 
+  const handleConfirmarDireccion = (cliente, idDireccion) => {
+    setClienteSeleccionado(cliente);
+    setDireccionSeleccionada(idDireccion);
+    setModalDireccionAbierto(false);
+  };
+
   const procesarProductos = () => {
     const productosCategoria = productos[categoriaActiva] || [];
 
@@ -299,32 +309,11 @@ const POS = () => {
             Paquete 3
           </button>
         </div>
-
-        {/* Sección de Cliente */}
-        <div className="w-full md:w-1/3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Cliente</label>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/clientes/agregar"
-              className='text-yellow-400 text-4xl hover:text-yellow-500 transition-colors'
-            >
-              <PiPlusFill />
-            </Link>
-            <Select
-              options={clientes}
-              value={clienteSeleccionado}
-              onChange={setClienteSeleccionado}
-              placeholder="Buscar y seleccionar cliente..."
-              isClearable
-              isSearchable
-              className="w-full text-black"
-            />
-          </div>
-        </div>
       </div>
 
       <div className="flex flex-1">
         <CartSection
+          className="max-h-[calc(100vh-200px)]"
           orden={orden}
           total={total}
           onUpdateQuantity={actualizarCantidad}
@@ -430,6 +419,16 @@ const POS = () => {
         onClose={() => setModalPagosAbierto(false)}
         total={total}
         onConfirm={handleConfirmarPagos}
+      />
+
+      {/* Modal de Dirección */}
+      <AddressSelectionModal
+        isOpen={modalDireccionAbierto}
+        onClose={() => setModalDireccionAbierto(false)}
+        onConfirm={handleConfirmarDireccion}
+        clientes={clientes}
+        clienteSeleccionado={clienteSeleccionado}
+        onClienteChange={setClienteSeleccionado}
       />
     </div>
   );

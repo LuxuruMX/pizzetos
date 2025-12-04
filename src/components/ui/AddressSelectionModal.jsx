@@ -1,0 +1,178 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Select from 'react-select';
+import { catalogsService } from '@/services/catalogsService';
+import { FaMapMarkerAlt, FaTimes } from 'react-icons/fa';
+
+const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSeleccionado, onClienteChange }) => {
+    const [direcciones, setDirecciones] = useState([]);
+    const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchDirecciones = async () => {
+            if (clienteSeleccionado?.value) {
+                setLoading(true);
+                setError(null);
+                setDireccionSeleccionada(null);
+                try {
+                    const data = await catalogsService.getClientesDirecciones(clienteSeleccionado.value);
+                    setDirecciones(data);
+                    if (data.length === 0) {
+                        setError('Este cliente no tiene direcciones registradas.');
+                    }
+                } catch (err) {
+                    console.error('Error al cargar direcciones:', err);
+                    setError('Error al cargar las direcciones del cliente.');
+                    setDirecciones([]);
+                } finally {
+                    setLoading(false);
+                }
+            } else {
+                setDirecciones([]);
+                setDireccionSeleccionada(null);
+            }
+        };
+
+        if (isOpen) {
+            setDireccionSeleccionada(null); // Reset selection when modal opens
+            fetchDirecciones();
+        }
+    }, [clienteSeleccionado, isOpen]);
+
+    const handleConfirm = () => {
+        if (clienteSeleccionado && direccionSeleccionada) {
+            onConfirm(clienteSeleccionado, direccionSeleccionada);
+            onClose();
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b">
+                    <div className="flex items-center gap-3">
+                        <FaMapMarkerAlt className="text-2xl text-orange-500" />
+                        <h2 className="text-2xl font-bold text-gray-800">Seleccionar Dirección de Entrega</h2>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        <FaTimes className="text-2xl" />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                    {/* Customer Selector */}
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Cliente <span className="text-red-500">*</span>
+                        </label>
+                        <Select
+                            options={clientes}
+                            value={clienteSeleccionado}
+                            onChange={onClienteChange}
+                            placeholder="Buscar y seleccionar cliente..."
+                            isClearable
+                            isSearchable
+                            className="text-black"
+                        />
+                    </div>
+
+                    {/* Address List */}
+                    {clienteSeleccionado && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-3">
+                                Dirección <span className="text-red-500">*</span>
+                            </label>
+
+                            {loading && (
+                                <div className="text-center py-8">
+                                    <p className="text-gray-500">Cargando direcciones...</p>
+                                </div>
+                            )}
+
+                            {error && (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                                    <p className="text-yellow-800">{error}</p>
+                                </div>
+                            )}
+
+                            {!loading && !error && direcciones.length > 0 && (
+                                <div className="space-y-3">
+                                    {direcciones.map((direccion) => (
+                                        <div
+                                            key={direccion.id_dir}
+                                            onClick={() => setDireccionSeleccionada(direccion.id_dir)}
+                                            className={`border rounded-lg p-4 cursor-pointer transition-all ${direccionSeleccionada === direccion.id_dir
+                                                ? 'border-orange-500 bg-orange-50 shadow-md'
+                                                : 'border-gray-300 hover:border-orange-300 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <input
+                                                    type="radio"
+                                                    name="direccion"
+                                                    checked={direccionSeleccionada === direccion.id_dir}
+                                                    onChange={() => setDireccionSeleccionada(direccion.id_dir)}
+                                                    className="mt-1 text-orange-500 focus:ring-orange-500"
+                                                />
+                                                <div className="flex-1">
+                                                    <p className="font-medium text-gray-800 mb-1">
+                                                        {direccion.calle}
+                                                    </p>
+                                                    <div className="text-sm text-gray-600 space-y-1">
+                                                        <p>
+                                                            <span className="font-medium">Manzana:</span> {direccion.manzana} |
+                                                            <span className="font-medium"> Lote:</span> {direccion.lote}
+                                                        </p>
+                                                        <p>
+                                                            <span className="font-medium">Colonia:</span> {direccion.colonia}
+                                                        </p>
+                                                        {direccion.referencia && (
+                                                            <p className="italic">
+                                                                <span className="font-medium">Referencia:</span> {direccion.referencia}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="border-t p-6 bg-gray-50">
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-lg transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleConfirm}
+                            disabled={!clienteSeleccionado || !direccionSeleccionada}
+                            className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
+                        >
+                            Confirmar Selección
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default AddressSelectionModal;
