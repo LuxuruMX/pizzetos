@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { catalogsService } from '@/services/catalogsService';
-import { FaMapMarkerAlt, FaTimes, FaUserPlus } from 'react-icons/fa';
+import { clientesService } from '@/services/clientesService';
+import { FaMapMarkerAlt, FaTimes, FaUserPlus, FaPlus } from 'react-icons/fa';
 import AddClientModal from './AddClientModal';
+import ModalDirecciones from './ModalDirecciones';
 
 const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSeleccionado, onClienteChange, onClienteCreado }) => {
     const [direcciones, setDirecciones] = useState([]);
@@ -12,6 +14,8 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [modalAgregarCliente, setModalAgregarCliente] = useState(false);
+    const [modalAgregarDireccion, setModalAgregarDireccion] = useState(false);
+    const [loadingDireccion, setLoadingDireccion] = useState(false);
 
     useEffect(() => {
         const fetchDirecciones = async () => {
@@ -53,6 +57,32 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
         // Seleccionar automáticamente el nuevo cliente
         onClienteChange(nuevoCliente);
         console.log('AddressSelectionModal - Cliente cambiado, el useEffect debería dispararse');
+    };
+
+    const handleDireccionCreada = async (dataDireccion) => {
+        if (!clienteSeleccionado?.value) return;
+
+        setLoadingDireccion(true);
+        try {
+            const response = await clientesService.addDireccion(clienteSeleccionado.value, dataDireccion);
+            // Recargar las direcciones del cliente
+            const data = await catalogsService.getClientesDirecciones(clienteSeleccionado.value);
+            setDirecciones(data);
+            setError(null);
+            // Si la respuesta incluye el id de la nueva dirección, seleccionarla automáticamente
+            if (response?.id_dir) {
+                setDireccionSeleccionada(response.id_dir);
+            } else if (data.length > 0) {
+                // Seleccionar la última dirección agregada
+                setDireccionSeleccionada(data[data.length - 1].id_dir);
+            }
+            setModalAgregarDireccion(false);
+        } catch (err) {
+            console.error('Error al crear dirección:', err);
+            alert(err.message || 'Error al crear la dirección');
+        } finally {
+            setLoadingDireccion(false);
+        }
     };
 
     const handleConfirm = () => {
@@ -104,7 +134,7 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
                             <button
                                 type="button"
                                 onClick={() => setModalAgregarCliente(true)}
-                                className="bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                                className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
                                 title="Agregar nuevo cliente"
                             >
                                 <FaUserPlus />
@@ -112,16 +142,27 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
                             </button>
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
-                            ¿No encuentras al cliente? Haz clic en <span className="text-green-600 font-medium">Nuevo</span> para agregarlo.
+                            ¿No encuentras al cliente? Haz clic en <span className="text-yellow-600 font-medium">Nuevo</span> para agregarlo.
                         </p>
                     </div>
 
                     {/* Address List */}
                     {clienteSeleccionado && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                                Dirección <span className="text-red-500">*</span>
-                            </label>
+                            <div className="flex items-center justify-between mb-3">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Dirección <span className="text-red-500">*</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setModalAgregarDireccion(true)}
+                                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 text-sm"
+                                    title="Agregar nueva dirección a este cliente"
+                                >
+                                    <FaPlus className="text-xs" />
+                                    <span>Nueva Dirección</span>
+                                </button>
+                            </div>
 
                             {loading && (
                                 <div className="text-center py-8">
@@ -207,6 +248,16 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
                 isOpen={modalAgregarCliente}
                 onClose={() => setModalAgregarCliente(false)}
                 onClienteCreado={handleClienteCreado}
+            />
+
+            {/* Modal para agregar nueva dirección */}
+            <ModalDirecciones
+                isOpen={modalAgregarDireccion}
+                onClose={() => setModalAgregarDireccion(false)}
+                cliente={clienteSeleccionado ? { nombre: clienteSeleccionado.label.split(' ')[0], apellido: clienteSeleccionado.label.split(' ').slice(1).join(' ') || '' } : null}
+                direccionActual={null}
+                onSubmit={handleDireccionCreada}
+                loading={loadingDireccion}
             />
         </div>
     );
