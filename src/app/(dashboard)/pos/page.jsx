@@ -10,10 +10,7 @@ import ProductModal from '@/components/ui/ProductModal';
 import PaymentModal from '@/components/ui/PaymentModal';
 import AddressSelectionModal from '@/components/ui/AddressSelectionModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
-import Select from 'react-select';
-import { PiPlusFill } from "react-icons/pi";
 import { MdComment } from "react-icons/md";
-import Link from 'next/link';
 
 // Función para decodificar el carrito desde la URL
 const decodeCartFromUrl = () => {
@@ -350,7 +347,6 @@ const POS = () => {
 
       <div className="flex flex-1">
         <CartSection
-          className="max-h-[calc(100vh-200px)]"
           orden={orden}
           total={total}
           onUpdateQuantity={actualizarCantidad}
@@ -468,6 +464,10 @@ const POS = () => {
         clientes={clientes}
         clienteSeleccionado={clienteSeleccionado}
         onClienteChange={setClienteSeleccionado}
+        onClienteCreado={(nuevoCliente) => {
+          // Agregar el nuevo cliente a la lista
+          setClientes(prev => [...prev, nuevoCliente]);
+        }}
       />
     </div>
   );

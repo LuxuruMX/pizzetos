@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { catalogsService } from '@/services/catalogsService';
-import { FaMapMarkerAlt, FaTimes } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaTimes, FaUserPlus } from 'react-icons/fa';
+import AddClientModal from './AddClientModal';
 
-const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSeleccionado, onClienteChange }) => {
+const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSeleccionado, onClienteChange, onClienteCreado }) => {
     const [direcciones, setDirecciones] = useState([]);
     const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [modalAgregarCliente, setModalAgregarCliente] = useState(false);
 
     useEffect(() => {
         const fetchDirecciones = async () => {
@@ -41,6 +43,17 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
             fetchDirecciones();
         }
     }, [clienteSeleccionado, isOpen]);
+
+    const handleClienteCreado = (nuevoCliente) => {
+        console.log('AddressSelectionModal - handleClienteCreado llamado con:', nuevoCliente);
+        // Notificar al componente padre para que actualice la lista de clientes
+        if (onClienteCreado) {
+            onClienteCreado(nuevoCliente);
+        }
+        // Seleccionar automáticamente el nuevo cliente
+        onClienteChange(nuevoCliente);
+        console.log('AddressSelectionModal - Cliente cambiado, el useEffect debería dispararse');
+    };
 
     const handleConfirm = () => {
         if (clienteSeleccionado && direccionSeleccionada) {
@@ -75,15 +88,32 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Cliente <span className="text-red-500">*</span>
                         </label>
-                        <Select
-                            options={clientes}
-                            value={clienteSeleccionado}
-                            onChange={onClienteChange}
-                            placeholder="Buscar y seleccionar cliente..."
-                            isClearable
-                            isSearchable
-                            className="text-black"
-                        />
+                        <div className="flex gap-2">
+                            <div className="flex-1">
+                                <Select
+                                    options={clientes}
+                                    value={clienteSeleccionado}
+                                    onChange={onClienteChange}
+                                    placeholder="Buscar y seleccionar cliente..."
+                                    isClearable
+                                    isSearchable
+                                    className="text-black"
+                                    noOptionsMessage={() => "No se encontraron clientes"}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setModalAgregarCliente(true)}
+                                className="bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                                title="Agregar nuevo cliente"
+                            >
+                                <FaUserPlus />
+                                <span className="hidden sm:inline">Nuevo</span>
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                            ¿No encuentras al cliente? Haz clic en <span className="text-green-600 font-medium">Nuevo</span> para agregarlo.
+                        </p>
                     </div>
 
                     {/* Address List */}
@@ -171,8 +201,16 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
                     </div>
                 </div>
             </div>
+
+            {/* Modal para agregar nuevo cliente */}
+            <AddClientModal
+                isOpen={modalAgregarCliente}
+                onClose={() => setModalAgregarCliente(false)}
+                onClienteCreado={handleClienteCreado}
+            />
         </div>
     );
 };
 
 export default AddressSelectionModal;
+
