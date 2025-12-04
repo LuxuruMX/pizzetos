@@ -221,12 +221,18 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
     if (datosExtra.mesa) {
       ordenParaEnviar.mesa = parseInt(datosExtra.mesa);
     }
+    if (datosExtra.nombreClie) {
+      ordenParaEnviar.nombreClie = datosExtra.nombreClie;
+    }
     // No lleva pagos ni id_cliente obligatoriamente
   } else if (tipo_servicio === 1) { // Para llevar
     ordenParaEnviar.pagos = pagos.map(p => ({
       id_metpago: parseInt(p.id_metpago),
       monto: parseFloat(p.monto)
     }));
+    if (datosExtra.nombreClie) {
+      ordenParaEnviar.nombreClie = datosExtra.nombreClie;
+    }
     // No lleva mesa ni id_cliente
   } else if (tipo_servicio === 2) { // Domicilio
     if (datosExtra.id_cliente) {

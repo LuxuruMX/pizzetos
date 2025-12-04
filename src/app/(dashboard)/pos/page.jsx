@@ -70,6 +70,7 @@ const POS = () => {
   const [pagos, setPagos] = useState([]);
   const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
   const [mesa, setMesa] = useState('');
+  const [nombreClie, setNombreClie] = useState('');
 
   // Estados para dirección de domicilio
   const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
@@ -144,6 +145,15 @@ const POS = () => {
 
       if (tipoServicio === 0) {
         datosExtra.mesa = parseInt(mesa);
+        if (nombreClie.trim()) {
+          datosExtra.nombreClie = nombreClie;
+        }
+      }
+
+      if (tipoServicio === 1) {
+        if (nombreClie.trim()) {
+          datosExtra.nombreClie = nombreClie;
+        }
       }
 
       if (tipoServicio === 2) {
@@ -157,6 +167,7 @@ const POS = () => {
       setComentarios('');
       setPagos([]);
       setMesa('');
+      setNombreClie('');
       setDireccionSeleccionada(null);
       setTipoServicio(0); // Reset a Comedor
     } catch (error) {
@@ -186,6 +197,7 @@ const POS = () => {
       setComentarios('');
       setPagos([]);
       setMesa('');
+      setNombreClie('');
       setTipoServicio(0);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
@@ -206,6 +218,7 @@ const POS = () => {
       setComentarios('');
       setPagos([]);
       setMesa('');
+      setNombreClie('');
       setDireccionSeleccionada(null);
       setClienteSeleccionado(null);
       setTipoServicio(0); // Reset a Comedor
@@ -349,6 +362,8 @@ const POS = () => {
           onTipoServicioChange={setTipoServicio}
           mesa={mesa}
           onMesaChange={setMesa}
+          nombreClie={nombreClie}
+          onNombreClieChange={setNombreClie}
         />
 
         <ProductsSection

@@ -14,7 +14,9 @@ const CartSection = ({
   tipoServicio,
   onTipoServicioChange,
   mesa,
-  onMesaChange
+  onMesaChange,
+  nombreClie,
+  onNombreClieChange
 }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const menuRef = useRef(null);
@@ -84,6 +86,21 @@ const CartSection = ({
               value={mesa}
               onChange={(e) => onMesaChange(e.target.value)}
               placeholder="Número de mesa"
+              className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+          </div>
+        )}
+
+        {/* Input de Nombre (Para Comedor y Para Llevar - Tipos 0 y 1) */}
+        {(tipoServicio === 0 || tipoServicio === 1) && (
+          <div className="mb-4 text-black">
+            <label className="block text-sm font-bold mb-1">Nombre:</label>
+            <input
+              type="text"
+              value={nombreClie}
+              onChange={(e) => onNombreClieChange(e.target.value)}
+              placeholder="Nombre del cliente"
+              maxLength={50}
               className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
