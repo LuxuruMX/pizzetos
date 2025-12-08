@@ -48,9 +48,9 @@ const CartSection = ({
       {/* Sección superior: Título y Lista de Artículos (se desplaza) */}
       <div className="flex-1 overflow-y-auto">
         <div>
-          <h2 className="text-2xl font-bold mb-4 px-6 pt-6 text-black">Carrito</h2>
+          <h2 className="text-2xl font-bold mb-4 px-6 pt-6 text-black">Productos</h2>
           {orden.length === 0 ? (
-            <p className="text-gray-500 px-6">El carrito está vacío.</p>
+            <p className="text-gray-500 px-6">Sin productos seleccionados</p>
           ) : (
             <div>
               <ul className="mb-4 space-y-2 px-6">

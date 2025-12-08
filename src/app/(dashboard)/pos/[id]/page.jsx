@@ -13,12 +13,13 @@ import { useCartEdit } from "@/hooks/useCartEdit";
 import CartSection from "@/components/ui/CartSection";
 import ProductsSection from "@/components/ui/ProductsSection";
 import ProductModal from "@/components/ui/ProductModal";
+import PaymentModal from "@/components/ui/PaymentModal";
+import AddressSelectionModal from "@/components/ui/AddressSelectionModal";
 import {
   ModalPaquete1,
   ModalPaquete2,
   ModalPaquete3,
 } from "@/components/ui/PaquetesModal";
-import Select from "react-select";
 import { MdComment, MdArrowBack } from "react-icons/md";
 import Link from "next/link";
 
@@ -59,8 +60,19 @@ const POSEdit = () => {
 
   const [categorias] = useState(CATEGORIAS);
   const [categoriaActiva, setCategoriaActiva] = useState("pizzas");
+
+  // Estados para tipo de servicio y pagos
+  const [tipoServicio, setTipoServicio] = useState(0);
+  const [pagos, setPagos] = useState([]);
+  const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
+  const [mesa, setMesa] = useState('');
+  const [nombreClie, setNombreClie] = useState('');
+
+  // Estados para dirección de domicilio
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
+  const [modalDireccionAbierto, setModalDireccionAbierto] = useState(false);
 
   // Estados para comentarios
   const [comentarios, setComentarios] = useState("");
@@ -94,16 +106,26 @@ const POSEdit = () => {
         setComentarios(detalleData.comentarios || "");
         setStatusPrincipal(detalleData.status);
 
-        // Cargar productos originales
-        // Dentro del useEffect en POSEdit.js
-        if (detalleData.productos && Array.isArray(detalleData.productos)) {
-          cargarProductosOriginales(detalleData.productos, productosData); // Pasar productosData
-        } else {
-          console.warn("No se encontraron productos en el detalle de venta");
-          cargarProductosOriginales([], productosData); // Pasar array vacío con productosData
+        // Cargar tipo de servicio y datos relacionados
+        if (detalleData.tipo_servicio !== undefined) {
+          setTipoServicio(detalleData.tipo_servicio);
+        }
+        if (detalleData.mesa) {
+          setMesa(detalleData.mesa.toString());
+        }
+        if (detalleData.nombreClie) {
+          setNombreClie(detalleData.nombreClie);
         }
 
-        // Configurar clientes
+        // Cargar productos originales
+        if (detalleData.productos && Array.isArray(detalleData.productos)) {
+          cargarProductosOriginales(detalleData.productos, productosData);
+        } else {
+          console.warn("No se encontraron productos en el detalle de venta");
+          cargarProductosOriginales([], productosData);
+        }
+
+        // Configurar clientes para domicilio
         const opcionesClientes = clientesData.map((cliente) => ({
           value: cliente.id_clie,
           label:
@@ -111,11 +133,17 @@ const POSEdit = () => {
         }));
         setClientes(opcionesClientes);
 
-        const clienteEncontrado = opcionesClientes.find(
-          (c) => c.value === detalleData.cliente
-        );
-        if (clienteEncontrado) {
-          setClienteSeleccionado(clienteEncontrado);
+        // Si es domicilio, cargar cliente
+        if (detalleData.tipo_servicio === 2 && detalleData.cliente) {
+          const clienteEncontrado = opcionesClientes.find(
+            (c) => c.value === detalleData.cliente
+          );
+          if (clienteEncontrado) {
+            setClienteSeleccionado(clienteEncontrado);
+          }
+          if (detalleData.id_direccion) {
+            setDireccionSeleccionada(detalleData.id_direccion);
+          }
         }
       } catch (error) {
         console.error("Error al cargar datos:", error);
@@ -131,9 +159,22 @@ const POSEdit = () => {
   }, [idVenta]);
 
   const handleActualizarPedido = async () => {
-    if (!clienteSeleccionado) {
-      alert("Por favor, selecciona un cliente antes de actualizar el pedido.");
-      return;
+    // Validación por tipo de servicio
+    if (tipoServicio === 2) { // Domicilio
+      if (!clienteSeleccionado || !direccionSeleccionada) {
+        setModalDireccionAbierto(true);
+        return;
+      }
+    } else if (tipoServicio === 1) { // Para Llevar
+      if (pagos.length === 0) {
+        setModalPagosAbierto(true);
+        return;
+      }
+    } else if (tipoServicio === 0) { // Comer Aquí
+      if (!mesa || mesa.trim() === '') {
+        alert('Por favor, ingresa el número de mesa.');
+        return;
+      }
     }
 
     try {
@@ -142,14 +183,34 @@ const POSEdit = () => {
       // Si el status principal es 2 (Listo), cambiarlo a 1 (En preparación)
       const nuevoStatusPrincipal = statusPrincipal === 2 ? 1 : statusPrincipal;
 
+      // Preparar datos adicionales según tipo de servicio
       const payload = {
-        id_suc: detalleVenta.id_suc || 1, // Fallback a 1 si no viene
-        id_cliente: clienteSeleccionado.value,
+        id_suc: detalleVenta.id_suc || 1,
         total: total,
         comentarios: comentarios.trim() || null,
         status: nuevoStatusPrincipal,
+        tipo_servicio: tipoServicio,
         items: items
       };
+
+      // Agregar campos según tipo de servicio
+      if (tipoServicio === 0) { // Comedor
+        payload.mesa = parseInt(mesa);
+        if (nombreClie.trim()) {
+          payload.nombreClie = nombreClie;
+        }
+      } else if (tipoServicio === 1) { // Para Llevar
+        payload.pagos = pagos.map(p => ({
+          id_metpago: parseInt(p.id_metpago),
+          monto: parseFloat(p.monto)
+        }));
+        if (nombreClie.trim()) {
+          payload.nombreClie = nombreClie;
+        }
+      } else if (tipoServicio === 2) { // Domicilio
+        payload.id_cliente = clienteSeleccionado.value;
+        payload.id_direccion = direccionSeleccionada;
+      }
 
       console.log("Enviando actualización:", payload);
 
@@ -161,6 +222,17 @@ const POSEdit = () => {
       console.error("Error al actualizar pedido:", error);
       alert(error.message || "Hubo un error al actualizar el pedido.");
     }
+  };
+
+  const handleConfirmarPagos = (pagosConfirmados) => {
+    setPagos(pagosConfirmados);
+    setModalPagosAbierto(false);
+  };
+
+  const handleConfirmarDireccion = (cliente, idDireccion) => {
+    setClienteSeleccionado(cliente);
+    setDireccionSeleccionada(idDireccion);
+    setModalDireccionAbierto(false);
   };
 
   const handleCategoriaChange = (categoria) => {
@@ -269,13 +341,12 @@ const POSEdit = () => {
             <p className="text-sm text-gray-600">
               {detalleVenta.sucursal} -
               <span
-                className={`ml-2 font-semibold ${
-                  detalleVenta.status === 0
-                    ? "text-gray-400"
-                    : detalleVenta.status === 1
+                className={`ml-2 font-semibold ${detalleVenta.status === 0
+                  ? "text-gray-400"
+                  : detalleVenta.status === 1
                     ? "text-yellow-400"
                     : "text-green-600"
-                }`}
+                  }`}
               >
                 {detalleVenta.status_texto}
               </span>
@@ -304,22 +375,6 @@ const POSEdit = () => {
             Paquete 3
           </button>
         </div>
-
-        {/* Sección de Cliente */}
-        <div className="w-full md:w-1/3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Cliente
-          </label>
-          <Select
-            options={clientes}
-            value={clienteSeleccionado}
-            onChange={setClienteSeleccionado}
-            placeholder="Buscar y seleccionar cliente..."
-            isClearable
-            isSearchable
-            className="w-full text-black"
-          />
-        </div>
       </div>
 
       <div className="flex flex-1">
@@ -331,6 +386,12 @@ const POSEdit = () => {
           onEnviarOrden={handleActualizarPedido}
           comentarios={comentarios}
           onAbrirComentarios={() => setModalComentarios(true)}
+          tipoServicio={tipoServicio}
+          onTipoServicioChange={setTipoServicio}
+          mesa={mesa}
+          onMesaChange={setMesa}
+          nombreClie={nombreClie}
+          onNombreClieChange={setNombreClie}
           esEdicion={true}
           textoBoton="Actualizar Pedido"
         />
@@ -421,6 +482,27 @@ const POSEdit = () => {
         onClose={() => setModalPaquete3(false)}
         onConfirmar={handleConfirmarPaquete3}
         pizzas={productos.pizzas}
+      />
+
+      {/* Modal de Pagos */}
+      <PaymentModal
+        isOpen={modalPagosAbierto}
+        onClose={() => setModalPagosAbierto(false)}
+        total={total}
+        onConfirm={handleConfirmarPagos}
+      />
+
+      {/* Modal de Dirección */}
+      <AddressSelectionModal
+        isOpen={modalDireccionAbierto}
+        onClose={() => setModalDireccionAbierto(false)}
+        onConfirm={handleConfirmarDireccion}
+        clientes={clientes}
+        clienteSeleccionado={clienteSeleccionado}
+        onClienteChange={setClienteSeleccionado}
+        onClienteCreado={(nuevoCliente) => {
+          setClientes(prev => [...prev, nuevoCliente]);
+        }}
       />
     </div>
   );
