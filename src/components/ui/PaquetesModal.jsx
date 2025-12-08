@@ -15,7 +15,7 @@ export const ModalPaquete1 = ({ isOpen, onClose, onConfirmar }) => {
             <IoClose size={24} />
           </button>
         </div>
-        
+
         <div className="mb-6">
           <p className="text-gray-700 mb-4">Este paquete incluye:</p>
           <ul className="list-disc list-inside text-gray-600 space-y-2">
@@ -74,7 +74,7 @@ export const ModalPaquete2 = ({ isOpen, onClose, onConfirmar, pizzas, hamburgues
             <IoClose size={24} />
           </button>
         </div>
-        
+
         <p className="text-xl font-bold text-green-600 mb-4">Precio: $265.00</p>
 
         {/* Selector de tipo */}
@@ -85,21 +85,19 @@ export const ModalPaquete2 = ({ isOpen, onClose, onConfirmar, pizzas, hamburgues
           <div className="flex gap-4">
             <button
               onClick={() => setSeleccion({ ...seleccion, tipo: 'hamburguesa', idProducto: null })}
-              className={`flex-1 py-2 px-4 rounded font-medium ${
-                seleccion.tipo === 'hamburguesa'
-                  ? 'bg-yellow-400 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={`flex-1 py-2 px-4 rounded font-medium ${seleccion.tipo === 'hamburguesa'
+                ? 'bg-yellow-400 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
             >
               Hamburguesa
             </button>
             <button
               onClick={() => setSeleccion({ ...seleccion, tipo: 'alitas', idProducto: null })}
-              className={`flex-1 py-2 px-4 rounded font-medium ${
-                seleccion.tipo === 'alitas'
-                  ? 'bg-yellow-400 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={`flex-1 py-2 px-4 rounded font-medium ${seleccion.tipo === 'alitas'
+                ? 'bg-yellow-400 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
             >
               Alitas
             </button>
@@ -119,11 +117,10 @@ export const ModalPaquete2 = ({ isOpen, onClose, onConfirmar, pizzas, hamburgues
                   ...seleccion,
                   idProducto: producto[seleccion.tipo === 'hamburguesa' ? 'id_hamb' : 'id_alis']
                 })}
-                className={`p-3 rounded border-2 text-left ${
-                  seleccion.idProducto === producto[seleccion.tipo === 'hamburguesa' ? 'id_hamb' : 'id_alis']
-                    ? 'border-yellow-400 bg-yellow-50'
-                    : 'border-gray-300 hover:border-yellow-300'
-                }`}
+                className={`p-3 rounded border-2 text-left ${seleccion.idProducto === producto[seleccion.tipo === 'hamburguesa' ? 'id_hamb' : 'id_alis']
+                  ? 'border-yellow-400 bg-yellow-50'
+                  : 'border-gray-300 hover:border-yellow-300'
+                  }`}
               >
                 <p className="font-medium text-gray-900">{producto.nombre}</p>
               </button>
@@ -138,16 +135,15 @@ export const ModalPaquete2 = ({ isOpen, onClose, onConfirmar, pizzas, hamburgues
           </label>
           <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto">
             {pizzas
-              .filter(p => p.tamano === 'Grande')
+              .filter(p => p.tamano === 'Grande Especial')
               .map((pizza) => (
                 <button
                   key={pizza.id_pizza}
                   onClick={() => setSeleccion({ ...seleccion, idPizza: pizza.id_pizza })}
-                  className={`p-3 rounded border-2 text-left ${
-                    seleccion.idPizza === pizza.id_pizza
-                      ? 'border-yellow-400 bg-yellow-50'
-                      : 'border-gray-300 hover:border-yellow-300'
-                  }`}
+                  className={`p-3 rounded border-2 text-left ${seleccion.idPizza === pizza.id_pizza
+                    ? 'border-yellow-400 bg-yellow-50'
+                    : 'border-gray-300 hover:border-yellow-300'
+                    }`}
                 >
                   <p className="font-medium text-gray-900">{pizza.nombre}</p>
                 </button>
@@ -210,7 +206,7 @@ export const ModalPaquete3 = ({ isOpen, onClose, onConfirmar, pizzas }) => {
             <IoClose size={24} />
           </button>
         </div>
-        
+
         <p className="text-xl font-bold text-green-600 mb-2">Precio: $395.00</p>
         <p className="text-sm text-gray-600 mb-4">
           Selecciona 3 Pizzas Grandes ({pizzasSeleccionadas.length}/3 seleccionadas)
@@ -219,19 +215,18 @@ export const ModalPaquete3 = ({ isOpen, onClose, onConfirmar, pizzas }) => {
         <div className="mb-6">
           <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
             {pizzas
-              .filter(p => p.tamano === 'Grande')
+              .filter(p => p.tamano === 'Grande Especial')
               .map((pizza) => (
                 <button
                   key={pizza.id_pizza}
                   onClick={() => handleTogglePizza(pizza.id_pizza)}
                   disabled={!pizzasSeleccionadas.includes(pizza.id_pizza) && pizzasSeleccionadas.length >= 3}
-                  className={`p-3 rounded border-2 text-left ${
-                    pizzasSeleccionadas.includes(pizza.id_pizza)
-                      ? 'border-yellow-400 bg-yellow-50'
-                      : pizzasSeleccionadas.length >= 3
+                  className={`p-3 rounded border-2 text-left ${pizzasSeleccionadas.includes(pizza.id_pizza)
+                    ? 'border-yellow-400 bg-yellow-50'
+                    : pizzasSeleccionadas.length >= 3
                       ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
                       : 'border-gray-300 hover:border-yellow-300'
-                  }`}
+                    }`}
                 >
                   <p className="font-medium text-gray-900">{pizza.nombre}</p>
                   {pizzasSeleccionadas.includes(pizza.id_pizza) && (

@@ -133,11 +133,6 @@ export const actualizarPedidoCocina = async (idVenta, datos) => {
   }
 };
 
-/**
- * Enviar una nueva orden
- */
-// En orderService.js, reemplaza la función enviarOrdenAPI con esta versión corregida:
-
 export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', tipo_servicio = 2, pagos = []) => {
   if (orden.length === 0) {
     throw new Error('La orden está vacía');
