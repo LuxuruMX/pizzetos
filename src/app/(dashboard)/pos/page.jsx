@@ -176,18 +176,17 @@ const POS = () => {
   const handleConfirmarPagos = (pagosConfirmados) => {
     setPagos(pagosConfirmados);
     setModalPagosAbierto(false);
-    // Intentar enviar la orden inmediatamente después de confirmar pagos
-    // Usamos un timeout pequeño para asegurar que el estado se actualizó (aunque en React 18+ el batching podría manejarlo, es más seguro pasar los pagos directamente)
     enviarOrdenConPagos(pagosConfirmados);
   };
 
   const enviarOrdenConPagos = async (pagosConfirmados) => {
-    // Esta función se llama principalmente para "Para Llevar" (tipo 1) después del modal
     try {
       const datosExtra = {};
-      // Para tipo 1 no necesitamos cliente ni mesa obligatoriamente según la nueva lógica
-      // pero si hubiera cliente seleccionado se podría enviar si el backend lo permitiera.
-      // Por ahora seguimos la regla: Type 1 -> Solo pagos.
+
+      // Incluir el nombre del cliente si está presente
+      if (nombreClie.trim()) {
+        datosExtra.nombreClie = nombreClie;
+      }
 
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
       limpiarCarrito();
