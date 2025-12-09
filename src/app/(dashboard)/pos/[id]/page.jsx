@@ -378,6 +378,15 @@ const POSEdit = () => {
       </div>
 
       <div className="flex flex-1">
+        <ProductsSection
+          categorias={categorias}
+          categoriaActiva={categoriaActiva}
+          onCategoriaChange={handleCategoriaChange}
+          productos={procesarProductos()}
+          onProductoClick={handleProductoClick}
+          mostrarPrecio={!categoriasConModal.includes(categoriaActiva)}
+        />
+
         <CartSection
           orden={orden}
           total={total}
@@ -394,15 +403,6 @@ const POSEdit = () => {
           onNombreClieChange={setNombreClie}
           esEdicion={true}
           textoBoton="Actualizar Pedido"
-        />
-
-        <ProductsSection
-          categorias={categorias}
-          categoriaActiva={categoriaActiva}
-          onCategoriaChange={handleCategoriaChange}
-          productos={procesarProductos()}
-          onProductoClick={handleProductoClick}
-          mostrarPrecio={!categoriasConModal.includes(categoriaActiva)}
         />
       </div>
 

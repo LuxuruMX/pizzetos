@@ -345,6 +345,15 @@ const POS = () => {
       </div>
 
       <div className="flex flex-1">
+        <ProductsSection
+          categorias={categorias}
+          categoriaActiva={categoriaActiva}
+          onCategoriaChange={handleCategoriaChange}
+          productos={procesarProductos()}
+          onProductoClick={handleProductoClick}
+          mostrarPrecio={!categoriasConModal.includes(categoriaActiva)}
+        />
+
         <CartSection
           orden={orden}
           total={total}
@@ -359,15 +368,6 @@ const POS = () => {
           onMesaChange={setMesa}
           nombreClie={nombreClie}
           onNombreClieChange={setNombreClie}
-        />
-
-        <ProductsSection
-          categorias={categorias}
-          categoriaActiva={categoriaActiva}
-          onCategoriaChange={handleCategoriaChange}
-          productos={procesarProductos()}
-          onProductoClick={handleProductoClick}
-          mostrarPrecio={!categoriasConModal.includes(categoriaActiva)}
         />
       </div>
 
