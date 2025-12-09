@@ -30,7 +30,7 @@ import { IoIosAlbums, IoIosSettings } from "react-icons/io";
 
 // Configuración del menú con permisos asociados
 const menuConfig = [
-  { name: 'Dashboard', path: '/dashboard', icon: FaHome, permiso: null },
+  { name: 'Inicio', path: '/dashboard', icon: FaHome, permiso: null },
   {
     name: 'Empleados',
     path: '/empleados',
@@ -72,7 +72,7 @@ const menuConfig = [
     permiso: 'ver_venta',
     submenu: [
       { name: 'Resume', path: '/pedidos/resumen', icon: FaBorderAll, permiso: 'ver_venta' },
-      { name: 'POS', path: '/pos', icon: FaShoppingBasket, permiso: ['ver_venta', 'crear_venta'] },
+      { name: 'Venta', path: '/pos', icon: FaShoppingBasket, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Gastos', path: '/gastos', icon: FaMoneyBills, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
       { name: 'Pedidos', path: '/pedidos', icon: IoIosAlbums }
@@ -184,8 +184,8 @@ export default function NavBar({ isOpen, onClose }) {
                             key={subitem.path}
                             href={subitem.path}
                             className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${pathname === subitem.path
-                                ? 'bg-yellow-500 text-white'
-                                : 'text-gray-300 hover:bg-gray-800'
+                              ? 'bg-yellow-500 text-white'
+                              : 'text-gray-300 hover:bg-gray-800'
                               }`}
                           >
                             <subitem.icon className="text-sm" />
@@ -199,8 +199,8 @@ export default function NavBar({ isOpen, onClose }) {
                   <Link
                     href={item.path}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${pathname === item.path
-                        ? 'bg-yellow-500 text-white'
-                        : 'text-gray-300 hover:bg-gray-800'
+                      ? 'bg-yellow-500 text-white'
+                      : 'text-gray-300 hover:bg-gray-800'
                       }`}
                   >
                     <item.icon className="text-lg" />
