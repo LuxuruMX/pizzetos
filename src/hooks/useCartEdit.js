@@ -139,7 +139,8 @@ export const useCartEdit = () => {
       // Usar index para garantizar unicidad si hay múltiples líneas del mismo producto
       const idCarrito = `original_${prod.tipo}_${prod.id}_${index}_${prod.tamaño || 'std'}`;
 
-      return {
+      // Preparar objeto base
+      const itemBase = {
         // IDs
         id: idCarrito,
         idProducto: prod.id, // ID real del producto
@@ -166,6 +167,20 @@ export const useCartEdit = () => {
         // Para items agrupados (pizzas del mismo tamaño)
         productos: null
       };
+
+      // Si es un paquete, agregar datoPaquete con la información del backend
+      if (esPaquete) {
+        itemBase.datoPaquete = {
+          id_paquete: prod.id,
+          id_refresco: prod.id_refresco || null,
+          detalle_paquete: prod.detalle_paquete || null,
+          id_pizza: prod.id_pizza || null,
+          id_hamb: prod.id_hamb || null,
+          id_alis: prod.id_alis || null,
+        };
+      }
+
+      return itemBase;
     });
 
     // Agrupar pizzas/mariscos del mismo tamaño
@@ -577,7 +592,7 @@ export const useCartEdit = () => {
           cantidad: item.cantidad,
           precio_unitario: item.precioUnitario,
           id_paquete: item.datoPaquete.id_paquete,
-          status: item.status || 1,
+          status: item.status ?? 1,
         };
 
         // Si es nuevo, incluir detalles de composición
@@ -608,7 +623,7 @@ export const useCartEdit = () => {
             cantidad: prod.cantidad,
             precio_unitario: item.precioUnitario || 0,
             [item.tipoId]: prod.idProducto || prod.id, // Usar idProducto si existe, sino id
-            status: prod.status !== undefined ? prod.status : (item.status || 1),
+            status: prod.status !== undefined ? prod.status : (item.status ?? 1),
           });
         });
       } else {
@@ -617,7 +632,7 @@ export const useCartEdit = () => {
           cantidad: item.cantidad,
           precio_unitario: item.precioUnitario || 0,
           [item.tipoId]: item.idProducto,
-          status: item.status || 1,
+          status: item.status ?? 1,
         });
       }
     });

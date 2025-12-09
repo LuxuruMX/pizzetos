@@ -212,7 +212,21 @@ const POSEdit = () => {
         payload.id_direccion = direccionSeleccionada;
       }
 
-      console.log("Enviando actualización:", payload);
+      // Mostrar en consola lo que se envía al backend
+      console.log("═══════════════════════════════════════════════════════");
+      console.log("📤 ENVIANDO ACTUALIZACIÓN AL BACKEND - POS EDIT");
+      console.log("═══════════════════════════════════════════════════════");
+      console.log("🆔 ID Venta:", idVenta);
+      console.log("📦 Tipo de Servicio:", tipoServicio === 0 ? "Comedor" : tipoServicio === 1 ? "Para Llevar" : "Domicilio");
+      console.log("💰 Total:", total);
+      console.log("📋 Items enviados:", items.length);
+      console.log("\n🔍 ITEMS DETALLADOS:");
+      items.forEach((item, index) => {
+        console.log(`  Item ${index + 1}:`, JSON.stringify(item, null, 2));
+      });
+      console.log("\n📄 PAYLOAD COMPLETO:");
+      console.log(JSON.stringify(payload, null, 2));
+      console.log("═══════════════════════════════════════════════════════\n");
 
       await actualizarPedidoCocina(idVenta, payload);
 
