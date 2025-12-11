@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
 import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS } from '@/services/orderService';
 import { useCart } from '@/hooks/useCart';
@@ -31,6 +32,7 @@ const decodeCartFromUrl = () => {
 };
 
 const POS = () => {
+  const router = useRouter();
   const initialCartFromUrl = decodeCartFromUrl();
 
   const {
@@ -88,6 +90,16 @@ const POS = () => {
   const [modalPaquete3, setModalPaquete3] = useState(false);
 
   useEffect(() => {
+    // Verificar si hay una caja abierta
+    if (typeof window !== 'undefined') {
+      const idCaja = localStorage.getItem('id_caja');
+      if (!idCaja) {
+        alert('Debes abrir una caja antes de acceder al Punto de Venta.');
+        router.push('/caja');
+        return;
+      }
+    }
+
     const cargarDatos = async () => {
       try {
         setLoading(true);
@@ -111,7 +123,7 @@ const POS = () => {
     };
 
     cargarDatos();
-  }, []);
+  }, [router]);
 
   // El modal de dirección se abre manualmente al enviar orden, no automáticamente
 

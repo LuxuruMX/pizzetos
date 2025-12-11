@@ -117,6 +117,17 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                                     />
                                     <span>Egreso</span>
                                 </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="tipo_movimiento"
+                                        value="retiro"
+                                        checked={movData.tipo_movimiento === 'retiro'}
+                                        onChange={handleMovChange}
+                                        className="text-yellow-500 focus:ring-yellow-500"
+                                    />
+                                    <span>Retiro</span>
+                                </label>
                             </div>
                         </div>
 

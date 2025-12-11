@@ -209,6 +209,7 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
     status: 0, // El usuario indicó status 1 en el ejemplo
     tipo_servicio: parseInt(tipo_servicio),
     items,
+    id_caja: localStorage.getItem('id_caja') ? parseInt(localStorage.getItem('id_caja')) : 0,
   };
 
   // Agregar campos según tipo de servicio
