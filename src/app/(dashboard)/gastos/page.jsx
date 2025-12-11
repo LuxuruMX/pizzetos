@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
+import { getSucursalFromToken } from '@/services/jwt';
 import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -27,8 +28,8 @@ export default function GastosPage() {
 
   const [permisos, setPermisos] = useState(null);
 
+  // Nuevo useEffect para verificar id_caja
   useEffect(() => {
-    // Leer permisos del token
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('access_token');
       if (token) {
@@ -43,9 +44,10 @@ export default function GastosPage() {
   }, []);
 
   useEffect(() => {
-    // Cargar gastos iniciales sin filtros
-    fetchGastos();
-  }, []);
+    if (permisos !== null) {
+      fetchGastos();
+    }
+  }, [permisos]);
 
   // useEffect para recalcular totales cuando cambien los gastos
   useEffect(() => {
@@ -61,6 +63,9 @@ export default function GastosPage() {
       const queryParams = new URLSearchParams();
       if (inicio) queryParams.append('fecha_inicio', inicio);
       if (fin) queryParams.append('fecha_fin', fin);
+
+      const id_suc = getSucursalFromToken();
+      if (id_suc) queryParams.append('id_suc', id_suc);
 
       const queryString = queryParams.toString();
       const url = `/gastos${queryString ? `?${queryString}` : ''}`;
@@ -159,6 +164,7 @@ export default function GastosPage() {
     });
   };
 
+  // Renderizado condicional mientras se verifica el id_caja y los permisos
   if (permisos === null) {
     return (
       <div className="p-6">

@@ -35,6 +35,7 @@ const POS = () => {
   const router = useRouter();
   const initialCartFromUrl = decodeCartFromUrl();
 
+  // Estados del componente
   const {
     orden,
     total,
@@ -43,7 +44,7 @@ const POS = () => {
     actualizarCantidad,
     eliminarDelCarrito,
     limpiarCarrito,
-  } = useCart(initialCartFromUrl); // Pasa el carrito inicial aquí
+  } = useCart(initialCartFromUrl);
 
   const [productos, setProductos] = useState({
     hamburguesas: [],
@@ -63,44 +64,34 @@ const POS = () => {
   const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-
-  // Estado para tipo de servicio y pagos
   const [tipoServicio, setTipoServicio] = useState(0);
   const [pagos, setPagos] = useState([]);
   const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
   const [mesa, setMesa] = useState('');
   const [nombreClie, setNombreClie] = useState('');
-
-  // Estados para dirección de domicilio
   const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
   const [modalDireccionAbierto, setModalDireccionAbierto] = useState(false);
-
-  // Estados para comentarios
   const [comentarios, setComentarios] = useState('');
   const [modalComentarios, setModalComentarios] = useState(false);
-
-  // Estados para el modal de productos
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [variantesProducto, setVariantesProducto] = useState([]);
-
-  // Estados para modales de paquetes
   const [modalPaquete1, setModalPaquete1] = useState(false);
   const [modalPaquete2, setModalPaquete2] = useState(false);
   const [modalPaquete3, setModalPaquete3] = useState(false);
 
+  // Efecto para verificar id_caja y cargar datos
   useEffect(() => {
-    // Verificar si hay una caja abierta
-    if (typeof window !== 'undefined') {
+    const checkAndRedirect = async () => {
       const idCaja = localStorage.getItem('id_caja');
       if (!idCaja) {
-        alert('Debes abrir una caja antes de acceder al Punto de Venta.');
-        router.push('/caja');
-        return;
+        setTimeout(() => {
+          router.push('/caja');
+        }, 0); // Un delay de 0 lo pone al final de la cola de tareas actuales
+        return; // Detener la ejecución de este efecto si nos vamos
       }
-    }
 
-    const cargarDatos = async () => {
+      // Si hay id_caja, procedemos a cargar los datos
       try {
         setLoading(true);
         const [productosData, clientesData] = await Promise.all([
@@ -122,26 +113,27 @@ const POS = () => {
       }
     };
 
-    cargarDatos();
-  }, [router]);
+    // Llamamos a la función asíncrona
+    checkAndRedirect();
 
-  // El modal de dirección se abre manualmente al enviar orden, no automáticamente
+  }, [router]); // Asegura que el efecto se vuelva a ejecutar si 'router' cambia
+
+
+  // --- El resto de tus funciones permanecen iguales ---
+  // (handleEnviarOrden, handleConfirmarPagos, etc.)
 
   const handleEnviarOrden = async () => {
-    // Validación por tipo de servicio
     if (tipoServicio === 2) { // Domicilio
-      // Abrir modal si no hay cliente o dirección seleccionada
       if (!clienteSeleccionado || !direccionSeleccionada) {
         setModalDireccionAbierto(true);
         return;
       }
-    } else if (tipoServicio === 1) { // Para Llevar
-      // Validar pagos si es necesario (aunque el modal se abre si no hay pagos)
+    } else if (tipoServicio === 1) {
       if (pagos.length === 0) {
         setModalPagosAbierto(true);
         return;
       }
-    } else if (tipoServicio === 0) { // Comer Aquí
+    } else if (tipoServicio === 0) {
       if (!mesa || mesa.trim() === '') {
         alert('Por favor, ingresa el número de mesa.');
         return;
@@ -149,7 +141,6 @@ const POS = () => {
     }
 
     try {
-      // Preparar datos adicionales según tipo de servicio
       const datosExtra = {};
 
       if (tipoServicio === 0) {
@@ -178,7 +169,7 @@ const POS = () => {
       setMesa('');
       setNombreClie('');
       setDireccionSeleccionada(null);
-      setTipoServicio(0); // Reset a Comedor
+      setTipoServicio(0);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -194,12 +185,9 @@ const POS = () => {
   const enviarOrdenConPagos = async (pagosConfirmados) => {
     try {
       const datosExtra = {};
-
-      // Incluir el nombre del cliente si está presente
       if (nombreClie.trim()) {
         datosExtra.nombreClie = nombreClie;
       }
-
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
       limpiarCarrito();
       setComentarios('');
@@ -219,9 +207,7 @@ const POS = () => {
         id_cliente: cliente.value,
         id_direccion: idDireccion
       };
-
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
-
       limpiarCarrito();
       setComentarios('');
       setPagos([]);
@@ -229,7 +215,7 @@ const POS = () => {
       setNombreClie('');
       setDireccionSeleccionada(null);
       setClienteSeleccionado(null);
-      setTipoServicio(0); // Reset a Comedor
+      setTipoServicio(0);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -240,14 +226,12 @@ const POS = () => {
     setCategoriaActiva(categoria);
   };
 
-  // Categorías que requieren modal
   const categoriasConModal = ['pizzas', 'refrescos', 'mariscos'];
 
   const handleProductoClick = (producto, tipoId) => {
     if (categoriasConModal.includes(categoriaActiva)) {
       const productosCategoria = productos[categoriaActiva];
       const variantes = productosCategoria.filter(p => p.nombre === producto.nombre);
-
       setProductoSeleccionado(producto.nombre);
       setVariantesProducto(variantes);
       setModalAbierto(true);
@@ -261,12 +245,11 @@ const POS = () => {
     setModalAbierto(false);
   };
 
-  // Handlers para los paquetes
   const handleConfirmarPaquete1 = () => {
     agregarPaquete({
       numeroPaquete: 1,
       precio: 295,
-      detallePaquete: "4,8", // IDs de las pizzas
+      detallePaquete: "4,8",
       idRefresco: 17
     });
     setModalPaquete1(false);
@@ -288,7 +271,7 @@ const POS = () => {
     agregarPaquete({
       numeroPaquete: 3,
       precio: 395,
-      detallePaquete: pizzasSeleccionadas.join(','), // IDs de las 3 pizzas
+      detallePaquete: pizzasSeleccionadas.join(','),
       idRefresco: 17
     });
     setModalPaquete3(false);
@@ -298,13 +281,11 @@ const POS = () => {
     setClienteSeleccionado(cliente);
     setDireccionSeleccionada(idDireccion);
     setModalDireccionAbierto(false);
-    // Enviar la orden inmediatamente
     enviarOrdenDomicilio(cliente, idDireccion);
   };
 
   const procesarProductos = () => {
     const productosCategoria = productos[categoriaActiva] || [];
-
     if (categoriasConModal.includes(categoriaActiva)) {
       const nombresUnicos = {};
       productosCategoria.forEach(producto => {
@@ -314,26 +295,28 @@ const POS = () => {
       });
       return Object.values(nombresUnicos);
     }
-
     return productosCategoria;
   };
 
+  // Renderizado condicional si aún está cargando o si se está redirigiendo
+  // Puedes mostrar un mensaje temporal mientras decide si redirigir o no.
+  // Por ejemplo, si la redirección es instantánea, puede ser apenas perceptible.
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-4 bg-gray-100 min-h-screen flex items-center justify-center">
-        <p className="text-xl">Cargando productos y clientes...</p>
+        <p className="text-xl">Verificando acceso...</p>
       </div>
     );
   }
 
+  // Renderizado normal del componente
   return (
     <div className="max-w-full mx-auto p-4 bg-gray-100 min-h-screen flex flex-col">
+      {/* ... Resto del JSX del componente ... */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-black">Punto de Venta</h1>
         </div>
-
-        {/* Sección de Paquetes */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
           <button
             onClick={() => setModalPaquete1(true)}
@@ -383,7 +366,7 @@ const POS = () => {
         />
       </div>
 
-      {/* Modal para seleccionar tamaño */}
+      {/* Modales JSX ... */}
       {modalAbierto && (
         <ProductModal
           isOpen={modalAbierto}
@@ -394,7 +377,6 @@ const POS = () => {
         />
       )}
 
-      {/* Modal de Comentarios */}
       {modalComentarios && (
         <div className="fixed inset-0 bg-white/30 bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
@@ -436,7 +418,6 @@ const POS = () => {
         </div>
       )}
 
-      {/* Modales de Paquetes */}
       <ModalPaquete1
         isOpen={modalPaquete1}
         onClose={() => setModalPaquete1(false)}
@@ -459,7 +440,6 @@ const POS = () => {
         pizzas={productos.pizzas}
       />
 
-      {/* Modal de Pagos */}
       <PaymentModal
         isOpen={modalPagosAbierto}
         onClose={() => setModalPagosAbierto(false)}
@@ -467,7 +447,6 @@ const POS = () => {
         onConfirm={handleConfirmarPagos}
       />
 
-      {/* Modal de Dirección */}
       <AddressSelectionModal
         isOpen={modalDireccionAbierto}
         onClose={() => setModalDireccionAbierto(false)}
@@ -476,7 +455,6 @@ const POS = () => {
         clienteSeleccionado={clienteSeleccionado}
         onClienteChange={setClienteSeleccionado}
         onClienteCreado={(nuevoCliente) => {
-          // Agregar el nuevo cliente a la lista
           setClientes(prev => [...prev, nuevoCliente]);
         }}
       />

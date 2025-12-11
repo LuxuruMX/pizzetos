@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import AbrirCajaForm from '@/components/caja/AbrirCajaForm';
 import CajaControlPanel from '@/components/caja/CajaControlPanel';
 
 export default function CajaPage() {
+    const router = useRouter();
     const [cajaId, setCajaId] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -22,6 +24,7 @@ export default function CajaPage() {
     const handleCajaAbierta = (id) => {
         localStorage.setItem('id_caja', id);
         setCajaId(id);
+        router.push('/pos');
     };
 
     const handleCajaCerrada = () => {

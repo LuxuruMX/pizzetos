@@ -21,7 +21,7 @@ import {
 } from 'react-icons/fa';
 import { GrResources } from "react-icons/gr";
 import { BiSolidCategoryAlt } from "react-icons/bi";
-import { TbHierarchy3 } from "react-icons/tb";
+import { TbHierarchy3, TbTransfer } from "react-icons/tb";
 import { FaMoneyBills } from "react-icons/fa6";
 import { RiCustomerServiceFill } from "react-icons/ri";
 import { MdPointOfSale } from "react-icons/md";
@@ -72,6 +72,7 @@ const menuConfig = [
     permiso: 'ver_venta',
     submenu: [
       { name: 'Resume', path: '/pedidos/resumen', icon: FaBorderAll, permiso: 'ver_venta' },
+      { name: 'Flujo de caja', path: '/caja', icon: TbTransfer, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Venta', path: '/pos', icon: FaShoppingBasket, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Gastos', path: '/gastos', icon: FaMoneyBills, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
