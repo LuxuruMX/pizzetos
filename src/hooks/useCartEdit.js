@@ -362,7 +362,6 @@ export const useCartEdit = () => {
 
         return recalcularPrecios(nuevaOrden);
       } else {
-        // Productos sin agrupación
         const itemExistente = prevOrden.find(
           (item) =>
             item.idProducto === id && item.tipoId === tipoId && !item.esPaquete

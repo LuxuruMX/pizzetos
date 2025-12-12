@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
+import { getSucursalFromToken } from '@/services/jwt';
 import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -16,38 +17,23 @@ export default function AgregarGastoPage() {
   const [formData, setFormData] = useState({
     descripcion: '',
     precio: '',
-    sucursal: '',
+    // sucursal se obtendrá al enviar
   });
 
-  const [sucursales, setSucursales] = useState([]);
+  // Ya no necesitamos cargar sucursales si la tomamos del token
+  // pero tal vez necesitamos otros catálogos? El código original tenía placeholders.
+  // Si no hay otros catalogos, podemos simplificar mucho.
+  // El usuario dijo "en la parte de seleccionar la sucursal... que ya no aparesca".
+
   const [loading, setLoading] = useState(false);
-  const [loadingCatalogs, setLoadingCatalogs] = useState(true);
+  // Eliminamos loadingCatalogs si ya no cargamos nada
+  // const [loadingCatalogs, setLoadingCatalogs] = useState(true);
 
-  useEffect(() => {
-    fetchCatalogs();
-  }, []);
+  // useEffect(() => {
+  //   fetchCatalogs(); // Si ya no hay catalogos, esto se va
+  // }, []);
 
-  const fetchCatalogs = async () => {
-    try {
-      // Si solo necesitas las sucursales, puedes llamar solo a ese servicio
-      // const sucursalesData = await catalogsService.getSucursales();
-      // setSucursales(sucursalesData);
-
-      // O si usas Promise.all como en tu ejemplo, pero solo asignas las sucursales
-      const [, sucursalesData] = await Promise.all([
-        // catalogsService.getOtroCatalogo(), // Si necesitas otros catálogos
-        new Promise(resolve => resolve([])), // Placeholder si no necesitas el primer catálogo
-        catalogsService.getSucursales()
-      ]);
-
-      setSucursales(sucursalesData);
-    } catch (error) {
-      console.error('Error loading catalogs:', error);
-      alert('Error al cargar los catálogos');
-    } finally {
-      setLoadingCatalogs(false);
-    }
-  };
+  /* Eliminamos fetchCatalogs y sucursales state */
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,7 +46,7 @@ export default function AgregarGastoPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.descripcion || !formData.precio || !formData.sucursal) {
+    if (!formData.descripcion || !formData.precio) {
       alert('Por favor completa todos los campos obligatorios');
       return;
     }
@@ -68,10 +54,13 @@ export default function AgregarGastoPage() {
     setLoading(true);
 
     try {
+      const id_suc = getSucursalFromToken();
+
       const dataToSend = {
         descripcion: formData.descripcion,
         precio: parseFloat(formData.precio),
-        id_suc: formData.sucursal,
+        id_suc: parseInt(id_suc),
+        id_caja: 0, // Ya no es obligatorio tener caja abierta
         // 'fecha' y 'evaluado' no se envían, la base de datos los manejará
       };
 
@@ -80,23 +69,13 @@ export default function AgregarGastoPage() {
       router.push('/gastos'); // Redirige a la lista de gastos
     } catch (error) {
       console.error('Error creating gasto:', error);
-      alert('Error al crear el gasto ❌');
+      alert('Error al crear el gasto');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loadingCatalogs) {
-    return (
-      <div className="p-6">
-        <Card>
-          <div className="text-center py-8">
-            <p className="text-gray-600">Cargando formulario...</p>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  /* Eliminado check de loadingCatalogs */
 
   return (
     <div className="p-6">
@@ -136,17 +115,7 @@ export default function AgregarGastoPage() {
             required
           />
 
-          <Select
-            label="Sucursal"
-            name="sucursal"
-            value={formData.sucursal}
-            onChange={handleChange}
-            options={sucursales}
-            valueKey="id_suc"
-            labelKey="nombre"
-            placeholder="Selecciona una sucursal"
-            required
-          />
+
 
           <div className="flex gap-3 pt-4">
             <Button
