@@ -41,17 +41,14 @@ export const cerrarCaja = async (idCaja, data) => {
   }
 };
 
-export const registrarMovimiento = async (idCaja, data) => {
+
+
+export const getCaja = async (idCaja) => {
   try {
-    const payload = {
-      tipo_movimiento: data.tipo_movimiento,
-      monto: parseFloat(data.monto),
-      concepto: data.concepto,
-    };
-    const response = await api.post(`/caja/movimiento/${idCaja}`, payload);
+    const response = await api.get(`/caja/${idCaja}`);
     return response.data;
   } catch (error) {
-    console.error('Error al registrar movimiento:', error);
+    console.error('Error al obtener caja:', error);
     throw error;
   }
 };

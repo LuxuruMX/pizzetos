@@ -11,7 +11,6 @@ export default function CajaPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Verificar si hay una caja abierta en localStorage
         if (typeof window !== 'undefined') {
             const storedId = localStorage.getItem('id_caja');
             if (storedId) {
@@ -42,9 +41,6 @@ export default function CajaPage() {
 
             {cajaId ? (
                 <>
-                    <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 text-center shadow-sm">
-                        <span className="font-semibold">Caja Abierta</span> (ID: {cajaId})
-                    </div>
                     <CajaControlPanel
                         cajaId={cajaId}
                         onClose={handleCajaCerrada}
