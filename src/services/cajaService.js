@@ -45,7 +45,7 @@ export const cerrarCaja = async (idCaja, data) => {
 
 export const getCaja = async (idCaja) => {
   try {
-    const response = await api.get(`/caja/${idCaja}`);
+    const response = await api.get(`/caja/detalles/${idCaja}`);
     return response.data;
   } catch (error) {
     console.error('Error al obtener caja:', error);

@@ -1,26 +1,17 @@
-// ... imports ...
+// ... import'use client';
+
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaCoins, FaShoppingCart, FaChartLine, FaReceipt } from 'react-icons/fa';
 import Card from '../ui/Card';
+import { getCaja, cerrarCaja } from '@/services/cajaService';
 
-export default function CajaControlPanel() {
+export default function CajaControlPanel({ cajaId, onClose }) {
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });
-
-    // Datos simulados de la caja
-    const [cajaDetails] = useState({
-        id: 123,
-        fecha_apertura: '2024-12-15T09:00:00Z',
-        estado: 'abierta',
-        usuario_apertura: 'Juan Pérez',
-        monto_inicial: 500.00,
-        total_ventas: 3450.50,
-        numero_ventas: 28,
-        total_efectivo: 1200.00,
-        total_tarjeta: 1800.50,
-        total_transferencia: 450.00
-    });
+    const [cajaDetails, setCajaDetails] = useState(null);
 
     const [cierreData, setCierreData] = useState({
         monto_final: '',
@@ -28,26 +19,56 @@ export default function CajaControlPanel() {
     });
 
     useEffect(() => {
-        // Simular carga de datos
-        setTimeout(() => setLoadingData(false), 500);
-    }, []);
+        const fetchCajaData = async () => {
+            try {
+                setLoadingData(true);
+                const data = await getCaja(cajaId);
+                setCajaDetails(data);
+            } catch (error) {
+                console.error('Error al cargar datos de caja:', error);
+                setMessage({
+                    type: 'error',
+                    text: 'Error al cargar los datos de la caja. Por favor, recarga la página.'
+                });
+            } finally {
+                setLoadingData(false);
+            }
+        };
+
+        if (cajaId) {
+            fetchCajaData();
+        }
+    }, [cajaId]);
 
     const handleCierreChange = (e) => {
         const { name, value } = e.target;
         setCierreData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleCerrarCaja = () => {
+    const handleCerrarCaja = async () => {
         if (!window.confirm('¿Está seguro que desea cerrar la caja?')) return;
 
         setLoading(true);
         setMessage({ type: '', text: '' });
 
-        // Simular cierre
-        setTimeout(() => {
+        try {
+            await cerrarCaja(cajaId, cierreData);
             setMessage({ type: 'success', text: 'Caja cerrada exitosamente' });
+
+            // Limpiar localStorage y redirigir después de 1.5 segundos
+            setTimeout(() => {
+                localStorage.removeItem('id_caja');
+                if (onClose) onClose();
+                router.push('/caja');
+            }, 1500);
+        } catch (error) {
+            console.error('Error al cerrar caja:', error);
+            setMessage({
+                type: 'error',
+                text: error.response?.data?.detail || 'Error al cerrar la caja. Por favor, intenta de nuevo.'
+            });
             setLoading(false);
-        }, 1000);
+        }
     };
 
     const formatCurrency = (val) => {
@@ -66,6 +87,16 @@ export default function CajaControlPanel() {
         );
     }
 
+    if (!cajaDetails) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-600 font-semibold">No se pudieron cargar los datos de la caja</p>
+                </div>
+            </div>
+        );
+    }
+
     const montoInicial = parseFloat(cajaDetails.monto_inicial || 0);
     const totalVentas = parseFloat(cajaDetails.total_ventas || 0);
     const numeroVentas = cajaDetails.numero_ventas || 0;
@@ -73,7 +104,6 @@ export default function CajaControlPanel() {
     const tarjeta = parseFloat(cajaDetails.total_tarjeta || 0);
     const transferencia = parseFloat(cajaDetails.total_transferencia || 0);
 
-    // Cálculos
     const balanceEsperado = montoInicial + totalVentas;
     const montoFinalIngresado = parseFloat(cierreData.monto_final) || 0;
     const diferencia = cierreData.monto_final ? montoFinalIngresado - balanceEsperado : 0;
@@ -95,7 +125,7 @@ export default function CajaControlPanel() {
                         <Card>
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                                 <div>
-                                    <h2 className="text-3xl font-bold text-gray-900">Caja #{cajaDetails.id}</h2>
+                                    <h2 className="text-3xl font-bold text-gray-900">Caja #{cajaDetails.id_caja}</h2>
                                     <p className="text-sm text-gray-500 mt-1">
                                         Apertura: {new Date(cajaDetails.fecha_apertura).toLocaleString('es-MX', {
                                             year: 'numeric',
@@ -106,7 +136,7 @@ export default function CajaControlPanel() {
                                         })}
                                     </p>
                                     <p className="text-sm text-gray-600 mt-1">
-                                        Cajero: <span className="font-medium">{cajaDetails.usuario_apertura}</span>
+                                        Cajero: <span className="font-medium">{cajaDetails.usuario_apertura || 'N/A'}</span>
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
