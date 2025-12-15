@@ -1,10 +1,17 @@
-// ... import'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaCoins, FaShoppingCart, FaChartLine, FaReceipt } from 'react-icons/fa';
 import Card from '../ui/Card';
 import { getCaja, cerrarCaja } from '@/services/cajaService';
+
+// Importar dinámicamente el componente de PDF para evitar problemas de SSR
+const PDFDownloadButton = dynamic(
+    () => import('./PDFDownloadButton'),
+    { ssr: false }
+);
 
 export default function CajaControlPanel({ cajaId, onClose }) {
     const router = useRouter();
@@ -17,6 +24,13 @@ export default function CajaControlPanel({ cajaId, onClose }) {
         monto_final: '',
         observaciones_cierre: ''
     });
+
+    const [isMounted, setIsMounted] = useState(false);
+
+    // Detectar cuando el componente está montado en el cliente
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     useEffect(() => {
         const fetchCajaData = async () => {
@@ -337,6 +351,14 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                                         'Confirmar Cierre de Caja'
                                     )}
                                 </button>
+                                {isMounted && (
+                                    <div className="mt-4">
+                                        <PDFDownloadButton
+                                            cajaDetails={cajaDetails}
+                                            cierreData={cierreData}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </Card>
                     </div>
