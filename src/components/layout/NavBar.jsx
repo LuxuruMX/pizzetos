@@ -24,7 +24,7 @@ import { BiSolidCategoryAlt } from "react-icons/bi";
 import { TbHierarchy3, TbTransfer } from "react-icons/tb";
 import { FaMoneyBills } from "react-icons/fa6";
 import { RiCustomerServiceFill } from "react-icons/ri";
-import { MdPointOfSale } from "react-icons/md";
+import { MdPointOfSale, MdOutlineBlindsClosed } from "react-icons/md";
 import { IoIosAlbums, IoIosSettings } from "react-icons/io";
 
 
@@ -36,6 +36,12 @@ const menuConfig = [
     path: '/empleados',
     icon: FaUser,
     permiso: 'ver_empleado'
+  },
+  {
+    name: 'Corte mensual',
+    path: '/corte',
+    icon: MdOutlineBlindsClosed,
+    permiso: null
   },
   {
     name: 'Productos',
@@ -64,6 +70,7 @@ const menuConfig = [
       { name: 'Categorias', path: '/recursos/categorias', icon: BiSolidCategoryAlt },
       { name: 'Sucursales', path: '/recursos/sucursales', icon: FaCodeBranch },
       { name: 'Cargos', path: '/recursos/cargos', icon: TbHierarchy3 },
+      { name: 'Gastos', path: '/gastos', icon: FaMoneyBills }
     ]
   },
   {
@@ -74,7 +81,6 @@ const menuConfig = [
       { name: 'Resume', path: '/pedidos/resumen', icon: FaBorderAll, permiso: 'ver_venta' },
       { name: 'Flujo de caja', path: '/caja', icon: TbTransfer, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Venta', path: '/pos', icon: FaShoppingBasket, permiso: ['ver_venta', 'crear_venta'] },
-      { name: 'Gastos', path: '/gastos', icon: FaMoneyBills, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
       { name: 'Pedidos', path: '/pedidos', icon: IoIosAlbums }
     ]
