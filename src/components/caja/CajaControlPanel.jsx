@@ -426,6 +426,7 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                                         <PDFDownloadButton
                                             cajaDetails={cajaDetails}
                                             cierreData={cierreData}
+                                            ventasData={ventasData}
                                         />
                                     </div>
                                 )}

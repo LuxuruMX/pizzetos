@@ -164,10 +164,36 @@ const styles = StyleSheet.create({
         fontSize: 9,
         color: '#9ca3af',
         textAlign: 'center'
+    },
+    table: {
+        display: 'table',
+        width: 'auto',
+        borderStyle: 'solid',
+        borderWidth: 1,
+        borderColor: '#d1d5db',
+        borderRadius: 4
+    },
+    tableRow: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        borderBottomColor: '#d1d5db',
+        alignItems: 'center'
+    },
+    tableHeader: {
+        backgroundColor: '#f3f4f6',
+        fontWeight: 'bold',
+        color: '#374151',
+        fontSize: 10
+    },
+    tableCell: {
+        flex: 1,
+        padding: 6,
+        fontSize: 9,
+        textAlign: 'center'
     }
 });
 
-export default function CierreCajaPDF({ cajaDetails, cierreData }) {
+export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = [] }) {
     const formatCurrency = (val) => {
         const num = parseFloat(val) || 0;
         return new Intl.NumberFormat('es-MX', {
@@ -305,6 +331,29 @@ export default function CierreCajaPDF({ cajaDetails, cierreData }) {
                         <Text style={styles.observacionesText}>
                             {cierreData.observaciones_cierre}
                         </Text>
+                    </View>
+                )}
+
+                {/* Detalle de Ventas */}
+                {ventasData && ventasData.length > 0 && (
+                    <View style={styles.salesSection} wrap={false}>
+                        <Text style={styles.sectionTitle}>Detalle de Ventas por Caja (Tabla)</Text>
+                        <View style={styles.table}>
+                            <View style={[styles.tableRow, styles.tableHeader]}>
+                                <Text style={styles.tableCell}>ID Venta</Text>
+                                <Text style={styles.tableCell}>Método</Text>
+                                <Text style={styles.tableCell}>Ref.</Text>
+                                <Text style={styles.tableCell}>Monto</Text>
+                            </View>
+                            {ventasData.map((venta, index) => (
+                                <View key={index} style={styles.tableRow}>
+                                    <Text style={styles.tableCell}>#{venta.id_venta}</Text>
+                                    <Text style={styles.tableCell}>{venta.Metodo}</Text>
+                                    <Text style={styles.tableCell}>{venta.referencia || '-'}</Text>
+                                    <Text style={styles.tableCell}>{formatCurrency(venta.monto)}</Text>
+                                </View>
+                            ))}
+                        </View>
                     </View>
                 )}
 

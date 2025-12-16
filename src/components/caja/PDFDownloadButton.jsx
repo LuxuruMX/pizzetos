@@ -3,10 +3,10 @@
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import CierreCajaPDF from './CierreCajaPDF';
 
-export default function PDFDownloadButton({ cajaDetails, cierreData }) {
+export default function PDFDownloadButton({ cajaDetails, cierreData, ventasData = [] }) {
     return (
         <PDFDownloadLink
-            document={<CierreCajaPDF cajaDetails={cajaDetails} cierreData={cierreData} />}
+            document={<CierreCajaPDF cajaDetails={cajaDetails} cierreData={cierreData} ventasData={ventasData} />}
             fileName={`cierre_caja_${cajaDetails.id_caja}_${new Date().toISOString().split('T')[0]}.pdf`}
         >
             {({ loading }) => (
