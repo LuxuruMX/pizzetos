@@ -194,6 +194,18 @@ const styles = StyleSheet.create({
         padding: 6,
         fontSize: 9,
         textAlign: 'center'
+    },
+    textGreen: {
+        color: '#16a34a',
+        fontWeight: 'bold'
+    },
+    textBlue: {
+        color: '#2563eb',
+        fontWeight: 'bold'
+    },
+    textPurple: {
+        color: '#9333ea',
+        fontWeight: 'bold'
     }
 });
 
@@ -230,8 +242,13 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
         if (!acc[venta.id_venta]) {
             acc[venta.id_venta] = {
                 id_venta: venta.id_venta,
+                referencias: new Set(), // Usar Set para evitar duplicados
                 pagos: {} // { 'Efectivo': 100, 'Tarjeta': 150, ... }
             };
+        }
+
+        if (venta.referencia) {
+            acc[venta.id_venta].referencias.add(venta.referencia);
         }
         const metodo = venta.Metodo;
         const monto = parseFloat(venta.monto) || 0;
@@ -366,19 +383,36 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                         <View style={styles.table}>
                             <View style={[styles.tableRow, styles.tableHeader]}>
                                 <Text style={styles.tableCell}>ID Venta</Text>
+                                <Text style={styles.tableCell}>Referencia</Text>
                                 <Text style={[styles.tableCell, { flex: 2 }]}>Desglose de Pagos</Text>
                                 <Text style={styles.tableCell}>Total</Text>
                             </View>
                             {groupedArray.map((group, index) => {
                                 const totalVenta = Object.values(group.pagos).reduce((sum, monto) => sum + monto, 0);
-                                const desglose = Object.entries(group.pagos)
-                                    .map(([metodo, monto]) => `${metodo}: ${formatCurrency(monto)}`)
-                                    .join('\n');
+                                const desgloseElements = Object.entries(group.pagos).map(([metodo, monto], i) => {
+                                    let style = {};
+                                    if (metodo === 'Efectivo') style = styles.textGreen;
+                                    else if (metodo === 'Tarjeta') style = styles.textBlue;
+                                    else if (metodo === 'Transferencia') style = styles.textPurple;
+
+                                    return (
+                                        <Text key={i} style={style}>
+                                            {metodo}: {formatCurrency(monto)}{i < Object.entries(group.pagos).length - 1 ? '\n' : ''}
+                                        </Text>
+                                    );
+                                });
 
                                 return (
                                     <View key={index} style={styles.tableRow}>
                                         <Text style={styles.tableCell}>#{group.id_venta}</Text>
-                                        <Text style={[styles.tableCell, { flex: 2 }]}>{desglose}</Text>
+                                        <Text style={styles.tableCell}>
+                                            {group.referencias.size > 0
+                                                ? Array.from(group.referencias).join('\n')
+                                                : '-'}
+                                        </Text>
+                                        <View style={[styles.tableCell, { flex: 2 }]}>
+                                            {desgloseElements}
+                                        </View>
                                         <Text style={styles.tableCell}>{formatCurrency(totalVenta)}</Text>
                                     </View>
                                 );
