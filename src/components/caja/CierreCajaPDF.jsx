@@ -165,6 +165,10 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
         textAlign: 'center'
     },
+    salesSection: {
+        marginTop: 15
+    },
+    // Estilo para tabla simple
     table: {
         display: 'table',
         width: 'auto',
@@ -220,6 +224,27 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
     const balanceEsperado = montoInicial + totalVentas;
     const montoFinal = parseFloat(cierreData.monto_final || 0);
     const diferencia = montoFinal - balanceEsperado;
+
+    // Agrupar ventas por id_venta y organizar pagos por método
+    const groupedSales = ventasData.reduce((acc, venta) => {
+        if (!acc[venta.id_venta]) {
+            acc[venta.id_venta] = {
+                id_venta: venta.id_venta,
+                pagos: {} // { 'Efectivo': 100, 'Tarjeta': 150, ... }
+            };
+        }
+        const metodo = venta.Metodo;
+        const monto = parseFloat(venta.monto) || 0;
+
+        if (!acc[venta.id_venta].pagos[metodo]) {
+            acc[venta.id_venta].pagos[metodo] = 0;
+        }
+        acc[venta.id_venta].pagos[metodo] += monto;
+
+        return acc;
+    }, {});
+
+    const groupedArray = Object.values(groupedSales);
 
     return (
         <Document>
@@ -334,25 +359,30 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                     </View>
                 )}
 
-                {/* Detalle de Ventas */}
-                {ventasData && ventasData.length > 0 && (
+                {/* Detalle de Ventas - Versión Tabla Agrupada */}
+                {groupedArray && groupedArray.length > 0 && (
                     <View style={styles.salesSection} wrap={false}>
-                        <Text style={styles.sectionTitle}>Detalle de Ventas por Caja (Tabla)</Text>
+                        <Text style={styles.sectionTitle}>Detalle de Ventas por Caja</Text>
                         <View style={styles.table}>
                             <View style={[styles.tableRow, styles.tableHeader]}>
                                 <Text style={styles.tableCell}>ID Venta</Text>
-                                <Text style={styles.tableCell}>Método</Text>
-                                <Text style={styles.tableCell}>Ref.</Text>
-                                <Text style={styles.tableCell}>Monto</Text>
+                                <Text style={[styles.tableCell, { flex: 2 }]}>Desglose de Pagos</Text>
+                                <Text style={styles.tableCell}>Total</Text>
                             </View>
-                            {ventasData.map((venta, index) => (
-                                <View key={index} style={styles.tableRow}>
-                                    <Text style={styles.tableCell}>#{venta.id_venta}</Text>
-                                    <Text style={styles.tableCell}>{venta.Metodo}</Text>
-                                    <Text style={styles.tableCell}>{venta.referencia || '-'}</Text>
-                                    <Text style={styles.tableCell}>{formatCurrency(venta.monto)}</Text>
-                                </View>
-                            ))}
+                            {groupedArray.map((group, index) => {
+                                const totalVenta = Object.values(group.pagos).reduce((sum, monto) => sum + monto, 0);
+                                const desglose = Object.entries(group.pagos)
+                                    .map(([metodo, monto]) => `${metodo}: ${formatCurrency(monto)}`)
+                                    .join('\n');
+
+                                return (
+                                    <View key={index} style={styles.tableRow}>
+                                        <Text style={styles.tableCell}>#{group.id_venta}</Text>
+                                        <Text style={[styles.tableCell, { flex: 2 }]}>{desglose}</Text>
+                                        <Text style={styles.tableCell}>{formatCurrency(totalVenta)}</Text>
+                                    </View>
+                                );
+                            })}
                         </View>
                     </View>
                 )}
