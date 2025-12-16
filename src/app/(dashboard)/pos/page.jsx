@@ -80,6 +80,10 @@ const POS = () => {
   const [modalPaquete2, setModalPaquete2] = useState(false);
   const [modalPaquete3, setModalPaquete3] = useState(false);
 
+  // Estado para auto-selección de tamaño (pizzas y mariscos)
+  const [ultimoTamanoSeleccionado, setUltimoTamanoSeleccionado] = useState(null);
+  const [usarTamanoAutomatico, setUsarTamanoAutomatico] = useState(false);
+
   // Efecto para verificar id_caja y cargar datos
   useEffect(() => {
     const checkAndRedirect = async () => {
@@ -232,11 +236,30 @@ const POS = () => {
   };
 
   const categoriasConModal = ['pizzas', 'refrescos', 'mariscos'];
+  const categoriasConAutoTamano = ['pizzas', 'mariscos'];
 
   const handleProductoClick = (producto, tipoId) => {
     if (categoriasConModal.includes(categoriaActiva)) {
       const productosCategoria = productos[categoriaActiva];
       const variantes = productosCategoria.filter(p => p.nombre === producto.nombre);
+
+      // Si es pizza o mariscos y hay tamaño guardado y debe usar automático
+      if (categoriasConAutoTamano.includes(categoriaActiva) && ultimoTamanoSeleccionado && usarTamanoAutomatico) {
+        // Buscar la variante que coincida con el tamaño guardado
+        const varianteConTamano = variantes.find(v => {
+          const tamano = v.subcategoria || v.tamano || v.tamaño;
+          return tamano === ultimoTamanoSeleccionado.tamano;
+        });
+
+        if (varianteConTamano) {
+          const tipoIdVariante = Object.keys(varianteConTamano).find(key => key.startsWith('id_'));
+          agregarAlCarrito(varianteConTamano, tipoIdVariante);
+          setUsarTamanoAutomatico(false); // Próxima vez mostrará modal
+          return;
+        }
+      }
+
+      // Mostrar modal normalmente
       setProductoSeleccionado(producto.nombre);
       setVariantesProducto(variantes);
       setModalAbierto(true);
@@ -248,6 +271,13 @@ const POS = () => {
   const handleSeleccionarVariante = (variante, tipoId) => {
     agregarAlCarrito(variante, tipoId);
     setModalAbierto(false);
+
+    // Guardar tamaño solo para pizzas y mariscos
+    if (categoriasConAutoTamano.includes(categoriaActiva)) {
+      const tamano = variante.subcategoria || variante.tamano || variante.tamaño;
+      setUltimoTamanoSeleccionado({ tamano, tipoId });
+      setUsarTamanoAutomatico(true); // Próxima vez usará este tamaño
+    }
   };
 
   const handleConfirmarPaquete1 = () => {
