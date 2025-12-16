@@ -8,6 +8,10 @@ import { IoReload } from "react-icons/io5";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import Popconfirm from "@/components/ui/Popconfirm";
 import api from "@/services/api";
+import { MdOutlinePayments } from "react-icons/md";
+import PaymentModal from "@/components/ui/PaymentModal";
+import { pagarVenta } from "@/services/orderService";
+
 
 export default function TodosPedidosPage() {
   const [loading, setLoading] = useState(false);
@@ -16,6 +20,8 @@ export default function TodosPedidosPage() {
   const [filtro, setFiltro] = useState("hoy");
   const [statusFiltro, setStatusFiltro] = useState(null);
   const [idSuc, setIdSuc] = useState(null);
+  const [modalPagosOpen, setModalPagosOpen] = useState(false);
+  const [pedidoAPagar, setPedidoAPagar] = useState(null);
   const router = useRouter();
 
   const fetchTodosPedidos = async () => {
@@ -109,15 +115,14 @@ export default function TodosPedidosPage() {
       accessor: "status_texto",
       render: (row) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            row.status === 0
-              ? "bg-gray-200 text-gray-800"
-              : row.status === 1
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${row.status === 0
+            ? "bg-gray-200 text-gray-800"
+            : row.status === 1
               ? "bg-yellow-200 text-yellow-800"
               : row.status === 2
-              ? "bg-green-200 text-green-800"
-              : "bg-red-200 text-red-800"
-          }`}
+                ? "bg-green-200 text-green-800"
+                : "bg-red-200 text-red-800"
+            }`}
         >
           {row.status_texto}
         </span>
@@ -149,7 +154,22 @@ export default function TodosPedidosPage() {
               <FaTrash size={18} />
             </button>
           </Popconfirm>
-        </div>
+
+          {
+            !row.pagado && (
+              <button
+                onClick={() => {
+                  setPedidoAPagar(row);
+                  setModalPagosOpen(true);
+                }}
+                className="text-green-600 hover:text-green-800 transition-colors"
+                title="Pagar"
+              >
+                <MdOutlinePayments size={20} />
+              </button>
+            )
+          }
+        </div >
       ),
     },
   ];
@@ -277,6 +297,30 @@ export default function TodosPedidosPage() {
           </>
         )}
       </Card>
-    </div>
+
+      {
+        modalPagosOpen && pedidoAPagar && (
+          <PaymentModal
+            isOpen={modalPagosOpen}
+            onClose={() => {
+              setModalPagosOpen(false);
+              setPedidoAPagar(null);
+            }}
+            total={pedidoAPagar.total}
+            onConfirm={async (pagos) => {
+              try {
+                await pagarVenta(pedidoAPagar.id_venta, pagos);
+                setModalPagosOpen(false);
+                setPedidoAPagar(null);
+                fetchTodosPedidos(); // Recargar lista
+                alert('Pago registrado correctamente');
+              } catch (error) {
+                alert(error.response?.data?.message || 'Error al procesar el pago');
+              }
+            }}
+          />
+        )
+      }
+    </div >
   );
 }

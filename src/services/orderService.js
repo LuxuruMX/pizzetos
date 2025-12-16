@@ -281,4 +281,22 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
   }
 };
 
+export const pagarVenta = async (id_venta, pagos) => {
+  try {
+    const payload = {
+      id_venta: parseInt(id_venta),
+      pagos: pagos.map(p => ({
+        id_metpago: parseInt(p.id_metpago),
+        monto: parseFloat(p.monto)
+      }))
+    };
+    
+    const response = await api.post('/pos/pagar', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error al procesar el pago:', error);
+    throw error;
+  }
+};
+
 export { CATEGORIAS };
