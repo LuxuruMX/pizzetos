@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaCoins, FaShoppingCart, FaChartLine, FaReceipt } from 'react-icons/fa';
 import Card from '../ui/Card';
-import { getCaja, cerrarCaja } from '@/services/cajaService';
+import { getCaja, cerrarCaja, getVentasCaja } from '@/services/cajaService';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 // Importar dinámicamente el componente de PDF para evitar problemas de SSR
 const PDFDownloadButton = dynamic(
@@ -24,6 +25,11 @@ export default function CajaControlPanel({ cajaId, onClose }) {
         monto_final: '',
         observaciones_cierre: ''
     });
+
+    // Estado para desglose de ventas
+    const [ventasData, setVentasData] = useState([]);
+    const [loadingVentas, setLoadingVentas] = useState(false);
+    const [showVentas, setShowVentas] = useState(false);
 
     const [isMounted, setIsMounted] = useState(false);
 
@@ -88,6 +94,22 @@ export default function CajaControlPanel({ cajaId, onClose }) {
     const formatCurrency = (val) => {
         const num = parseFloat(val) || 0;
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num);
+    };
+
+    const handleToggleVentas = async () => {
+        if (!showVentas && ventasData.length === 0) {
+            try {
+                setLoadingVentas(true);
+                const data = await getVentasCaja(cajaId);
+                setVentasData(data);
+            } catch (error) {
+                console.error('Error al cargar ventas:', error);
+                setMessage({ type: 'error', text: 'Error al cargar el detalle de ventas' });
+            } finally {
+                setLoadingVentas(false);
+            }
+        }
+        setShowVentas(!showVentas);
     };
 
     if (loadingData) {
@@ -254,6 +276,54 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                                         {totalVentas > 0 ? ((transferencia / totalVentas) * 100).toFixed(1) : 0}% del total
                                     </p>
                                 </div>
+                            </div>
+                        </Card>
+
+                        {/* Detalle de Ventas Colapsable */}
+                        <Card title="Detalle de Ventas por Caja">
+                            <div className="flex flex-col">
+                                <button
+                                    onClick={handleToggleVentas}
+                                    className="flex items-center justify-between w-full p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    <span className="font-semibold text-gray-700">
+                                        {showVentas ? 'Ocultar detalles' : 'Ver detalles de ventas'}
+                                    </span>
+                                    {showVentas ? <FaChevronUp className="text-gray-500" /> : <FaChevronDown className="text-gray-500" />}
+                                </button>
+
+                                {showVentas && (
+                                    <div className="mt-4 overflow-x-auto">
+                                        {loadingVentas ? (
+                                            <div className="text-center py-4 text-gray-500">Cargando ventas...</div>
+                                        ) : ventasData.length === 0 ? (
+                                            <div className="text-center py-4 text-gray-500">No hay ventas registradas en esta sesión.</div>
+                                        ) : (
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Venta</th>
+                                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Método</th>
+                                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referencia</th>
+                                                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {ventasData.map((venta, index) => (
+                                                        <tr key={index} className="hover:bg-gray-50">
+                                                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">#{venta.id_venta}</td>
+                                                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">{venta.Metodo}</td>
+                                                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-400">{venta.referencia || '-'}</td>
+                                                            <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-green-600 text-right">
+                                                                {formatCurrency(venta.monto)}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </Card>
                     </div>
