@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
-import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS } from '@/services/orderService';
+import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS, fetchPizzaDescriptions } from '@/services/orderService';
 import { useCart } from '@/hooks/useCart';
 import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
@@ -13,7 +13,6 @@ import AddressSelectionModal from '@/components/ui/AddressSelectionModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
 import { MdComment } from "react-icons/md";
 
-// Función para decodificar el carrito desde la URL
 const decodeCartFromUrl = () => {
   if (typeof window !== 'undefined' && window.location.search) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -59,6 +58,7 @@ const POS = () => {
     magno: [],
     pizzas: []
   });
+  const [descripcionesPizzas, setDescripcionesPizzas] = useState([]);
   const [categorias] = useState(CATEGORIAS);
   const [categoriaActiva, setCategoriaActiva] = useState('pizzas');
   const [loading, setLoading] = useState(true);
@@ -94,10 +94,15 @@ const POS = () => {
       // Si hay id_caja, procedemos a cargar los datos
       try {
         setLoading(true);
-        const [productosData, clientesData] = await Promise.all([
+        const [productosData, clientesData, descripcionesData] = await Promise.all([
           fetchProductosPorCategoria(),
-          catalogsService.getNombresClientes()
+          catalogsService.getNombresClientes(),
+          fetchPizzaDescriptions()
         ]);
+
+        if (descripcionesData) {
+          setDescripcionesPizzas(descripcionesData);
+        }
 
         setProductos(productosData);
 
@@ -374,6 +379,7 @@ const POS = () => {
           nombreProducto={productoSeleccionado}
           variantes={variantesProducto}
           onSeleccionar={handleSeleccionarVariante}
+          descripcion={descripcionesPizzas.find(d => d.nombre === productoSeleccionado)?.descripcion}
         />
       )}
 

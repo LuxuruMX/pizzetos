@@ -8,6 +8,16 @@ let cachedData = null;
 let lastFetchTime = null;
 const CACHE_DURATION = 24 * 60 * 60 * 1000;
 
+export const fetchPizzaDescriptions = async () => {
+  try {
+    const response = await api.get('/prices/descripciones');
+    return response.data;
+  } catch (error) {
+    console.warn('Error fetching pizza descriptions:', error);
+    return [];
+  }
+};
+
 export const fetchProductosPorCategoria = async (force = false) => {
   const now = Date.now();
 
