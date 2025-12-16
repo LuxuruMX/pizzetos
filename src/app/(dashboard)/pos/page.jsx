@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
-import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS } from '@/services/orderService';
+import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS, fetchPizzaDescriptions } from '@/services/orderService';
 import { useCart } from '@/hooks/useCart';
 import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
@@ -13,7 +13,6 @@ import AddressSelectionModal from '@/components/ui/AddressSelectionModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
 import { MdComment } from "react-icons/md";
 
-// Función para decodificar el carrito desde la URL
 const decodeCartFromUrl = () => {
   if (typeof window !== 'undefined' && window.location.search) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -59,6 +58,7 @@ const POS = () => {
     magno: [],
     pizzas: []
   });
+  const [descripcionesPizzas, setDescripcionesPizzas] = useState([]);
   const [categorias] = useState(CATEGORIAS);
   const [categoriaActiva, setCategoriaActiva] = useState('pizzas');
   const [loading, setLoading] = useState(true);
@@ -80,6 +80,10 @@ const POS = () => {
   const [modalPaquete2, setModalPaquete2] = useState(false);
   const [modalPaquete3, setModalPaquete3] = useState(false);
 
+  // Estado para auto-selección de tamaño (pizzas y mariscos)
+  const [ultimoTamanoSeleccionado, setUltimoTamanoSeleccionado] = useState(null);
+  const [usarTamanoAutomatico, setUsarTamanoAutomatico] = useState(false);
+
   // Efecto para verificar id_caja y cargar datos
   useEffect(() => {
     const checkAndRedirect = async () => {
@@ -94,10 +98,15 @@ const POS = () => {
       // Si hay id_caja, procedemos a cargar los datos
       try {
         setLoading(true);
-        const [productosData, clientesData] = await Promise.all([
+        const [productosData, clientesData, descripcionesData] = await Promise.all([
           fetchProductosPorCategoria(),
-          catalogsService.getNombresClientes()
+          catalogsService.getNombresClientes(),
+          fetchPizzaDescriptions()
         ]);
+
+        if (descripcionesData) {
+          setDescripcionesPizzas(descripcionesData);
+        }
 
         setProductos(productosData);
 
@@ -227,11 +236,30 @@ const POS = () => {
   };
 
   const categoriasConModal = ['pizzas', 'refrescos', 'mariscos'];
+  const categoriasConAutoTamano = ['pizzas', 'mariscos'];
 
   const handleProductoClick = (producto, tipoId) => {
     if (categoriasConModal.includes(categoriaActiva)) {
       const productosCategoria = productos[categoriaActiva];
       const variantes = productosCategoria.filter(p => p.nombre === producto.nombre);
+
+      // Si es pizza o mariscos y hay tamaño guardado y debe usar automático
+      if (categoriasConAutoTamano.includes(categoriaActiva) && ultimoTamanoSeleccionado && usarTamanoAutomatico) {
+        // Buscar la variante que coincida con el tamaño guardado
+        const varianteConTamano = variantes.find(v => {
+          const tamano = v.subcategoria || v.tamano || v.tamaño;
+          return tamano === ultimoTamanoSeleccionado.tamano;
+        });
+
+        if (varianteConTamano) {
+          const tipoIdVariante = Object.keys(varianteConTamano).find(key => key.startsWith('id_'));
+          agregarAlCarrito(varianteConTamano, tipoIdVariante);
+          setUsarTamanoAutomatico(false); // Próxima vez mostrará modal
+          return;
+        }
+      }
+
+      // Mostrar modal normalmente
       setProductoSeleccionado(producto.nombre);
       setVariantesProducto(variantes);
       setModalAbierto(true);
@@ -243,6 +271,13 @@ const POS = () => {
   const handleSeleccionarVariante = (variante, tipoId) => {
     agregarAlCarrito(variante, tipoId);
     setModalAbierto(false);
+
+    // Guardar tamaño solo para pizzas y mariscos
+    if (categoriasConAutoTamano.includes(categoriaActiva)) {
+      const tamano = variante.subcategoria || variante.tamano || variante.tamaño;
+      setUltimoTamanoSeleccionado({ tamano, tipoId });
+      setUsarTamanoAutomatico(true); // Próxima vez usará este tamaño
+    }
   };
 
   const handleConfirmarPaquete1 = () => {
@@ -374,6 +409,7 @@ const POS = () => {
           nombreProducto={productoSeleccionado}
           variantes={variantesProducto}
           onSeleccionar={handleSeleccionarVariante}
+          descripcion={descripcionesPizzas.find(d => d.nombre === productoSeleccionado)?.descripcion}
         />
       )}
 

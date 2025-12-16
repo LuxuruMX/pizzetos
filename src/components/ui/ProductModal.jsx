@@ -1,6 +1,6 @@
 import { IoClose } from 'react-icons/io5';
 
-const ProductModal = ({ isOpen, onClose, nombreProducto, variantes, onSeleccionar }) => {
+const ProductModal = ({ isOpen, onClose, nombreProducto, variantes, onSeleccionar, descripcion }) => {
   if (!isOpen) return null;
 
   // Función para obtener el nombre del tamaño
@@ -29,6 +29,11 @@ const ProductModal = ({ isOpen, onClose, nombreProducto, variantes, onSelecciona
 
         {/* Body */}
         <div className="p-6">
+          {descripcion && (
+            <div className="mb-4 p-3 text-gray-400">
+              <p className="text-sm font-medium">{descripcion}</p>
+            </div>
+          )}
           <p className="text-gray-600 mb-4">Selecciona el tamaño:</p>
           <div className="space-y-3">
             {variantes.map((variante) => {
