@@ -116,16 +116,19 @@ export default function Pedidos() {
     const actions = [
       {
         icon: <PiCookingPotFill />,
+        iconDescription: 'Preparar',
         onClick: () => togglePreparacion(pedido.id_venta),
         disabled: false
       },
       {
         icon: <IoMailOpenSharp />,
+        iconDescription: 'Ver detalle',
         onClick: () => verDetalle(pedido.id_venta),
         disabled: false
       },
       {
         icon: <IoSend />,
+        iconDescription: 'Completar',
         onClick: () => completarPedido(pedido.id_venta, pedido.status),
         disabled: pedido.status !== 1
       }
@@ -145,9 +148,9 @@ export default function Pedidos() {
           <p className="mb-1">
             <b>Estado:</b>
             <span className={`ml-2 px-2 py-1 rounded text-xs ${pedido.status === 0 ? 'bg-gray-200 text-black' :
-                pedido.status === 1 ? 'bg-yellow-200 text-yellow-800' :
-                  pedido.status === 2 ? 'bg-green-200 text-green-800' :
-                    'bg-red-200 text-red-800'
+              pedido.status === 1 ? 'bg-yellow-200 text-yellow-800' :
+                pedido.status === 2 ? 'bg-green-200 text-green-800' :
+                  'bg-red-200 text-red-800'
               }`}>
               {pedido.status_texto}
             </span>
@@ -170,9 +173,9 @@ export default function Pedidos() {
           <p className="font-bold mb-2">Productos ({pedido.cantidad_items} items):</p>
           {pedido.productos.map((prod, idx) => (
             <div key={idx} className={`mb-2 pl-2 border-l-2 rounded ${prod.status === 0 ? 'bg-red-100 border-red-300' :
-                prod.status === 1 ? 'bg-gray-100 border-gray-300' :
-                  prod.status === 2 ? 'bg-green-100 border-green-300' :
-                    'bg-gray-50 border-gray-200'
+              prod.status === 1 ? 'bg-gray-100 border-gray-300' :
+                prod.status === 2 ? 'bg-green-100 border-green-300' :
+                  'bg-gray-50 border-gray-200'
               }`}>
               <p className="font-semibold text-sm">
                 {prod.cantidad}x {prod.nombre || 'Producto sin nombre'}
@@ -341,8 +344,8 @@ export default function Pedidos() {
                   <div>
                     <p className="text-sm text-gray-600">Estado</p>
                     <span className={`inline-block px-3 py-1 rounded text-sm font-semibold ${pedidoDetalle.status === 0 ? 'bg-gray-200 text-black' :
-                        pedidoDetalle.status === 1 ? 'bg-yellow-200 text-yellow-800' :
-                          'bg-green-200 text-green-800'
+                      pedidoDetalle.status === 1 ? 'bg-yellow-200 text-yellow-800' :
+                        'bg-green-200 text-green-800'
                       }`}>
                       {pedidoDetalle.status_texto}
                     </span>
@@ -396,9 +399,9 @@ export default function Pedidos() {
                   <div className="space-y-3">
                     {pedidoDetalle.productos.map((prod, idx) => (
                       <div key={idx} className={`border-l-4 rounded pl-4 py-2 text-black ${prod.status === 0 ? 'bg-red-50 border-red-500' :
-                          prod.status === 1 ? 'bg-gray-50 border-gray-300' :
-                            prod.status === 2 ? 'bg-green-50 border-green-500' :
-                              'bg-gray-100 border-gray-200'
+                        prod.status === 1 ? 'bg-gray-50 border-gray-300' :
+                          prod.status === 2 ? 'bg-green-50 border-green-500' :
+                            'bg-gray-100 border-gray-200'
                         }`}>
                         <div className="flex justify-between items-start">
                           <div>
