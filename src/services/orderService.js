@@ -234,7 +234,8 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
   } else if (tipo_servicio === 1) { // Para llevar
     ordenParaEnviar.pagos = pagos.map(p => ({
       id_metpago: parseInt(p.id_metpago),
-      monto: parseFloat(p.monto)
+      monto: parseFloat(p.monto),
+      referencia: p.referencia || ""
     }));
     if (datosExtra.nombreClie) {
       ordenParaEnviar.nombreClie = datosExtra.nombreClie;
@@ -287,7 +288,8 @@ export const pagarVenta = async (id_venta, pagos) => {
       id_venta: parseInt(id_venta),
       pagos: pagos.map(p => ({
         id_metpago: parseInt(p.id_metpago),
-        monto: parseFloat(p.monto)
+        monto: parseFloat(p.monto),
+        referencia: p.referencia || ""
       }))
     };
     

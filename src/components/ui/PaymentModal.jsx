@@ -6,6 +6,7 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
   const [montoRestante, setMontoRestante] = useState(total);
   const [metodoSeleccionado, setMetodoSeleccionado] = useState(1); // 1: Tarjeta, 2: Efectivo, 3: Transferencia
   const [montoInput, setMontoInput] = useState('');
+  const [referenciaInput, setReferenciaInput] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -13,6 +14,7 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
       setMontoRestante(total);
       setMontoInput(total.toString());
       setMetodoSeleccionado(1);
+      setReferenciaInput('');
     }
   }, [isOpen, total]);
 
@@ -34,25 +36,33 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
       return;
     }
 
+    // Validar referencia para tarjeta o transferencia
+    if ((metodoSeleccionado === 1 || metodoSeleccionado === 3) && !referenciaInput.trim()) {
+      alert('Por favor ingresa el número de referencia/folio');
+      return;
+    }
+
     const nuevoPago = {
       id_metpago: metodoSeleccionado,
       monto: monto,
-      nombreMetodo: metodosPago.find(m => m.id === metodoSeleccionado)?.nombre
+      nombreMetodo: metodosPago.find(m => m.id === metodoSeleccionado)?.nombre,
+      referencia: (metodoSeleccionado === 1 || metodoSeleccionado === 3) ? referenciaInput.trim() : ''
     };
 
     const nuevosPagos = [...pagos, nuevoPago];
     setPagos(nuevosPagos);
-    
+
     const nuevoRestante = montoRestante - monto;
     setMontoRestante(parseFloat(nuevoRestante.toFixed(2)));
     setMontoInput(parseFloat(nuevoRestante.toFixed(2)).toString());
+    setReferenciaInput('');
   };
 
   const handleEliminarPago = (index) => {
     const pagoEliminado = pagos[index];
     const nuevosPagos = pagos.filter((_, i) => i !== index);
     setPagos(nuevosPagos);
-    
+
     const nuevoRestante = montoRestante + pagoEliminado.monto;
     setMontoRestante(parseFloat(nuevoRestante.toFixed(2)));
     setMontoInput(parseFloat(nuevoRestante.toFixed(2)).toString());
@@ -95,17 +105,32 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
               <button
                 key={metodo.id}
                 onClick={() => setMetodoSeleccionado(metodo.id)}
-                className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${
-                  metodoSeleccionado === metodo.id
+                className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${metodoSeleccionado === metodo.id
                     ? 'bg-yellow-50 border-yellow-500 text-yellow-700 ring-1 ring-yellow-500'
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 <div className="text-xl mb-1">{metodo.icon}</div>
                 <span className="text-xs font-medium">{metodo.nombre}</span>
               </button>
             ))}
           </div>
+
+          {/* Input de Referencia (solo para Tarjeta y Transferencia) */}
+          {(metodoSeleccionado === 1 || metodoSeleccionado === 3) && (
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Número de Referencia/Folio *
+              </label>
+              <input
+                type="text"
+                value={referenciaInput}
+                onChange={(e) => setReferenciaInput(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+                placeholder="Ingresa el folio o número de transacción"
+              />
+            </div>
+          )}
 
           {/* Input de Monto */}
           <div className="flex gap-2 mb-6">
@@ -143,22 +168,29 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
             ) : (
               <div className="space-y-2">
                 {pagos.map((pago, index) => (
-                  <div key={index} className="flex justify-between items-center bg-white p-2 rounded border border-gray-200 shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-600">
-                        {metodosPago.find(m => m.id === pago.id_metpago)?.icon}
-                      </span>
-                      <span className="text-sm font-medium text-gray-800">{pago.nombreMetodo}</span>
+                  <div key={index} className="bg-white p-2 rounded border border-gray-200 shadow-sm">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">
+                          {metodosPago.find(m => m.id === pago.id_metpago)?.icon}
+                        </span>
+                        <span className="text-sm font-medium text-gray-800">{pago.nombreMetodo}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-gray-900">${pago.monto.toFixed(2)}</span>
+                        <button
+                          onClick={() => handleEliminarPago(index)}
+                          className="text-red-400 hover:text-red-600 transition-colors"
+                        >
+                          <FaTrash size={20} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-gray-900">${pago.monto.toFixed(2)}</span>
-                      <button
-                        onClick={() => handleEliminarPago(index)}
-                        className="text-red-400 hover:text-red-600 transition-colors"
-                      >
-                        <FaTrash size={20} />
-                      </button>
-                    </div>
+                    {pago.referencia && (
+                      <div className="mt-1 text-xs text-gray-500">
+                        Ref: {pago.referencia}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

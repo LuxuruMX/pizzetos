@@ -313,7 +313,6 @@ export default function TodosPedidosPage() {
                 setModalPagosOpen(false);
                 setPedidoAPagar(null);
                 fetchTodosPedidos(); // Recargar lista
-                alert('Pago registrado correctamente');
               } catch (error) {
                 alert(error.response?.data?.message || 'Error al procesar el pago');
               }
