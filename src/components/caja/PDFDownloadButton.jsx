@@ -12,7 +12,7 @@ export default function PDFDownloadButton({ cajaDetails, cierreData, ventasData 
             {({ loading }) => (
                 <button
                     disabled={loading || !cierreData.monto_final}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {loading ? (
                         <>

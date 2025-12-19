@@ -70,6 +70,7 @@ const POS = () => {
   const [mesa, setMesa] = useState('');
   const [nombreClie, setNombreClie] = useState('');
   const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
+  const [fechaEntrega, setFechaEntrega] = useState(null);
   const [modalDireccionAbierto, setModalDireccionAbierto] = useState(false);
   const [comentarios, setComentarios] = useState('');
   const [modalComentarios, setModalComentarios] = useState(false);
@@ -142,6 +143,11 @@ const POS = () => {
         setModalPagosAbierto(true);
         return;
       }
+    } else if (tipoServicio === 3) { // Pedidos Especiales
+      if (!clienteSeleccionado || !direccionSeleccionada || !fechaEntrega) {
+        setModalDireccionAbierto(true);
+        return;
+      }
     } else if (tipoServicio === 0) {
       if (!mesa || mesa.trim() === '') {
         alert('Por favor, ingresa el número de mesa.');
@@ -170,6 +176,12 @@ const POS = () => {
         datosExtra.id_direccion = direccionSeleccionada;
       }
 
+      if (tipoServicio === 3) {
+        datosExtra.id_cliente = clienteSeleccionado.value;
+        datosExtra.id_direccion = direccionSeleccionada;
+        datosExtra.fecha_entrega = fechaEntrega;
+      }
+
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
 
       limpiarCarrito();
@@ -178,6 +190,7 @@ const POS = () => {
       setMesa('');
       setNombreClie('');
       setDireccionSeleccionada(null);
+      setFechaEntrega(null);
       setTipoServicio(0);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
@@ -188,7 +201,12 @@ const POS = () => {
   const handleConfirmarPagos = (pagosConfirmados) => {
     setPagos(pagosConfirmados);
     setModalPagosAbierto(false);
-    enviarOrdenConPagos(pagosConfirmados);
+
+    if (tipoServicio === 3) {
+      enviarOrdenEspecial(clienteSeleccionado, direccionSeleccionada, fechaEntrega, pagosConfirmados);
+    } else {
+      enviarOrdenConPagos(pagosConfirmados);
+    }
   };
 
   const enviarOrdenConPagos = async (pagosConfirmados) => {
@@ -223,6 +241,30 @@ const POS = () => {
       setMesa('');
       setNombreClie('');
       setDireccionSeleccionada(null);
+      setFechaEntrega(null);
+      setClienteSeleccionado(null);
+      setTipoServicio(0);
+    } catch (error) {
+      console.error('Error al enviar la orden:', error);
+      alert(error.message || 'Hubo un error al enviar la orden.');
+    }
+  };
+
+  const enviarOrdenEspecial = async (cliente, idDireccion, fecha, pagosConfirmados = []) => {
+    try {
+      const datosExtra = {
+        id_cliente: cliente.value,
+        id_direccion: idDireccion,
+        fecha_entrega: fecha
+      };
+      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
+      limpiarCarrito();
+      setComentarios('');
+      setPagos([]);
+      setMesa('');
+      setNombreClie('');
+      setDireccionSeleccionada(null);
+      setFechaEntrega(null);
       setClienteSeleccionado(null);
       setTipoServicio(0);
     } catch (error) {
@@ -312,11 +354,18 @@ const POS = () => {
     setModalPaquete3(false);
   };
 
-  const handleConfirmarDireccion = (cliente, idDireccion) => {
+  const handleConfirmarDireccion = (cliente, idDireccion, fecha = null) => {
     setClienteSeleccionado(cliente);
     setDireccionSeleccionada(idDireccion);
+    if (fecha) setFechaEntrega(fecha);
     setModalDireccionAbierto(false);
-    enviarOrdenDomicilio(cliente, idDireccion);
+
+    if (tipoServicio === 2) {
+      enviarOrdenDomicilio(cliente, idDireccion);
+    } else if (tipoServicio === 3) {
+      // Para pedidos especiales, ahora pedimos pago (anticipo)
+      setModalPagosAbierto(true);
+    }
   };
 
   const procesarProductos = () => {
@@ -481,6 +530,7 @@ const POS = () => {
         onClose={() => setModalPagosAbierto(false)}
         total={total}
         onConfirm={handleConfirmarPagos}
+        allowPartial={tipoServicio === 3}
       />
 
       <AddressSelectionModal
@@ -493,6 +543,7 @@ const POS = () => {
         onClienteCreado={(nuevoCliente) => {
           setClientes(prev => [...prev, nuevoCliente]);
         }}
+        askForDate={tipoServicio === 3}
       />
     </div>
   );

@@ -252,6 +252,26 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
       ordenParaEnviar.id_direccion = 1; // Hardcoded temporal según ejemplo del usuario
     }
     // No lleva mesa ni pagos
+  } else if (tipo_servicio === 3) { // Pedidos Especiales (Domicilio + Fecha)
+    if (datosExtra.id_cliente) {
+      ordenParaEnviar.id_cliente = parseInt(datosExtra.id_cliente);
+    }
+    if (datosExtra.id_direccion) {
+      ordenParaEnviar.id_direccion = parseInt(datosExtra.id_direccion);
+    }
+    if (datosExtra.fecha_entrega) {
+      // Formatear a ISO string si no lo es
+      const fecha = new Date(datosExtra.fecha_entrega);
+      ordenParaEnviar.fecha_entrega = fecha.toISOString();
+    }
+    // No lleva mesa ni pagos por ahora (según ejemplo user, aunque el JSON ejemplo muestra `pagos` array vacío y status 0)
+    // El usuario dijo "enviara casi lo mismo que la opcion a domicilio pero con el extra de fecha_entrega"
+    // UPDATE: El usuario pidio incluir pagos (anticipo)
+    ordenParaEnviar.pagos = pagos.map(p => ({
+      id_metpago: parseInt(p.id_metpago),
+      monto: parseFloat(p.monto),
+      referencia: p.referencia || ""
+    }));
   }
 
   // Agregar comentarios solo si existen

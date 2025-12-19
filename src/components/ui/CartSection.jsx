@@ -38,6 +38,7 @@ const CartSection = ({
     { id: 0, label: 'Comer Aqui', icon: <FaUtensils /> },
     { id: 1, label: 'Para Llevar', icon: <FaShoppingBag /> },
     { id: 2, label: 'A Domicilio', icon: <FaMotorcycle /> },
+    { id: 3, label: 'Pedidos Especiales', icon: <FaUtensils /> },
   ];
 
   const servicioActual = opcionesServicio.find(op => op.id === tipoServicio) || opcionesServicio[2];

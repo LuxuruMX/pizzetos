@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { catalogsService } from '@/services/catalogsService';
 import { clientesService } from '@/services/clientesService';
-import { FaMapMarkerAlt, FaTimes, FaUserPlus, FaPlus } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaTimes, FaUserPlus, FaPlus, FaCalendarAlt } from 'react-icons/fa';
 import AddClientModal from './AddClientModal';
 import ModalDirecciones from './ModalDirecciones';
 
-const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSeleccionado, onClienteChange, onClienteCreado }) => {
+const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSeleccionado, onClienteChange, onClienteCreado, askForDate = false }) => {
     const [direcciones, setDirecciones] = useState([]);
     const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -16,6 +16,7 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
     const [modalAgregarCliente, setModalAgregarCliente] = useState(false);
     const [modalAgregarDireccion, setModalAgregarDireccion] = useState(false);
     const [loadingDireccion, setLoadingDireccion] = useState(false);
+    const [fechaEntrega, setFechaEntrega] = useState('');
 
     useEffect(() => {
         const fetchDirecciones = async () => {
@@ -44,6 +45,7 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
 
         if (isOpen) {
             setDireccionSeleccionada(null); // Reset selection when modal opens
+            setFechaEntrega('');
             fetchDirecciones();
         }
     }, [clienteSeleccionado, isOpen]);
@@ -87,7 +89,8 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
 
     const handleConfirm = () => {
         if (clienteSeleccionado && direccionSeleccionada) {
-            onConfirm(clienteSeleccionado, direccionSeleccionada);
+            if (askForDate && !fechaEntrega) return;
+            onConfirm(clienteSeleccionado, direccionSeleccionada, fechaEntrega);
             onClose();
         }
     };
@@ -145,6 +148,25 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
                             ¿No encuentras al cliente? Haz clic en <span className="text-yellow-600 font-medium">Nuevo</span> para agregarlo.
                         </p>
                     </div>
+
+                    {/* Date Selection for Special Orders */}
+                    {askForDate && (
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Fecha de Entrega <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-transparent">
+                                <FaCalendarAlt className="text-gray-400" />
+                                <input
+                                    type="datetime-local"
+                                    value={fechaEntrega}
+                                    onChange={(e) => setFechaEntrega(e.target.value)}
+                                    className="flex-1 outline-none text-gray-700"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Address List */}
                     {clienteSeleccionado && (
@@ -234,7 +256,7 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
                         </button>
                         <button
                             onClick={handleConfirm}
-                            disabled={!clienteSeleccionado || !direccionSeleccionada}
+                            disabled={!clienteSeleccionado || !direccionSeleccionada || (askForDate && !fechaEntrega)}
                             className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
                         >
                             Confirmar Selección
