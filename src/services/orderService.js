@@ -306,6 +306,7 @@ export const pagarVenta = async (id_venta, pagos) => {
   try {
     const payload = {
       id_venta: parseInt(id_venta),
+      id_caja: localStorage.getItem('id_caja') ? parseInt(localStorage.getItem('id_caja')) : 0,
       pagos: pagos.map(p => ({
         id_metpago: parseInt(p.id_metpago),
         monto: parseFloat(p.monto),
@@ -313,10 +314,27 @@ export const pagarVenta = async (id_venta, pagos) => {
       }))
     };
     
+    // Log payload for debugging
+    console.log('Enviando pago:', payload);
+    
     const response = await api.post('/pos/pagar', payload);
     return response.data;
   } catch (error) {
     console.error('Error al procesar el pago:', error);
+    
+    // Mejorar el error para mostrar detalles del backend
+    if (error.response?.data?.detail) {
+      console.error('Detalle del error:', error.response.data.detail);
+      throw new Error(typeof error.response.data.detail === 'string' 
+        ? error.response.data.detail 
+        : JSON.stringify(error.response.data.detail)
+      );
+    }
+    
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    
     throw error;
   }
 };
