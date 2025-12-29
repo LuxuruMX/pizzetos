@@ -6,9 +6,9 @@ import Card from "@/components/ui/Card";
 import Table from "@/components/ui/Table";
 import { IoReload, IoMailOpenSharp, IoClose } from "react-icons/io5";
 import { FaEdit, FaTrash, FaCheck } from "react-icons/fa";
-import { MdComment, MdOutlinePayments } from "react-icons/md";
+import { MdComment } from "react-icons/md";
 import api from "@/services/api";
-import { pagarVenta, fetchDetalleVenta } from "@/services/orderService";
+import { pagarVenta } from "@/services/orderService";
 import PaymentModal from "@/components/ui/PaymentModal";
 
 import { getSucursalFromToken } from "@/services/jwt";

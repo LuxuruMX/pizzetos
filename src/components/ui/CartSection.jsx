@@ -1,5 +1,5 @@
 import CartItem from '@/components/ui/CartItem';
-import { MdComment, MdBrightness1 } from "react-icons/md";
+import { MdComment, MdBrightness1, MdFeaturedPlayList } from "react-icons/md";
 import { FaChevronDown, FaChevronUp, FaUtensils, FaMotorcycle, FaShoppingBag } from "react-icons/fa";
 import { useState, useRef, useEffect } from 'react';
 
@@ -38,7 +38,7 @@ const CartSection = ({
     { id: 0, label: 'Comer Aqui', icon: <FaUtensils /> },
     { id: 1, label: 'Para Llevar', icon: <FaShoppingBag /> },
     { id: 2, label: 'A Domicilio', icon: <FaMotorcycle /> },
-    { id: 3, label: 'Pedidos Especiales', icon: <FaUtensils /> },
+    { id: 3, label: 'Pedidos Especiales', icon: <MdFeaturedPlayList /> },
   ];
 
   const servicioActual = opcionesServicio.find(op => op.id === tipoServicio) || opcionesServicio[2];
