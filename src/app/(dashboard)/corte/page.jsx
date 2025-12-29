@@ -22,7 +22,7 @@ export default function CortePage() {
     // Modal State
     const [showModal, setShowModal] = useState(false);
     const [selectedDayData, setSelectedDayData] = useState(null);
-    const [selectedDayPagos, setSelectedDayPagos] = useState([]);
+    const [selectedDayReporte, setSelectedDayReporte] = useState([]);
     const [selectedDayGastos, setSelectedDayGastos] = useState([]);
 
     const fetchData = async () => {
@@ -165,7 +165,7 @@ export default function CortePage() {
         setSelectedDayData(row);
         setShowModal(true);
         setLoadingDetails(true);
-        setSelectedDayPagos([]); // Clear previous data
+        setSelectedDayReporte([]); // Clear previous data
 
         try {
             // Construct date string YYYY-MM-DD
@@ -173,13 +173,13 @@ export default function CortePage() {
             const fullDate = `${year}-${month}-${dayStr}`;
 
             // New endpoint to fetch details for a specific day
-            const response = await api.get('/corte/detalle-dia', {
+            const response = await api.get('/corte/reporte-dia', {
                 params: {
                     fecha: fullDate
                 }
             });
 
-            setSelectedDayPagos(response.data || []);
+            setSelectedDayReporte(response.data || []);
 
         } catch (error) {
             console.error("Error fetching day details:", error);
@@ -353,7 +353,7 @@ export default function CortePage() {
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 dayData={selectedDayData}
-                dailyPagos={selectedDayPagos}
+                reporteData={selectedDayReporte}
                 dailyGastos={selectedDayGastos}
                 isLoading={loadingDetails}
             />

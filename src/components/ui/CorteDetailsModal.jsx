@@ -5,10 +5,13 @@ import { IoClose } from 'react-icons/io5';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaReceipt, FaShoppingCart } from 'react-icons/fa';
 import Table from './Table';
 
-export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPagos, dailyGastos, isLoading }) {
+export default function CorteDetailsModal({ isOpen, onClose, dayData, reporteData, dailyGastos, isLoading }) {
     const [activeTab, setActiveTab] = useState('resumen'); // 'resumen' | 'ingresos' | 'gastos'
 
     if (!isOpen || !dayData) return null;
+
+    // Flatten all pagos from all sucursales for statistics
+    const allPagos = reporteData?.flatMap(sucursal => sucursal.pagos || []) || [];
 
     const formatDate = (dateStr) => {
         if (!dateStr) return '';
@@ -28,25 +31,25 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPagos
             render: row => <span className="font-semibold text-gray-800">#{row.id_venta}</span>
         },
         {
-            header: 'HORA',
-            accessor: 'fecha',
-            render: row => <span className="text-gray-600 text-sm">{formatDate(row.fecha)}</span>
+            header: 'CAJA',
+            accessor: 'id_caja',
+            render: row => <span className="text-gray-600 text-sm">Caja #{row.id_caja}</span>
         },
         {
             header: 'MÉTODO',
-            accessor: 'id_metpago',
+            accessor: 'metodo_pago',
             render: row => {
                 const icons = {
-                    1: <FaCreditCard className="text-blue-500" />,   // Tarjeta
-                    2: <FaMoneyBillWave className="text-green-500" />, // Efectivo
-                    3: <FaExchangeAlt className="text-purple-500" />   // Transferencia
+                    'Tarjeta': <FaCreditCard className="text-blue-500" />,
+                    'Efectivo': <FaMoneyBillWave className="text-green-500" />,
+                    'Transferencia': <FaExchangeAlt className="text-purple-500" />
                 };
-                const labels = { 1: 'Tarjeta', 2: 'Efectivo', 3: 'Transf.' };
+                const method = row.metodo_pago || 'Otro';
 
                 return (
                     <div className="flex items-center gap-2 text-sm text-gray-700">
-                        {icons[row.id_metpago] || <FaMoneyBillWave />}
-                        <span className="font-medium">{labels[row.id_metpago] || 'Otro'}</span>
+                        {icons[method] || <FaMoneyBillWave />}
+                        <span className="font-medium">{method}</span>
                     </div>
                 );
             }
@@ -177,6 +180,160 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPagos
                         </div>
                     </div>
 
+                    {/* Cash Registers and Branch Information */}
+                    {!isLoading && reporteData && reporteData.length > 0 && (
+                        <div className="space-y-4 mb-6">
+                            {reporteData.map((sucursalData, idx) => (
+                                <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                        <FaReceipt className="text-purple-600" />
+                                        Sucursal: {sucursalData.sucursal}
+                                    </h3>
+
+                                    {/* Cash Registers for this branch */}
+                                    {sucursalData.cajas && sucursalData.cajas.length > 0 && (
+                                        <div className="mb-4">
+                                            <h4 className="text-sm font-bold text-gray-700 mb-3">Cajas Registradoras</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {sucursalData.cajas.map((caja) => (
+                                                    <div key={caja.id_caja} className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div>
+                                                                <span className="font-bold text-green-900">Caja #{caja.id_caja}</span>
+                                                                <p className="text-sm text-gray-700 mt-1">{caja.empleado}</p>
+                                                            </div>
+                                                            <div className={`px-2 py-1 rounded text-xs font-semibold ${caja.hora_cierre ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                                                {caja.hora_cierre ? 'Cerrada' : 'Abierta'}
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-1 text-sm">
+                                                            <div className="flex justify-between">
+                                                                <span className="text-gray-600">Apertura:</span>
+                                                                <span className="font-medium text-gray-800">{formatDate(caja.hora_apertura)}</span>
+                                                            </div>
+                                                            {caja.hora_cierre && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-gray-600">Cierre:</span>
+                                                                    <span className="font-medium text-gray-800">{formatDate(caja.hora_cierre)}</span>
+                                                                </div>
+                                                            )}
+                                                            {caja.observaciones_apertura && (
+                                                                <div className="mt-2 pt-2 border-t border-green-200">
+                                                                    <p className="text-xs text-gray-600 italic">Obs. Apertura: {caja.observaciones_apertura}</p>
+                                                                </div>
+                                                            )}
+                                                            {caja.observaciones_cierre && (
+                                                                <div className="mt-1">
+                                                                    <p className="text-xs text-gray-600 italic">Obs. Cierre: {caja.observaciones_cierre}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Payment summary for this branch */}
+                                    {sucursalData.pagos && sucursalData.pagos.length > 0 && (
+                                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
+                                            <h4 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
+                                                <FaShoppingCart className="text-blue-600" />
+                                                Resumen de Pagos
+                                            </h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                <div>
+                                                    <span className="text-gray-600 block">Transacciones:</span>
+                                                    <span className="font-bold text-gray-800">{sucursalData.pagos.length}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-600 block">Total:</span>
+                                                    <span className="font-bold text-blue-700">
+                                                        {formatCurrency(sucursalData.pagos.reduce((sum, p) => sum + parseFloat(p.monto || 0), 0))}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-600 block">Ticket Promedio:</span>
+                                                    <span className="font-bold text-green-700">
+                                                        {formatCurrency(sucursalData.pagos.reduce((sum, p) => sum + parseFloat(p.monto || 0), 0) / sucursalData.pagos.length)}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-600 block">Más Alto:</span>
+                                                    <span className="font-bold text-purple-700">
+                                                        {formatCurrency(Math.max(...sucursalData.pagos.map(p => parseFloat(p.monto || 0))))}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!sucursalData.cajas?.length && !sucursalData.pagos?.length && (
+                                        <p className="text-sm text-gray-500 italic">No hay datos disponibles para esta sucursal</p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Overall Statistics */}
+                    {!isLoading && allPagos.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">Estadísticas Generales del Día</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
+                                    <h4 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
+                                        <FaShoppingCart className="text-blue-600" />
+                                        Totales
+                                    </h4>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Total de Transacciones:</span>
+                                            <span className="font-bold text-gray-800">{allPagos.length}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Ticket Promedio:</span>
+                                            <span className="font-bold text-blue-700">
+                                                {formatCurrency(dayData.ingresos / (allPagos.length || 1))}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Transacción Más Alta:</span>
+                                            <span className="font-bold text-green-700">
+                                                {formatCurrency(Math.max(...allPagos.map(p => parseFloat(p.monto || 0))))}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Transacción Más Baja:</span>
+                                            <span className="font-bold text-orange-700">
+                                                {formatCurrency(Math.min(...allPagos.map(p => parseFloat(p.monto || 0))))}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Branch totals */}
+                                <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-100">
+                                    <h4 className="text-sm font-bold text-purple-900 mb-3 flex items-center gap-2">
+                                        <FaReceipt className="text-purple-600" />
+                                        Desglose por Sucursal
+                                    </h4>
+                                    <div className="space-y-2 text-sm">
+                                        {reporteData?.map((sucursal) => {
+                                            const total = sucursal.pagos?.reduce((sum, p) => sum + parseFloat(p.monto || 0), 0) || 0;
+                                            return (
+                                                <div key={sucursal.sucursal} className="flex justify-between">
+                                                    <span className="text-gray-600">{sucursal.sucursal}:</span>
+                                                    <span className="font-bold text-purple-700">{formatCurrency(total)}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Tabs */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="flex border-b border-gray-200">
@@ -235,8 +392,8 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPagos
                                     )}
 
                                     {activeTab === 'ingresos' && (
-                                        dailyPagos && dailyPagos.length > 0 ? (
-                                            <Table columns={pagosColumns} data={dailyPagos} />
+                                        allPagos && allPagos.length > 0 ? (
+                                            <Table columns={pagosColumns} data={allPagos} />
                                         ) : (
                                             <div className="p-8 text-center text-gray-500">
                                                 No hay registros de ingresos detallados para este día.
