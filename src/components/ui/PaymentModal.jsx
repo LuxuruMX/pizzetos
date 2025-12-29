@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaTimes, FaTrash } from 'react-icons/fa';
 
-const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
+const PaymentModal = ({ isOpen, onClose, total, onConfirm, allowPartial = false }) => {
   const [pagos, setPagos] = useState([]);
   const [montoRestante, setMontoRestante] = useState(total);
   const [metodoSeleccionado, setMetodoSeleccionado] = useState(1); // 1: Tarjeta, 2: Efectivo, 3: Transferencia
@@ -31,6 +31,17 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
       return;
     }
 
+    if (!allowPartial && monto > montoRestante) {
+      alert('El monto no puede ser mayor al restante');
+      return;
+    }
+
+    // Si permite parcial, no limitamos estrictamente al restante, pero sí que sea positivo
+    // Bueno, para anticipo, el monto total puede ser menor al total de la orden.
+    // Pero la logica actual de restar del total esta bien.
+    // Si allowPartial es true, el usuario puede agregar un pago (ej: 50) y el restante ser 50.
+    // Lo que NO debe pasar es que pague MAS del total? Depende.
+    // Supongamos que no debe pagar mas del total.
     if (monto > montoRestante) {
       alert('El monto no puede ser mayor al restante');
       return;
@@ -69,10 +80,17 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
   };
 
   const handleConfirmar = () => {
-    if (montoRestante > 0.01) { // Margen de error pequeño por decimales
+    if (!allowPartial && montoRestante > 0.01) { // Margen de error pequeño por decimales
       alert(`Falta cubrir $${montoRestante.toFixed(2)} del total`);
       return;
     }
+
+    if (allowPartial && pagos.length === 0) {
+      if (!confirm("¿Está seguro de continuar sin registrar ningún pago (anticipo $0)?")) {
+        return;
+      }
+    }
+
     onConfirm(pagos);
   };
 
@@ -106,8 +124,8 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
                 key={metodo.id}
                 onClick={() => setMetodoSeleccionado(metodo.id)}
                 className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${metodoSeleccionado === metodo.id
-                    ? 'bg-yellow-50 border-yellow-500 text-yellow-700 ring-1 ring-yellow-500'
-                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? 'bg-yellow-50 border-yellow-500 text-yellow-700 ring-1 ring-yellow-500'
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
               >
                 <div className="text-xl mb-1">{metodo.icon}</div>
@@ -199,10 +217,10 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
 
           <button
             onClick={handleConfirmar}
-            disabled={montoRestante > 0.01}
+            disabled={!allowPartial && montoRestante > 0.01}
             className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Confirmar Pagos
+            {allowPartial && montoRestante > 0.01 ? 'Confirmar Anticipo' : 'Confirmar Pagos'}
           </button>
         </div>
       </div>

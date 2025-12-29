@@ -24,7 +24,7 @@ import { BiSolidCategoryAlt } from "react-icons/bi";
 import { TbHierarchy3, TbTransfer } from "react-icons/tb";
 import { FaMoneyBills } from "react-icons/fa6";
 import { RiCustomerServiceFill } from "react-icons/ri";
-import { MdPointOfSale, MdOutlineBlindsClosed } from "react-icons/md";
+import { MdPointOfSale, MdOutlineBlindsClosed, MdOutlinePendingActions } from "react-icons/md";
 import { IoIosAlbums, IoIosSettings } from "react-icons/io";
 
 
@@ -82,7 +82,8 @@ const menuConfig = [
       { name: 'Flujo de caja', path: '/caja', icon: TbTransfer, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Venta', path: '/pos', icon: FaShoppingBasket, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
-      { name: 'Pedidos', path: '/pedidos', icon: IoIosAlbums }
+      { name: 'Pedidos', path: '/pedidos', icon: IoIosAlbums },
+      { name: 'Anticipos', path: '/pedidos/anticipos', icon: MdOutlinePendingActions, permiso: 'ver_venta' },
     ]
   },
   {
