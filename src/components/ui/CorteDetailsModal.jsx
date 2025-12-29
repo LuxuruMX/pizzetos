@@ -5,14 +5,10 @@ import { IoClose } from 'react-icons/io5';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaReceipt, FaShoppingCart } from 'react-icons/fa';
 import Table from './Table';
 
-export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPedidos, dailyGastos }) {
-    const [activeTab, setActiveTab] = useState('ingresos'); // 'ingresos' | 'gastos'
+export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPagos, dailyGastos, isLoading }) {
+    const [activeTab, setActiveTab] = useState('resumen'); // 'resumen' | 'ingresos' | 'gastos'
 
     if (!isOpen || !dayData) return null;
-
-    const formatCurrency = (val) => {
-        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val || 0);
-    };
 
     const formatDate = (dateStr) => {
         if (!dateStr) return '';
@@ -20,8 +16,12 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPedid
         return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
     };
 
-    // Columns for Pedidos List
-    const pedidosColumns = [
+    const formatCurrency = (val) => {
+        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val || 0);
+    };
+
+    // Columns for Pagos List (Detailed)
+    const pagosColumns = [
         {
             header: 'FOLIO',
             accessor: 'id_venta',
@@ -29,40 +29,41 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPedid
         },
         {
             header: 'HORA',
-            accessor: 'fecha_hora',
-            render: row => <span className="text-gray-600 text-sm">{formatDate(row.fecha_hora)}</span>
+            accessor: 'fecha',
+            render: row => <span className="text-gray-600 text-sm">{formatDate(row.fecha)}</span>
         },
         {
-            header: 'MÉTODO PAGO',
-            accessor: 'pagos',
+            header: 'MÉTODO',
+            accessor: 'id_metpago',
             render: row => {
-                // If it has multiple payments, show primary or "Mixto"
-                if (!row.pagos || row.pagos.length === 0) return <span className="text-gray-500 text-xs">Desconocido</span>;
+                const icons = {
+                    1: <FaCreditCard className="text-blue-500" />,   // Tarjeta
+                    2: <FaMoneyBillWave className="text-green-500" />, // Efectivo
+                    3: <FaExchangeAlt className="text-purple-500" />   // Transferencia
+                };
+                const labels = { 1: 'Tarjeta', 2: 'Efectivo', 3: 'Transf.' };
+
                 return (
-                    <div className="flex flex-col gap-1">
-                        {row.pagos.map((p, idx) => {
-                            const icons = {
-                                1: <FaCreditCard className="text-blue-500" />,   // Tarjeta
-                                2: <FaMoneyBillWave className="text-green-500" />, // Efectivo
-                                3: <FaExchangeAlt className="text-purple-500" />   // Transferencia
-                            };
-                            const labels = { 1: 'Tarjeta', 2: 'Efectivo', 3: 'Transf.' };
-                            return (
-                                <div key={idx} className="flex items-center gap-1 text-xs text-gray-700">
-                                    {icons[p.id_metpago] || <FaMoneyBillWave />}
-                                    <span>{labels[p.id_metpago] || 'Otro'}</span>
-                                    {p.referencia && <span className="text-gray-400 italic">({p.referencia})</span>}
-                                </div>
-                            );
-                        })}
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                        {icons[row.id_metpago] || <FaMoneyBillWave />}
+                        <span className="font-medium">{labels[row.id_metpago] || 'Otro'}</span>
                     </div>
                 );
             }
         },
         {
+            header: 'REFERENCIA',
+            accessor: 'referencia',
+            render: row => (
+                <span className="text-gray-500 text-sm italic">
+                    {row.referencia || '-'}
+                </span>
+            )
+        },
+        {
             header: 'MONTO',
-            accessor: 'total',
-            render: row => <span className="font-bold text-gray-800">{formatCurrency(row.total)}</span>
+            accessor: 'monto',
+            render: row => <span className="font-bold text-gray-800">{formatCurrency(row.monto)}</span>
         }
     ];
 
@@ -139,19 +140,40 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPedid
                         </div>
                     </div>
 
-                    {/* Breakdown Payment Methods Mini-Cards */}
-                    <div className="grid grid-cols-3 gap-2 mb-6 text-sm">
-                        <div className="bg-green-50 border border-green-100 p-3 rounded-lg text-center">
-                            <span className="block text-green-700 text-xs font-semibold mb-1">Efectivo</span>
-                            <span className="block font-bold text-green-900">{formatCurrency(dayData.efectivo)}</span>
-                        </div>
-                        <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg text-center">
-                            <span className="block text-blue-700 text-xs font-semibold mb-1">Tarjeta</span>
-                            <span className="block font-bold text-blue-900">{formatCurrency(dayData.tarjeta)}</span>
-                        </div>
-                        <div className="bg-purple-50 border border-purple-100 p-3 rounded-lg text-center">
-                            <span className="block text-purple-700 text-xs font-semibold mb-1">Transferencia</span>
-                            <span className="block font-bold text-purple-900">{formatCurrency(dayData.transferencia)}</span>
+                    {/* Breakdown Payment Methods Cards */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4">Desglose de Ingresos por Método de Pago</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <FaMoneyBillWave className="text-green-600" size={20} />
+                                    <span className="text-green-700 text-sm font-semibold">Efectivo</span>
+                                </div>
+                                <p className="text-2xl font-bold text-green-900">{formatCurrency(dayData.efectivo)}</p>
+                                <p className="text-xs text-green-600 mt-1">
+                                    {dayData.ingresos > 0 ? ((dayData.efectivo / dayData.ingresos) * 100).toFixed(1) : 0}% del total
+                                </p>
+                            </div>
+                            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <FaCreditCard className="text-blue-600" size={20} />
+                                    <span className="text-blue-700 text-sm font-semibold">Tarjeta</span>
+                                </div>
+                                <p className="text-2xl font-bold text-blue-900">{formatCurrency(dayData.tarjeta)}</p>
+                                <p className="text-xs text-blue-600 mt-1">
+                                    {dayData.ingresos > 0 ? ((dayData.tarjeta / dayData.ingresos) * 100).toFixed(1) : 0}% del total
+                                </p>
+                            </div>
+                            <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <FaExchangeAlt className="text-purple-600" size={20} />
+                                    <span className="text-purple-700 text-sm font-semibold">Transferencia</span>
+                                </div>
+                                <p className="text-2xl font-bold text-purple-900">{formatCurrency(dayData.transferencia)}</p>
+                                <p className="text-xs text-purple-600 mt-1">
+                                    {dayData.ingresos > 0 ? ((dayData.transferencia / dayData.ingresos) * 100).toFixed(1) : 0}% del total
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -159,13 +181,22 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPedid
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="flex border-b border-gray-200">
                             <button
+                                onClick={() => setActiveTab('resumen')}
+                                className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'resumen'
+                                    ? 'bg-white text-blue-600 border-b-2 border-blue-600'
+                                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                                    }`}
+                            >
+                                Resumen
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('ingresos')}
                                 className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'ingresos'
                                     ? 'bg-white text-yellow-600 border-b-2 border-yellow-600'
                                     : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
                                     }`}
                             >
-                                Detalle de Ingresos ({dailyPedidos.length})
+                                Detalle de Ingresos
                             </button>
                             <button
                                 onClick={() => setActiveTab('gastos')}
@@ -174,27 +205,55 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, dailyPedid
                                     : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
                                     }`}
                             >
-                                Detalle de Gastos ({dailyGastos.length})
+                                Detalle de Gastos ({dailyGastos?.length || 0})
                             </button>
                         </div>
 
                         <div className="p-0">
-                            {activeTab === 'ingresos' ? (
-                                dailyPedidos.length > 0 ? (
-                                    <Table columns={pedidosColumns} data={dailyPedidos} />
-                                ) : (
-                                    <div className="p-8 text-center text-gray-500">
-                                        No hay registros de ingresos para este día.
-                                    </div>
-                                )
+                            {isLoading ? (
+                                <div className="p-12 flex justify-center items-center">
+                                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                                </div>
                             ) : (
-                                dailyGastos.length > 0 ? (
-                                    <Table columns={gastosColumns} data={dailyGastos} />
-                                ) : (
-                                    <div className="p-8 text-center text-gray-500">
-                                        No hay registros de gastos para este día.
-                                    </div>
-                                )
+                                <>
+                                    {activeTab === 'resumen' && (
+                                        <div className="p-8 text-center">
+                                            <div className="inline-block p-4 bg-blue-50 rounded-full mb-4">
+                                                <FaShoppingCart className="text-blue-600" size={32} />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-gray-800 mb-2">Resumen del Día</h3>
+                                            <p className="text-gray-600 mb-4">
+                                                Este día se registraron <span className="font-bold text-green-600">{formatCurrency(dayData.ingresos)}</span> en ingresos
+                                                y <span className="font-bold text-red-600">{formatCurrency(dayData.gastos)}</span> en gastos.
+                                            </p>
+                                            <p className="text-lg">
+                                                Balance: <span className={`font-bold ${dayData.balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                                                    {formatCurrency(dayData.balance)}
+                                                </span>
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'ingresos' && (
+                                        dailyPagos && dailyPagos.length > 0 ? (
+                                            <Table columns={pagosColumns} data={dailyPagos} />
+                                        ) : (
+                                            <div className="p-8 text-center text-gray-500">
+                                                No hay registros de ingresos detallados para este día.
+                                            </div>
+                                        )
+                                    )}
+
+                                    {activeTab === 'gastos' && (
+                                        dailyGastos && dailyGastos.length > 0 ? (
+                                            <Table columns={gastosColumns} data={dailyGastos} />
+                                        ) : (
+                                            <div className="p-8 text-center text-gray-500">
+                                                No hay registros de gastos para este día.
+                                            </div>
+                                        )
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
