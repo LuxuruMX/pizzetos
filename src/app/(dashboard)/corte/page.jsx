@@ -4,9 +4,10 @@ import { useState, useEffect, useMemo } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
+import CorteDetailsModal from '@/components/ui/CorteDetailsModal';
 import api from '@/services/api';
 import { getSucursalFromToken } from '@/services/jwt';
-import { IoReload } from 'react-icons/io5';
+import { IoReload, IoEye } from 'react-icons/io5';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaChartPie } from 'react-icons/fa';
 
 export default function CortePage() {
@@ -18,6 +19,12 @@ export default function CortePage() {
         const now = new Date();
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     });
+
+    // Modal State
+    const [showModal, setShowModal] = useState(false);
+    const [selectedDayData, setSelectedDayData] = useState(null);
+    const [selectedDayPedidos, setSelectedDayPedidos] = useState([]);
+    const [selectedDayGastos, setSelectedDayGastos] = useState([]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -189,6 +196,34 @@ export default function CortePage() {
         }));
     }, [pedidos, gastos, fecha]);
 
+    const handleViewDetails = (row) => {
+        const [year, month] = fecha.split('-');
+
+        // Filter pedidos for this day
+        const dayPedidos = pedidos.filter(p => {
+            const pDate = new Date(p.fecha_hora);
+            return pDate.getDate() === row.day;
+        });
+
+        // Filter gastos for this day
+        const dayGastos = gastos.filter(g => {
+            if (!g.fecha) return false;
+            const parts = g.fecha.split('T')[0].split('-'); // YYYY-MM-DD
+            if (parts.length === 3) {
+                // Check year, month and day
+                return parseInt(parts[0]) === parseInt(year) &&
+                    parseInt(parts[1]) === parseInt(month) &&
+                    parseInt(parts[2]) === row.day;
+            }
+            return false;
+        });
+
+        setSelectedDayData(row);
+        setSelectedDayPedidos(dayPedidos);
+        setSelectedDayGastos(dayGastos);
+        setShowModal(true);
+    };
+
     const dailyColumns = [
         { header: 'FECHA', accessor: 'dateStr', render: row => <span className="text-gray-600">{row.dateStr}</span> },
         { header: 'EFECTIVO', accessor: 'efectivo', render: row => <span className="text-gray-700 font-medium">{formatCurrency(row.efectivo)}</span> },
@@ -197,21 +232,21 @@ export default function CortePage() {
         { header: 'TOTAL INGRESOS', accessor: 'ingresos', render: row => <span className="text-green-600 font-medium">{formatCurrency(row.ingresos)}</span> },
         { header: 'GASTOS', accessor: 'gastos', render: row => <span className="text-red-600 font-medium">{formatCurrency(row.gastos)}</span> },
         { header: 'BALANCE', accessor: 'balance', render: row => <span className={`font-bold ${row.balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{formatCurrency(row.balance)}</span> },
+        {
+            header: 'ACCIONES', accessor: 'actions', render: row => (
+                <div className="flex justify-center gap-2">
+                    <button
+                        onClick={() => handleViewDetails(row)}
+                        className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-colors"
+                        title="Ver detalle del día"
+                    >
+                        <IoEye size={20} />
+                    </button>
+                </div>
+            )
+        }
     ];
 
-    const methodIcons = {
-        1: <FaCreditCard className="text-blue-500" size={16} />,
-        2: <FaMoneyBillWave className="text-green-500" size={16} />,
-        3: <FaExchangeAlt className="text-purple-500" size={16} />
-    };
-
-    const methodLabels = {
-        1: 'Tarjeta',
-        2: 'Efectivo',
-        3: 'Transferencia'
-    };
-
-    // Data for method breakdown chart
     const methodBreakdown = [
         { name: 'Efectivo', value: stats.totalEfectivo, color: 'bg-green-100', textColor: 'text-green-600', icon: <FaMoneyBillWave size={16} /> },
         { name: 'Tarjeta', value: stats.totalTarjeta, color: 'bg-blue-100', textColor: 'text-blue-600', icon: <FaCreditCard size={16} /> },
@@ -332,6 +367,14 @@ export default function CortePage() {
             <Card title="Desglose Diario por Método de Pago">
                 <Table columns={dailyColumns} data={dailyData} />
             </Card>
+
+            <CorteDetailsModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                dayData={selectedDayData}
+                dailyPedidos={selectedDayPedidos}
+                dailyGastos={selectedDayGastos}
+            />
         </div>
     );
 }
