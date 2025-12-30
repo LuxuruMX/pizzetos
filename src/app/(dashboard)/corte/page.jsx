@@ -6,13 +6,12 @@ import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import CorteDetailsModal from '@/components/ui/CorteDetailsModal';
 import api from '@/services/api';
-import { getSucursalFromToken } from '@/services/jwt';
 import { IoReload, IoEye } from 'react-icons/io5';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaChartPie } from 'react-icons/fa';
 
 export default function CortePage() {
     const [loading, setLoading] = useState(false);
-    const [pedidos, setPedidos] = useState([]);
+    const [pagos, setPagos] = useState([]);
     const [gastos, setGastos] = useState([]);
     const [error, setError] = useState(null);
     const [fecha, setFecha] = useState(() => {
@@ -23,10 +22,12 @@ export default function CortePage() {
     // Modal State
     const [showModal, setShowModal] = useState(false);
     const [selectedDayData, setSelectedDayData] = useState(null);
-    const [selectedDayPedidos, setSelectedDayPedidos] = useState([]);
+    const [selectedDayReporte, setSelectedDayReporte] = useState([]);
     const [selectedDayGastos, setSelectedDayGastos] = useState([]);
 
     const fetchData = async () => {
+        setPagos([]);
+        setGastos([]);
         setLoading(true);
         setError(null);
         try {
@@ -36,33 +37,26 @@ export default function CortePage() {
 
             const formatDate = (d) => d.toISOString().split('T')[0];
 
-            const id_suc = getSucursalFromToken(); // Get sucursal ID to filter by sucursal
-
+            // Fetch gastos (expenses)
             const gastosPromise = api.get('/gastos', {
                 params: {
                     fecha_inicio: formatDate(startDate),
-                    fecha_fin: formatDate(endDate),
-                    id_suc
+                    fecha_fin: formatDate(endDate)
                 }
             });
 
-            const pedidosPromise = api.get('/pos/pedidos-resumen', {
+            // Fetch simplified daily income data (amounts by payment method)
+            const corteDiarioPromise = api.get('/corte/resumen-mes', {
                 params: {
-                    filtro: 'todos',
-                    id_suc
+                    mes: parseInt(month),
+                    anio: parseInt(year)
                 }
             });
 
-            const [gastosRes, pedidosRes] = await Promise.all([gastosPromise, pedidosPromise]);
+            const [gastosRes, corteDiarioRes] = await Promise.all([gastosPromise, corteDiarioPromise]);
 
             setGastos(gastosRes.data);
-
-            const pedidosData = pedidosRes.data.pedidos || [];
-            const filteredPedidos = pedidosData.filter(p => {
-                const pDate = new Date(p.fecha_hora);
-                return pDate.getFullYear() === parseInt(year) && pDate.getMonth() === (parseInt(month) - 1);
-            });
-            setPedidos(filteredPedidos);
+            setPagos(corteDiarioRes.data || []);
 
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -74,40 +68,28 @@ export default function CortePage() {
 
     useEffect(() => {
         fetchData();
+        // Clear modal state when month changes to prevent showing old data
+        setSelectedDayReporte([]);
+        setSelectedDayGastos([]);
+        setSelectedDayData(null);
+        setShowModal(false);
     }, [fecha]);
 
-    // Calculations
+    // Calculations - Now working with simplified daily data
     const stats = useMemo(() => {
         let totalIngresos = 0;
         let totalEfectivo = 0;
         let totalTarjeta = 0;
         let totalTransferencia = 0;
 
-        pedidos.forEach(p => {
-            if (p.status !== 0) {
-                const totalPedido = parseFloat(p.total);
-                totalIngresos += totalPedido;
-
-                if (p.pagos && Array.isArray(p.pagos) && p.pagos.length > 0) {
-                    p.pagos.forEach(pago => {
-                        const monto = parseFloat(pago.monto);
-                        const idMetodo = parseInt(pago.id_metpago);
-
-                        if (idMetodo === 1) {
-                            totalTarjeta += monto;
-                        } else if (idMetodo === 2) {
-                            totalEfectivo += monto;
-                        } else if (idMetodo === 3) {
-                            totalTransferencia += monto;
-                        } else {
-                            totalEfectivo += monto;
-                        }
-                    });
-                } else {
-                    totalEfectivo += totalPedido;
-                }
-            }
+        // pagos now contains daily summaries with efectivo, tarjeta, transferencia amounts
+        pagos.forEach(dia => {
+            totalEfectivo += parseFloat(dia.efectivo || 0);
+            totalTarjeta += parseFloat(dia.tarjeta || 0);
+            totalTransferencia += parseFloat(dia.transferencia || 0);
         });
+
+        totalIngresos = totalEfectivo + totalTarjeta + totalTransferencia;
 
         const totalGastos = gastos.reduce((acc, g) => acc + parseFloat(g.precio || 0), 0);
         const balanceNeto = totalIngresos - totalGastos;
@@ -127,7 +109,7 @@ export default function CortePage() {
             totalTransferencia,
             gastosPorCategoria
         };
-    }, [pedidos, gastos]);
+    }, [pagos, gastos]);
 
     const formatCurrency = (val) => {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
@@ -139,6 +121,7 @@ export default function CortePage() {
         const [year, month] = fecha.split('-');
         const lastDay = new Date(year, month, 0).getDate();
 
+        // Initialize all days of the month
         for (let i = 1; i <= lastDay; i++) {
             days[i] = {
                 day: i,
@@ -150,33 +133,18 @@ export default function CortePage() {
             };
         }
 
-        pedidos.forEach(p => {
-            const d = new Date(p.fecha_hora).getDate();
+        // pagos now contains simplified daily data with amounts already separated
+        pagos.forEach(dia => {
+            const d = parseInt(dia.dia); // Expecting 'dia' field with day number
             if (days[d]) {
-                const totalPedido = parseFloat(p.total);
-                days[d].ingresos += totalPedido;
-
-                if (p.pagos && Array.isArray(p.pagos) && p.pagos.length > 0) {
-                    p.pagos.forEach(pago => {
-                        const monto = parseFloat(pago.monto);
-                        const idMetodo = parseInt(pago.id_metpago);
-
-                        if (idMetodo === 1) {
-                            days[d].tarjeta += monto;
-                        } else if (idMetodo === 2) {
-                            days[d].efectivo += monto;
-                        } else if (idMetodo === 3) {
-                            days[d].transferencia += monto;
-                        } else {
-                            days[d].efectivo += monto;
-                        }
-                    });
-                } else {
-                    days[d].efectivo += totalPedido;
-                }
+                days[d].efectivo = parseFloat(dia.efectivo || 0);
+                days[d].tarjeta = parseFloat(dia.tarjeta || 0);
+                days[d].transferencia = parseFloat(dia.transferencia || 0);
+                days[d].ingresos = days[d].efectivo + days[d].tarjeta + days[d].transferencia;
             }
         });
 
+        // Add gastos to each day
         gastos.forEach(g => {
             if (g.fecha) {
                 const parts = g.fecha.split('T')[0].split('-');
@@ -194,18 +162,41 @@ export default function CortePage() {
             balance: d.ingresos - d.gastos,
             dateStr: `${d.day} de ${new Date(year, month - 1).toLocaleString('es-MX', { month: 'long' })}`
         }));
-    }, [pedidos, gastos, fecha]);
+    }, [pagos, gastos, fecha]);
 
-    const handleViewDetails = (row) => {
+    const [loadingDetails, setLoadingDetails] = useState(false);
+
+    const handleViewDetails = async (row) => {
         const [year, month] = fecha.split('-');
 
-        // Filter pedidos for this day
-        const dayPedidos = pedidos.filter(p => {
-            const pDate = new Date(p.fecha_hora);
-            return pDate.getDate() === row.day;
-        });
+        setSelectedDayData(row);
+        setShowModal(true);
+        setLoadingDetails(true);
+        setSelectedDayReporte([]); // Clear previous data
 
-        // Filter gastos for this day
+        try {
+            // Construct date string YYYY-MM-DD
+            const dayStr = String(row.day).padStart(2, '0');
+            const fullDate = `${year}-${month}-${dayStr}`;
+
+            // New endpoint to fetch details for a specific day
+            const response = await api.get('/corte/reporte-dia', {
+                params: {
+                    fecha: fullDate
+                }
+            });
+
+            setSelectedDayReporte(response.data || []);
+
+        } catch (error) {
+            console.error("Error fetching day details:", error);
+            // Optionally set an error state for the modal
+        } finally {
+            setLoadingDetails(false);
+        }
+
+        // Filter gastos for this day (we still use the pre-fetched gastos as they are usually fewer)
+        // Or we could also move this to the backend call if we wanted to
         const dayGastos = gastos.filter(g => {
             if (!g.fecha) return false;
             const parts = g.fecha.split('T')[0].split('-'); // YYYY-MM-DD
@@ -218,10 +209,7 @@ export default function CortePage() {
             return false;
         });
 
-        setSelectedDayData(row);
-        setSelectedDayPedidos(dayPedidos);
         setSelectedDayGastos(dayGastos);
-        setShowModal(true);
     };
 
     const dailyColumns = [
@@ -248,9 +236,9 @@ export default function CortePage() {
     ];
 
     const methodBreakdown = [
-        { name: 'Efectivo', value: stats.totalEfectivo, color: 'bg-green-100', textColor: 'text-green-600', icon: <FaMoneyBillWave size={16} /> },
-        { name: 'Tarjeta', value: stats.totalTarjeta, color: 'bg-blue-100', textColor: 'text-blue-600', icon: <FaCreditCard size={16} /> },
-        { name: 'Transferencia', value: stats.totalTransferencia, color: 'bg-purple-100', textColor: 'text-purple-600', icon: <FaExchangeAlt size={16} /> }
+        { name: 'Efectivo', value: stats.totalEfectivo, color: 'bg-green-100', barColor: 'bg-green-500', textColor: 'text-green-600', icon: <FaMoneyBillWave size={16} /> },
+        { name: 'Tarjeta', value: stats.totalTarjeta, color: 'bg-blue-100', barColor: 'bg-blue-500', textColor: 'text-blue-600', icon: <FaCreditCard size={16} /> },
+        { name: 'Transferencia', value: stats.totalTransferencia, color: 'bg-purple-100', barColor: 'bg-purple-500', textColor: 'text-purple-600', icon: <FaExchangeAlt size={16} /> }
     ];
 
     return (
@@ -354,7 +342,7 @@ export default function CortePage() {
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2.5">
                                 <div
-                                    className={`h-2.5 rounded-full ${method.color.replace('bg-', 'bg-').replace('-100', '-500')}`}
+                                    className={`h-2.5 rounded-full ${method.barColor}`}
                                     style={{ width: stats.totalIngresos > 0 ? `${(method.value / stats.totalIngresos) * 100}%` : '0%' }}
                                 ></div>
                             </div>
@@ -372,8 +360,9 @@ export default function CortePage() {
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 dayData={selectedDayData}
-                dailyPedidos={selectedDayPedidos}
+                reporteData={selectedDayReporte}
                 dailyGastos={selectedDayGastos}
+                isLoading={loadingDetails}
             />
         </div>
     );
