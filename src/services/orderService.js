@@ -251,7 +251,12 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
       // Valor por defecto temporal si se requiere, o se omite si el backend lo permite
       ordenParaEnviar.id_direccion = 1; // Hardcoded temporal según ejemplo del usuario
     }
-    // No lleva mesa ni pagos
+    // Agregar pagos para domicilio
+    ordenParaEnviar.pagos = pagos.map(p => ({
+      id_metpago: parseInt(p.id_metpago),
+      monto: parseFloat(p.monto),
+      referencia: p.referencia || ""
+    }));
   } else if (tipo_servicio === 3) { // Pedidos Especiales (Domicilio + Fecha)
     if (datosExtra.id_cliente) {
       ordenParaEnviar.id_cliente = parseInt(datosExtra.id_cliente);

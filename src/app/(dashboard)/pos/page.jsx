@@ -10,6 +10,7 @@ import ProductsSection from '@/components/ui/ProductsSection';
 import ProductModal from '@/components/ui/ProductModal';
 import PaymentModal from '@/components/ui/PaymentModal';
 import AddressSelectionModal from '@/components/ui/AddressSelectionModal';
+import DeliveryPaymentModal from '@/components/ui/DeliveryPaymentModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
 import { MdComment } from "react-icons/md";
 
@@ -72,6 +73,7 @@ const POS = () => {
   const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
   const [fechaEntrega, setFechaEntrega] = useState(null);
   const [modalDireccionAbierto, setModalDireccionAbierto] = useState(false);
+  const [modalPagoDomicilioAbierto, setModalPagoDomicilioAbierto] = useState(false);
   const [comentarios, setComentarios] = useState('');
   const [modalComentarios, setModalComentarios] = useState(false);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -228,13 +230,15 @@ const POS = () => {
     }
   };
 
-  const enviarOrdenDomicilio = async (cliente, idDireccion) => {
+  const enviarOrdenDomicilio = async (cliente, idDireccion, pagoData) => {
     try {
       const datosExtra = {
         id_cliente: cliente.value,
         id_direccion: idDireccion
       };
-      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
+      // Convertir pagoData a array de pagos
+      const pagosArray = pagoData ? [pagoData] : [];
+      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosArray);
       limpiarCarrito();
       setComentarios('');
       setPagos([]);
@@ -361,11 +365,17 @@ const POS = () => {
     setModalDireccionAbierto(false);
 
     if (tipoServicio === 2) {
-      enviarOrdenDomicilio(cliente, idDireccion);
+      // Para domicilio, abrir modal de pago
+      setModalPagoDomicilioAbierto(true);
     } else if (tipoServicio === 3) {
       // Para pedidos especiales, ahora pedimos pago (anticipo)
       setModalPagosAbierto(true);
     }
+  };
+
+  const handleConfirmarPagoDomicilio = (pagoData) => {
+    setModalPagoDomicilioAbierto(false);
+    enviarOrdenDomicilio(clienteSeleccionado, direccionSeleccionada, pagoData);
   };
 
   const procesarProductos = () => {
@@ -544,6 +554,13 @@ const POS = () => {
           setClientes(prev => [...prev, nuevoCliente]);
         }}
         askForDate={tipoServicio === 3}
+      />
+
+      <DeliveryPaymentModal
+        isOpen={modalPagoDomicilioAbierto}
+        onClose={() => setModalPagoDomicilioAbierto(false)}
+        total={total}
+        onConfirm={handleConfirmarPagoDomicilio}
       />
     </div>
   );
