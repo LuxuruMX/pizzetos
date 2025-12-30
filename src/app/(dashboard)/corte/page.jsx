@@ -26,6 +26,8 @@ export default function CortePage() {
     const [selectedDayGastos, setSelectedDayGastos] = useState([]);
 
     const fetchData = async () => {
+        setPagos([]);
+        setGastos([]);
         setLoading(true);
         setError(null);
         try {
@@ -46,8 +48,8 @@ export default function CortePage() {
             // Fetch simplified daily income data (amounts by payment method)
             const corteDiarioPromise = api.get('/corte/resumen-mes', {
                 params: {
-                    fecha_inicio: formatDate(startDate),
-                    fecha_fin: formatDate(endDate)
+                    mes: parseInt(month),
+                    anio: parseInt(year)
                 }
             });
 
