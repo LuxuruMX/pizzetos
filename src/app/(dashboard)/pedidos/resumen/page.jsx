@@ -129,6 +129,32 @@ export default function TodosPedidosPage() {
       ),
     },
     {
+      header: "DETALLE",
+      accessor: "detalle",
+      render: (row) => {
+        // Solo mostrar detalle para pedidos de domicilio (tipo_servicio === 2)
+        if (row.tipo_servicio !== 2 || !row.detalle) {
+          return <span className="text-gray-400 text-sm">-</span>;
+        }
+
+        // Determinar el color y estilo según el tipo de detalle
+        let badgeClass = "bg-blue-100 text-blue-800";
+        if (row.detalle.includes("Pago realizado")) {
+          badgeClass = "bg-green-100 text-green-800";
+        } else if (row.detalle.includes("terminal")) {
+          badgeClass = "bg-purple-100 text-purple-800";
+        } else if (row.detalle.includes("cambio")) {
+          badgeClass = "bg-orange-100 text-orange-800";
+        }
+
+        return (
+          <span className={`px-2 py-1 rounded text-xs font-medium ${badgeClass}`}>
+            {row.detalle}
+          </span>
+        );
+      },
+    },
+    {
       header: "ACCIONES",
       accessor: "actions",
       render: (row) => (
