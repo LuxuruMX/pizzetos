@@ -66,6 +66,11 @@ export default function CortePage() {
 
     useEffect(() => {
         fetchData();
+        // Clear modal state when month changes to prevent showing old data
+        setSelectedDayReporte([]);
+        setSelectedDayGastos([]);
+        setSelectedDayData(null);
+        setShowModal(false);
     }, [fecha]);
 
     // Calculations - Now working with simplified daily data

@@ -6,7 +6,7 @@ import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaReceipt, FaShoppingCart
 import Table from './Table';
 
 export default function CorteDetailsModal({ isOpen, onClose, dayData, reporteData, dailyGastos, isLoading }) {
-    const [activeTab, setActiveTab] = useState('resumen'); // 'resumen' | 'ingresos' | 'gastos'
+    const [activeTab, setActiveTab] = useState('ingresos'); // 'resumen' | 'ingresos' | 'gastos'
 
     if (!isOpen || !dayData) return null;
 
@@ -292,12 +292,6 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, reporteDat
                                             <span className="font-bold text-gray-800">{allPagos.length}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-gray-600">Ticket Promedio:</span>
-                                            <span className="font-bold text-blue-700">
-                                                {formatCurrency(dayData.ingresos / (allPagos.length || 1))}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between">
                                             <span className="text-gray-600">Transacción Más Alta:</span>
                                             <span className="font-bold text-green-700">
                                                 {formatCurrency(Math.max(...allPagos.map(p => parseFloat(p.monto || 0))))}
@@ -338,15 +332,6 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, reporteDat
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="flex border-b border-gray-200">
                             <button
-                                onClick={() => setActiveTab('resumen')}
-                                className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'resumen'
-                                    ? 'bg-white text-blue-600 border-b-2 border-blue-600'
-                                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-                                    }`}
-                            >
-                                Resumen
-                            </button>
-                            <button
                                 onClick={() => setActiveTab('ingresos')}
                                 className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'ingresos'
                                     ? 'bg-white text-yellow-600 border-b-2 border-yellow-600'
@@ -373,24 +358,6 @@ export default function CorteDetailsModal({ isOpen, onClose, dayData, reporteDat
                                 </div>
                             ) : (
                                 <>
-                                    {activeTab === 'resumen' && (
-                                        <div className="p-8 text-center">
-                                            <div className="inline-block p-4 bg-blue-50 rounded-full mb-4">
-                                                <FaShoppingCart className="text-blue-600" size={32} />
-                                            </div>
-                                            <h3 className="text-xl font-bold text-gray-800 mb-2">Resumen del Día</h3>
-                                            <p className="text-gray-600 mb-4">
-                                                Este día se registraron <span className="font-bold text-green-600">{formatCurrency(dayData.ingresos)}</span> en ingresos
-                                                y <span className="font-bold text-red-600">{formatCurrency(dayData.gastos)}</span> en gastos.
-                                            </p>
-                                            <p className="text-lg">
-                                                Balance: <span className={`font-bold ${dayData.balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-                                                    {formatCurrency(dayData.balance)}
-                                                </span>
-                                            </p>
-                                        </div>
-                                    )}
-
                                     {activeTab === 'ingresos' && (
                                         allPagos && allPagos.length > 0 ? (
                                             <Table columns={pagosColumns} data={allPagos} />
