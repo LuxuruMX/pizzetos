@@ -157,8 +157,8 @@ export default function TodosPedidosPage() {
       header: "DETALLE",
       accessor: "detalle",
       render: (row) => {
-        // Solo mostrar detalle para pedidos de domicilio (tipo_servicio === 2)
-        if (row.tipo_servicio !== 2 || !row.detalle) {
+        // Solo mostrar detalle para pedidos de domicilio (tipo_servicio === 2) o cancelados
+        if ((row.tipo_servicio !== 2 && row.status !== 5) || !row.detalle) {
           return <span className="text-gray-400 text-sm">-</span>;
         }
 

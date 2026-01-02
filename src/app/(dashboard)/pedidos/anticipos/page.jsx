@@ -260,8 +260,12 @@ export default function AnticiposPage() {
 
                         <button
                             onClick={() => handleCancel(row)}
-                            className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-full"
-                            title="Cancelar pedido"
+                            disabled={!isActionable}
+                            className={`transition-colors p-2 rounded-full ${isActionable
+                                ? "text-red-500 hover:text-red-700 hover:bg-red-50"
+                                : "text-gray-300 cursor-not-allowed"
+                                }`}
+                            title={isActionable ? "Cancelar pedido" : "No disponible"}
                         >
                             <FaTrash size={18} />
                         </button>
@@ -324,7 +328,7 @@ export default function AnticiposPage() {
                         >
                             <option value={1}>Pendientes</option>
                             <option value={2}>Completados</option>
-                            <option value={5}>Cancelados</option>
+                            <option value={0}>Cancelados</option>
                         </select>
 
                         <button
