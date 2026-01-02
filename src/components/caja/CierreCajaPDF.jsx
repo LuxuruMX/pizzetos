@@ -64,15 +64,24 @@ const styles = StyleSheet.create({
         color: '#111827'
     },
     paymentMethod: {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        padding: 10,
-        marginBottom: 8,
+        // Eliminamos el estilo original de paymentMethod
+        // Lo reemplazamos con un estilo más compacto para la cuadrícula
+        padding: 8, // Reducido
         backgroundColor: '#f9fafb',
         borderRadius: 6,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: '#e5e7eb',
+        // Añadimos propiedades para que se comporte como un ítem de grid
+        flex: 1,
+        minWidth: '30%', // Ajusta según sea necesario
+        margin: 2, // Espacio entre ítems
+    },
+    paymentGrid: { // Añadimos este nuevo estilo para contener la cuadrícula
+        display: 'flex',
+        flexDirection: 'row', // Disposición horizontal
+        flexWrap: 'wrap', // Permitir envoltura si no caben en una línea
+        justifyContent: 'space-between', // Distribuir espacio entre ítems
+        gap: 4, // Pequeño espacio entre ítems
     },
     paymentLabel: {
         fontSize: 11,
@@ -168,7 +177,6 @@ const styles = StyleSheet.create({
     salesSection: {
         marginTop: 15
     },
-    // Estilo para tabla simple
     table: {
         display: 'table',
         width: 'auto',
@@ -206,10 +214,53 @@ const styles = StyleSheet.create({
     textPurple: {
         color: '#9333ea',
         fontWeight: 'bold'
+    },
+    textRed: {
+        color: '#dc2626',
+        fontWeight: 'bold'
+    },
+    gastosCard: {
+        padding: 10,
+        backgroundColor: '#fef2f2',
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#fecaca',
+        marginBottom: 8
+    },
+    gastosHeader: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 4
+    },
+    gastosConcepto: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#991b1b'
+    },
+    gastosMonto: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: '#dc2626'
+    },
+    gastosCategoria: {
+        fontSize: 8,
+        color: '#7f1d1d',
+        fontStyle: 'italic'
+    },
+    pageTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#1f2937',
+        marginBottom: 10,
+        textAlign: 'center',
+        paddingBottom: 10,
+        borderBottom: 2,
+        borderBottomColor: '#2563eb'
     }
 });
 
-export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = [] }) {
+export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = [], gastosData = [] }) {
     const formatCurrency = (val) => {
         const num = parseFloat(val) || 0;
         return new Intl.NumberFormat('es-MX', {
@@ -233,17 +284,21 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
     const efectivo = parseFloat(cajaDetails.total_efectivo || 0);
     const tarjeta = parseFloat(cajaDetails.total_tarjeta || 0);
     const transferencia = parseFloat(cajaDetails.total_transferencia || 0);
-    const balanceEsperado = montoInicial + totalVentas;
+
+    const totalGastos = gastosData.reduce((acc, gasto) =>
+        acc + (parseFloat(gasto.precio || gasto.monto) || 0), 0
+    );
+
+    const balanceEsperado = montoInicial + totalVentas - totalGastos;
     const montoFinal = parseFloat(cierreData.monto_final || 0);
     const diferencia = montoFinal - balanceEsperado;
 
-    // Agrupar ventas por id_venta y organizar pagos por método
     const groupedSales = ventasData.reduce((acc, venta) => {
         if (!acc[venta.id_venta]) {
             acc[venta.id_venta] = {
                 id_venta: venta.id_venta,
-                referencias: new Set(), // Usar Set para evitar duplicados
-                pagos: {} // { 'Efectivo': 100, 'Tarjeta': 150, ... }
+                referencias: new Set(),
+                pagos: {}
             };
         }
 
@@ -265,6 +320,7 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
 
     return (
         <Document>
+            {/* PÁGINA 1: RESUMEN COMPLETO */}
             <Page size="A4" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
@@ -297,6 +353,10 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                             <Text style={styles.infoValue}>{cajaDetails.numero_ventas || 0}</Text>
                         </View>
                         <View style={styles.infoCard}>
+                            <Text style={styles.infoLabel}>Total Gastos</Text>
+                            <Text style={[styles.infoValue, styles.textRed]}>{formatCurrency(totalGastos)}</Text>
+                        </View>
+                        <View style={styles.infoCard}>
                             <Text style={styles.infoLabel}>Balance Esperado</Text>
                             <Text style={styles.infoValue}>{formatCurrency(balanceEsperado)}</Text>
                         </View>
@@ -306,40 +366,57 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                 {/* Métodos de Pago */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Desglose por Método de Pago</Text>
-
-                    <View style={styles.paymentMethod}>
-                        <View>
-                            <Text style={styles.paymentLabel}>Efectivo</Text>
-                            <Text style={styles.paymentPercent}>
-                                {totalVentas > 0 ? ((efectivo / totalVentas) * 100).toFixed(1) : 0}% del total
-                            </Text>
+                    <View style={styles.paymentGrid}>
+                        {/* Efectivo */}
+                        <View style={styles.paymentMethod}>
+                            <View>
+                                <Text style={styles.paymentLabel}>Efectivo</Text>
+                                <Text style={styles.paymentPercent}>
+                                    {totalVentas > 0 ? ((efectivo / totalVentas) * 100).toFixed(1) : 0}% del total
+                                </Text>
+                            </View>
+                            <Text style={styles.paymentAmount}>{formatCurrency(efectivo)}</Text>
                         </View>
-                        <Text style={styles.paymentAmount}>{formatCurrency(efectivo)}</Text>
-                    </View>
 
-                    <View style={styles.paymentMethod}>
-                        <View>
-                            <Text style={styles.paymentLabel}>Tarjeta</Text>
-                            <Text style={styles.paymentPercent}>
-                                {totalVentas > 0 ? ((tarjeta / totalVentas) * 100).toFixed(1) : 0}% del total
-                            </Text>
+                        {/* Tarjeta */}
+                        <View style={styles.paymentMethod}>
+                            <View>
+                                <Text style={styles.paymentLabel}>Tarjeta</Text>
+                                <Text style={styles.paymentPercent}>
+                                    {totalVentas > 0 ? ((tarjeta / totalVentas) * 100).toFixed(1) : 0}% del total
+                                </Text>
+                            </View>
+                            <Text style={styles.paymentAmount}>{formatCurrency(tarjeta)}</Text>
                         </View>
-                        <Text style={styles.paymentAmount}>{formatCurrency(tarjeta)}</Text>
-                    </View>
 
-                    <View style={styles.paymentMethod}>
-                        <View>
-                            <Text style={styles.paymentLabel}>Transferencia</Text>
-                            <Text style={styles.paymentPercent}>
-                                {totalVentas > 0 ? ((transferencia / totalVentas) * 100).toFixed(1) : 0}% del total
-                            </Text>
+                        {/* Transferencia */}
+                        <View style={styles.paymentMethod}>
+                            <View>
+                                <Text style={styles.paymentLabel}>Transferencia</Text>
+                                <Text style={styles.paymentPercent}>
+                                    {totalVentas > 0 ? ((transferencia / totalVentas) * 100).toFixed(1) : 0}% del total
+                                </Text>
+                            </View>
+                            <Text style={styles.paymentAmount}>{formatCurrency(transferencia)}</Text>
                         </View>
-                        <Text style={styles.paymentAmount}>{formatCurrency(transferencia)}</Text>
                     </View>
                 </View>
 
                 {/* Balance Final */}
                 <View style={styles.balanceSection}>
+                    <View style={styles.balanceRow}>
+                        <Text style={styles.balanceLabel}>Fondo Inicial:</Text>
+                        <Text style={styles.balanceValue}>{formatCurrency(montoInicial)}</Text>
+                    </View>
+                    <View style={styles.balanceRow}>
+                        <Text style={styles.balanceLabel}>+ Total Ventas:</Text>
+                        <Text style={styles.balanceValue}>{formatCurrency(totalVentas)}</Text>
+                    </View>
+                    <View style={styles.balanceRow}>
+                        <Text style={styles.balanceLabel}>- Total Gastos:</Text>
+                        <Text style={[styles.balanceValue, styles.textRed]}>{formatCurrency(totalGastos)}</Text>
+                    </View>
+                    <View style={styles.balanceDivider} />
                     <View style={styles.balanceRow}>
                         <Text style={styles.balanceLabel}>Balance Esperado:</Text>
                         <Text style={styles.balanceValue}>{formatCurrency(balanceEsperado)}</Text>
@@ -376,10 +453,60 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                     </View>
                 )}
 
-                {/* Detalle de Ventas - Versión Tabla Agrupada */}
-                {groupedArray && groupedArray.length > 0 && (
-                    <View style={styles.salesSection} wrap={false}>
-                        <Text style={styles.sectionTitle}>Detalle de Ventas por Caja</Text>
+                {/* Footer */}
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>
+                        Documento generado automáticamente - {new Date().toLocaleString('es-MX')}
+                    </Text>
+                </View>
+            </Page>
+
+            {/* PÁGINA 2: DETALLE DE GASTOS */}
+            {gastosData && gastosData.length > 0 && (
+                <Page size="A4" style={styles.page}>
+                    <Text style={styles.pageTitle}>Detalle de Gastos - Caja #{cajaDetails.id_caja}</Text>
+
+                    <View style={styles.section}>
+                        {gastosData.map((gasto, index) => (
+                            <View key={index} style={styles.gastosCard}>
+                                <View style={styles.gastosHeader}>
+                                    <Text style={styles.gastosConcepto}>
+                                        {gasto.descripcion}
+                                    </Text>
+                                    <Text style={styles.gastosMonto}>
+                                        {formatCurrency(gasto.precio || gasto.monto)}
+                                    </Text>
+                                </View>
+                                {gasto.categoria && (
+                                    <Text style={styles.gastosCategoria}>
+                                        Categoría: {gasto.categoria}
+                                    </Text>
+                                )}
+                            </View>
+                        ))}
+
+                        <View style={[styles.paymentMethod, { backgroundColor: '#fee2e2', borderColor: '#fecaca', marginTop: 15 }]}>
+                            <Text style={[styles.paymentLabel, { color: '#991b1b', fontSize: 14 }]}>Total de Gastos</Text>
+                            <Text style={[styles.paymentAmount, { color: '#dc2626', fontSize: 16 }]}>
+                                {formatCurrency(totalGastos)}
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.footer}>
+                        <Text style={styles.footerText}>
+                            Página 2 - Detalle de Gastos
+                        </Text>
+                    </View>
+                </Page>
+            )}
+
+            {/* PÁGINA 3: DETALLE DE VENTAS */}
+            {groupedArray && groupedArray.length > 0 && (
+                <Page size="A4" style={styles.page}>
+                    <Text style={styles.pageTitle}>Detalle de Ventas - Caja #{cajaDetails.id_caja}</Text>
+
+                    <View style={styles.salesSection}>
                         <View style={styles.table}>
                             <View style={[styles.tableRow, styles.tableHeader]}>
                                 <Text style={styles.tableCell}>ID Venta</Text>
@@ -419,15 +546,14 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                             })}
                         </View>
                     </View>
-                )}
 
-                {/* Footer */}
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>
-                        Documento generado automáticamente - {new Date().toLocaleString('es-MX')}
-                    </Text>
-                </View>
-            </Page>
+                    <View style={styles.footer}>
+                        <Text style={styles.footerText}>
+                            Página 3 - Detalle de Ventas
+                        </Text>
+                    </View>
+                </Page>
+            )}
         </Document>
     );
 }
