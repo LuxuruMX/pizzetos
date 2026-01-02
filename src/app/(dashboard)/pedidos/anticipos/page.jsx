@@ -31,15 +31,18 @@ export default function AnticiposPage() {
     const [canceling, setCanceling] = useState(false);
 
 
-    const verDetalle = async (id) => {
+    const verDetalle = async (row) => {
         setLoadingDetalle(true);
         setModalOpen(true);
+        // Inicializar con datos conocidos mientras carga
+        setPedidoDetalle({ ...row });
         try {
-            const response = await api.get(`/pos/pedidos-cocina/${id}/detalle`);
+            const response = await api.get(`/pos/pedidos-cocina/${row.id_venta}/detalle`);
 
             if (response.status === 200) {
                 const data = response.data;
-                setPedidoDetalle(data);
+                // Combinar datos del API con los datos de la fila (priorizando API, pero manteniendo fecha_entrega si falta)
+                setPedidoDetalle(prev => ({ ...prev, ...data }));
             } else {
                 throw new Error('Error al obtener el detalle');
             }
@@ -251,7 +254,7 @@ export default function AnticiposPage() {
                         </button>
 
                         <button
-                            onClick={() => verDetalle(row.id_venta)}
+                            onClick={() => verDetalle(row)}
                             className="text-gray-600 hover:text-gray-800 transition-colors p-2 hover:bg-gray-50 rounded-full"
                             title="Ver detalle"
                         >
@@ -400,10 +403,23 @@ export default function AnticiposPage() {
                                         </span>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-gray-600">Tiempo transcurrido</p>
-                                        <p className="font-semibold text-lg text-black">
-                                            {pedidoDetalle.tiempo_transcurrido_minutos} minutos
-                                        </p>
+                                        {pedidoDetalle.tipo_servicio === 3 ? (
+                                            <>
+                                                <p className="text-sm text-gray-600">Fecha de entrega</p>
+                                                <p className="font-semibold text-lg text-black">
+                                                    {pedidoDetalle.fecha_entrega ? new Date(pedidoDetalle.fecha_entrega).toLocaleString("es-MX", {
+                                                        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+                                                    }) : 'Sin fecha'}
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p className="text-sm text-gray-600">Tiempo transcurrido</p>
+                                                <p className="font-semibold text-lg text-black">
+                                                    {pedidoDetalle.tiempo_transcurrido_minutos} minutos
+                                                </p>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
