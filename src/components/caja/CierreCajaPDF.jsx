@@ -265,6 +265,28 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
         borderBottom: 2,
         borderBottomColor: '#2563eb'
+    },
+    gastosTotalSection: {
+        marginTop: 20,
+        padding: 15,
+        backgroundColor: '#fee2e2',
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#fecaca',
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    gastosTotalLabel: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#991b1b'
+    },
+    gastosTotalValue: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#dc2626'
     }
 });
 
@@ -500,9 +522,9 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                             </View>
                         ))}
 
-                        <View style={[styles.paymentMethod, { backgroundColor: '#fee2e2', borderColor: '#fecaca', marginTop: 15 }]}>
-                            <Text style={[styles.paymentLabel, { color: '#991b1b', fontSize: 14 }]}>Total de Gastos</Text>
-                            <Text style={[styles.paymentAmount, { color: '#dc2626', fontSize: 16 }]}>
+                        <View style={styles.gastosTotalSection}>
+                            <Text style={styles.gastosTotalLabel}>Total de Gastos</Text>
+                            <Text style={styles.gastosTotalValue}>
                                 {formatCurrency(totalGastos)}
                             </Text>
                         </View>
