@@ -56,11 +56,18 @@ export default function AgregarGastoPage() {
     try {
       const id_suc = getSucursalFromToken();
 
+      // Obtener caja abierta si existe
+      let id_caja = 0;
+      if (typeof window !== 'undefined') {
+        const storedCaja = localStorage.getItem('id_caja');
+        if (storedCaja) id_caja = parseInt(storedCaja);
+      }
+
       const dataToSend = {
         descripcion: formData.descripcion,
         precio: parseFloat(formData.precio),
         id_suc: parseInt(id_suc),
-        id_caja: 0, // Ya no es obligatorio tener caja abierta
+        id_caja: id_caja,
         // 'fecha' y 'evaluado' no se envían, la base de datos los manejará
       };
 

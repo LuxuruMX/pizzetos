@@ -70,7 +70,6 @@ const menuConfig = [
       { name: 'Categorias', path: '/recursos/categorias', icon: BiSolidCategoryAlt },
       { name: 'Sucursales', path: '/recursos/sucursales', icon: FaCodeBranch },
       { name: 'Cargos', path: '/recursos/cargos', icon: TbHierarchy3 },
-      { name: 'Gastos', path: '/gastos', icon: FaMoneyBills }
     ]
   },
   {
@@ -78,12 +77,13 @@ const menuConfig = [
     icon: MdPointOfSale,
     permiso: 'ver_venta',
     submenu: [
-      { name: 'Resume', path: '/pedidos/resumen', icon: FaBorderAll, permiso: 'ver_venta' },
+      { name: 'Resume', path: '/pedidos/resumen', icon: FaBorderAll, permiso: ['ver_venta'] },
       { name: 'Flujo de caja', path: '/caja', icon: TbTransfer, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Venta', path: '/pos', icon: FaShoppingBasket, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
-      { name: 'Pedidos', path: '/pedidos', icon: IoIosAlbums },
+      { name: 'Pedidos', path: '/pedidos', icon: IoIosAlbums, permiso: 'ver_venta' },
       { name: 'Anticipos', path: '/pedidos/anticipos', icon: MdOutlinePendingActions, permiso: 'ver_venta' },
+      { name: 'Gastos', path: '/gastos', icon: FaMoneyBills, permiso: ['ver_venta', 'crear_venta'] }
     ]
   },
   {

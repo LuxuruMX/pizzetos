@@ -11,7 +11,7 @@ import api from "@/services/api";
 import { pagarVenta } from "@/services/orderService";
 import PaymentModal from "@/components/ui/PaymentModal";
 
-import { getSucursalFromToken } from "@/services/jwt";
+import { getSucursalFromToken, getPermisosFromToken } from "@/services/jwt";
 import CancellationModal from "@/components/ui/CancellationModal";
 
 export default function AnticiposPage() {
@@ -29,6 +29,14 @@ export default function AnticiposPage() {
     const [cancellationModalOpen, setCancellationModalOpen] = useState(false);
     const [pedidoACancelar, setPedidoACancelar] = useState(null);
     const [canceling, setCanceling] = useState(false);
+    const [permisos, setPermisos] = useState({});
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const perms = getPermisosFromToken();
+            setPermisos(perms);
+        }
+    }, []);
 
 
     const verDetalle = async (row) => {
@@ -229,14 +237,21 @@ export default function AnticiposPage() {
 
                 return (
                     <div className="flex justify-center gap-2">
+                        {/* Botón Editar - Requiere modificar_venta */}
                         <button
                             onClick={() => handleEdit(row)}
-                            disabled={!isActionable}
-                            className={`p-2 rounded-full transition-colors ${isActionable
+                            disabled={!isActionable || !permisos?.modificar_venta}
+                            className={`p-2 rounded-full transition-colors ${isActionable && permisos?.modificar_venta
                                 ? "text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                                 : "text-gray-300 cursor-not-allowed"
                                 }`}
-                            title={isActionable ? "Editar pedido" : "No disponible"}
+                            title={
+                                !permisos?.modificar_venta
+                                    ? "No tienes permisos para editar"
+                                    : isActionable
+                                        ? "Editar pedido"
+                                        : "No disponible"
+                            }
                         >
                             <FaEdit size={18} />
                         </button>
@@ -261,14 +276,21 @@ export default function AnticiposPage() {
                             <IoMailOpenSharp size={18} />
                         </button>
 
+                        {/* Botón Cancelar - Requiere eliminar_venta */}
                         <button
                             onClick={() => handleCancel(row)}
-                            disabled={!isActionable}
-                            className={`transition-colors p-2 rounded-full ${isActionable
+                            disabled={!isActionable || !permisos?.eliminar_venta}
+                            className={`transition-colors p-2 rounded-full ${isActionable && permisos?.eliminar_venta
                                 ? "text-red-500 hover:text-red-700 hover:bg-red-50"
                                 : "text-gray-300 cursor-not-allowed"
                                 }`}
-                            title={isActionable ? "Cancelar pedido" : "No disponible"}
+                            title={
+                                !permisos?.eliminar_venta
+                                    ? "No tienes permisos para cancelar (eliminar) ventas"
+                                    : isActionable
+                                        ? "Cancelar pedido"
+                                        : "No disponible"
+                            }
                         >
                             <FaTrash size={18} />
                         </button>

@@ -22,6 +22,7 @@ export default function TodosPedidosPage() {
   const [statusFiltro, setStatusFiltro] = useState(null);
   const [idSuc, setIdSuc] = useState(null);
   const [modalPagosOpen, setModalPagosOpen] = useState(false);
+  const [permisos, setPermisos] = useState(null);
 
   const [pedidoAPagar, setPedidoAPagar] = useState(null);
   const [cancellationModalOpen, setCancellationModalOpen] = useState(false);
@@ -79,6 +80,19 @@ export default function TodosPedidosPage() {
 
   // Cargar pedidos al montar el componente
   useEffect(() => {
+    // Cargar permisos
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const jwtDecode = require('jwt-decode').jwtDecode;
+          const decoded = jwtDecode(token);
+          setPermisos(decoded.permisos || {});
+        } catch (e) {
+          console.error("Error decoding token", e);
+        }
+      }
+    }
     fetchTodosPedidos();
   }, [filtro, statusFiltro, idSuc]);
 
@@ -189,21 +203,25 @@ export default function TodosPedidosPage() {
         <div className="flex justify-center gap-2">
           {row.status !== 5 && (
             <>
-              <button
-                onClick={() => handleEdit(row)}
-                className="text-blue-600 hover:text-blue-800 transition-colors"
-                title="Editar"
-              >
-                <FaEdit size={18} />
-              </button>
+              {permisos?.modificar_venta && (
+                <button
+                  onClick={() => handleEdit(row)}
+                  className="text-blue-600 hover:text-blue-800 transition-colors"
+                  title="Editar"
+                >
+                  <FaEdit size={18} />
+                </button>
+              )}
 
-              <button
-                onClick={() => handleDelete(row)}
-                className="text-red-600 hover:text-red-800 transition-colors"
-                title="Eliminar"
-              >
-                <FaTrash size={18} />
-              </button>
+              {permisos?.eliminar_venta && (
+                <button
+                  onClick={() => handleDelete(row)}
+                  className="text-red-600 hover:text-red-800 transition-colors"
+                  title="Eliminar"
+                >
+                  <FaTrash size={18} />
+                </button>
+              )}
             </>
           )}
 

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { jwtDecode } from 'jwt-decode';
-import { getSucursalFromToken } from '@/services/jwt';
+import { getSucursalFromToken, getPermisosFromToken } from '@/services/jwt';
 import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -28,18 +27,16 @@ export default function GastosPage() {
 
   const [permisos, setPermisos] = useState(null);
 
-  // Nuevo useEffect para verificar id_caja
+  // Nuevo useEffect para verificar id_caja y permisos
+  const [cajaAbierta, setCajaAbierta] = useState(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        try {
-          const decoded = jwtDecode(token);
-          setPermisos(decoded.permisos || {});
-        } catch (e) {
-          console.error('Token inválido', e);
-        }
-      }
+      const storedId = localStorage.getItem('id_caja');
+      setCajaAbierta(!!storedId);
+
+      const perms = getPermisosFromToken();
+      setPermisos(perms);
     }
   }, []);
 
@@ -335,10 +332,17 @@ export default function GastosPage() {
               Gestiona los gastos de las sucursales
             </p>
           </div>
-          {permisos.crear_producto && (
-            <Button icon={FaPlus} onClick={handleAdd}>
-              Añadir
-            </Button>
+          {permisos.crear_venta && (
+            <div className="tooltip" data-tip={!cajaAbierta ? "Debes tener una caja abierta" : ""}>
+              <Button
+                icon={FaPlus}
+                onClick={handleAdd}
+                disabled={!cajaAbierta}
+                title={!cajaAbierta ? "Debes tener una caja abierta para registrar gastos" : "Registrar nuevo gasto"}
+              >
+                Añadir
+              </Button>
+            </div>
           )}
         </div>
 
@@ -346,7 +350,7 @@ export default function GastosPage() {
           columns={columns}
           data={gastos}
         />
-      </Card>
-    </div>
+      </Card >
+    </div >
   );
 }
