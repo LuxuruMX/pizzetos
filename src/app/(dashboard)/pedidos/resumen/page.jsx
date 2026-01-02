@@ -339,6 +339,12 @@ export default function TodosPedidosPage() {
                   {pedidos.filter((p) => p.status === 2).length}
                 </span>
               </span>
+              <span className="text-gray-600">
+                Cancelados:{" "}
+                <span className="font-semibold text-red-600">
+                  {pedidos.filter((p) => p.status === 5).length}
+                </span>
+              </span>
               <span className="text-gray-600 ml-auto">
                 Suma total:{" "}
                 <span className="font-bold text-green-600 text-lg">
