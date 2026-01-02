@@ -62,3 +62,13 @@ export const getVentasCaja = async (idCaja) => {
     throw error;
   }
 };
+
+export const getGastosCaja = async (idCaja) => {
+  try {
+    const response = await api.get(`/gastos/${idCaja}/caja`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener gastos de caja:', error);
+    throw error;
+  }
+};

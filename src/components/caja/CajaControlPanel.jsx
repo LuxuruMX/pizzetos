@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaCoins, FaShoppingCart, FaChartLine, FaReceipt } from 'react-icons/fa';
 import Card from '../ui/Card';
-import { getCaja, cerrarCaja, getVentasCaja } from '@/services/cajaService';
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { getCaja, cerrarCaja, getVentasCaja, getGastosCaja } from '@/services/cajaService';
+import { FaChevronDown, FaChevronUp, FaFileInvoiceDollar } from 'react-icons/fa';
 
 // Importar dinámicamente el componente de PDF para evitar problemas de SSR
 const PDFDownloadButton = dynamic(
@@ -27,9 +27,13 @@ export default function CajaControlPanel({ cajaId, onClose }) {
     });
 
     // Estado para desglose de ventas
+    // Estado para desglose de ventas y gastos
     const [ventasData, setVentasData] = useState([]);
+    const [gastosData, setGastosData] = useState([]); // Nueva variable para gastos
     const [loadingVentas, setLoadingVentas] = useState(false);
+    const [loadingGastos, setLoadingGastos] = useState(false); // Estado de carga para gastos
     const [showVentas, setShowVentas] = useState(false);
+    const [showGastos, setShowGastos] = useState(false); // Toggle para gastos
 
     const [isMounted, setIsMounted] = useState(false);
 
@@ -44,6 +48,15 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                 setLoadingData(true);
                 const data = await getCaja(cajaId);
                 setCajaDetails(data);
+
+                // Fetch gastos immediately to include in balance calculation
+                try {
+                    const gastos = await getGastosCaja(cajaId);
+                    setGastosData(gastos);
+                } catch (err) {
+                    console.error("Error fetching gastos:", err);
+                }
+
             } catch (error) {
                 console.error('Error al cargar datos de caja:', error);
                 setMessage({
@@ -140,7 +153,12 @@ export default function CajaControlPanel({ cajaId, onClose }) {
     const tarjeta = parseFloat(cajaDetails.total_tarjeta || 0);
     const transferencia = parseFloat(cajaDetails.total_transferencia || 0);
 
-    const balanceEsperado = montoInicial + totalVentas;
+    // Calcular total de gastos
+    const totalGastos = gastosData.reduce((acc, gasto) =>
+        acc + (parseFloat(gasto.precio || gasto.monto) || 0), 0
+    );
+
+    const balanceEsperado = montoInicial + totalVentas - totalGastos;
     const montoFinalIngresado = parseFloat(cierreData.monto_final) || 0;
     const diferencia = cierreData.monto_final ? montoFinalIngresado - balanceEsperado : 0;
     const hayDiferencia = cierreData.monto_final && diferencia !== 0;
@@ -235,6 +253,21 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                             </Card>
                         </div>
 
+                        {/* Expenses Stats */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                            <Card className="hover:shadow-md transition-shadow" padding="none">
+                                <div className="p-5 flex items-center gap-4">
+                                    <div className="p-3 bg-red-50 text-red-600 rounded-xl">
+                                        <FaFileInvoiceDollar size={24} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total Gastos</p>
+                                        <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(totalGastos)}</p>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+
                         {/* Sales Breakdown */}
                         <Card title="Desglose de Ventas por Método de Pago">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -316,6 +349,50 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                                                             <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-400">{venta.referencia || '-'}</td>
                                                             <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-green-600 text-right">
                                                                 {formatCurrency(venta.monto)}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+
+                        {/* Detalle de Gastos Colapsable */}
+                        <Card title="Detalle de Gastos">
+                            <div className="flex flex-col">
+                                <button
+                                    onClick={() => setShowGastos(!showGastos)}
+                                    className="flex items-center justify-between w-full p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    <span className="font-semibold text-gray-700">
+                                        {showGastos ? 'Ocultar gastos' : 'Ver detalle de gastos'}
+                                    </span>
+                                    {showGastos ? <FaChevronUp className="text-gray-500" /> : <FaChevronDown className="text-gray-500" />}
+                                </button>
+
+                                {showGastos && (
+                                    <div className="mt-4 overflow-x-auto">
+                                        {gastosData.length === 0 ? (
+                                            <div className="text-center py-4 text-gray-500">No hay gastos registrados en esta sesión.</div>
+                                        ) : (
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Concepto</th>
+                                                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {gastosData.map((gasto, index) => (
+                                                        <tr key={gasto.id_gastos || index} className="hover:bg-gray-50">
+                                                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                                                {gasto.descripcion}
+                                                            </td>
+                                                            <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-red-600 text-right">
+                                                                {formatCurrency(gasto.precio || gasto.monto)}
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -427,6 +504,7 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                                             cajaDetails={cajaDetails}
                                             cierreData={cierreData}
                                             ventasData={ventasData}
+                                            gastosData={gastosData}
                                         />
                                     </div>
                                 )}

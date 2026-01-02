@@ -8,6 +8,7 @@ import CorteDetailsModal from '@/components/ui/CorteDetailsModal';
 import api from '@/services/api';
 import { IoReload, IoEye } from 'react-icons/io5';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaChartPie } from 'react-icons/fa';
+import { getSucursalFromToken } from '@/services/jwt';
 
 export default function CortePage() {
     const [loading, setLoading] = useState(false);
@@ -41,7 +42,8 @@ export default function CortePage() {
             const gastosPromise = api.get('/gastos', {
                 params: {
                     fecha_inicio: formatDate(startDate),
-                    fecha_fin: formatDate(endDate)
+                    fecha_fin: formatDate(endDate),
+                    id_suc: getSucursalFromToken()
                 }
             });
 
