@@ -12,6 +12,7 @@ import { pagarVenta } from "@/services/orderService";
 import PaymentModal from "@/components/ui/PaymentModal";
 
 import { getSucursalFromToken } from "@/services/jwt";
+import CancellationModal from "@/components/ui/CancellationModal";
 
 export default function AnticiposPage() {
     const [loading, setLoading] = useState(false);
@@ -23,7 +24,11 @@ export default function AnticiposPage() {
     const [loadingDetalle, setLoadingDetalle] = useState(false);
     const [pedidoDetalle, setPedidoDetalle] = useState(null);
     const [modalPagosOpen, setModalPagosOpen] = useState(false);
+
     const [pedidoAPagar, setPedidoAPagar] = useState(null);
+    const [cancellationModalOpen, setCancellationModalOpen] = useState(false);
+    const [pedidoACancelar, setPedidoACancelar] = useState(null);
+    const [canceling, setCanceling] = useState(false);
 
 
     const verDetalle = async (id) => {
@@ -99,6 +104,31 @@ export default function AnticiposPage() {
             if (confirm("¿Confirmar entrega del pedido?")) {
                 completarPedidoEspecial(row.id_pespeciales);
             }
+        }
+    };
+
+    const handleCancel = (row) => {
+        setPedidoACancelar(row);
+        setCancellationModalOpen(true);
+    };
+
+    const confirmCancellation = async (motivo) => {
+        setCanceling(true);
+        try {
+            const response = await api.patch(`/pos/${pedidoACancelar.id_venta}/cancelar?motivo_cancelacion=${encodeURIComponent(motivo)}`);
+
+            if (response.status === 200) {
+                fetchPedidosEspeciales();
+                setCancellationModalOpen(false);
+                setPedidoACancelar(null);
+            } else {
+                throw new Error("Error al cancelar");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error al cancelar el pedido: " + (error.response?.data?.message || error.message));
+        } finally {
+            setCanceling(false);
         }
     };
 
@@ -229,9 +259,9 @@ export default function AnticiposPage() {
                         </button>
 
                         <button
-                            disabled
-                            className="text-gray-400 cursor-not-allowed p-2 rounded-full"
-                            title="Eliminar (Próximamente)"
+                            onClick={() => handleCancel(row)}
+                            className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-full"
+                            title="Cancelar pedido"
                         >
                             <FaTrash size={18} />
                         </button>
@@ -294,7 +324,7 @@ export default function AnticiposPage() {
                         >
                             <option value={1}>Pendientes</option>
                             <option value={2}>Completados</option>
-                            <option value={0}>Cancelados</option>
+                            <option value={5}>Cancelados</option>
                         </select>
 
                         <button
@@ -359,7 +389,8 @@ export default function AnticiposPage() {
                                         <p className="text-sm text-gray-600">Estado</p>
                                         <span className={`inline-block px-3 py-1 rounded text-sm font-semibold ${pedidoDetalle.status === 0 ? 'bg-gray-200 text-black' :
                                             pedidoDetalle.status === 1 ? 'bg-yellow-200 text-yellow-800' :
-                                                'bg-green-200 text-green-800'
+                                                pedidoDetalle.status === 5 ? 'bg-red-200 text-red-800' :
+                                                    'bg-green-200 text-green-800'
                                             }`}>
                                             {pedidoDetalle.status_texto}
                                         </span>
@@ -467,6 +498,16 @@ export default function AnticiposPage() {
                     />
                 )
             }
+
+            <CancellationModal
+                isOpen={cancellationModalOpen}
+                onClose={() => {
+                    setCancellationModalOpen(false);
+                    setPedidoACancelar(null);
+                }}
+                onConfirm={confirmCancellation}
+                loading={canceling}
+            />
         </div>
     );
 }

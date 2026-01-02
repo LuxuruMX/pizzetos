@@ -11,6 +11,7 @@ import api from "@/services/api";
 import { MdOutlinePayments } from "react-icons/md";
 import PaymentModal from "@/components/ui/PaymentModal";
 import { pagarVenta } from "@/services/orderService";
+import CancellationModal from "@/components/ui/CancellationModal";
 
 
 export default function TodosPedidosPage() {
@@ -21,7 +22,11 @@ export default function TodosPedidosPage() {
   const [statusFiltro, setStatusFiltro] = useState(null);
   const [idSuc, setIdSuc] = useState(null);
   const [modalPagosOpen, setModalPagosOpen] = useState(false);
+
   const [pedidoAPagar, setPedidoAPagar] = useState(null);
+  const [cancellationModalOpen, setCancellationModalOpen] = useState(false);
+  const [pedidoACancelar, setPedidoACancelar] = useState(null);
+  const [canceling, setCanceling] = useState(false);
   const router = useRouter();
 
   const fetchTodosPedidos = async () => {
@@ -50,6 +55,26 @@ export default function TodosPedidosPage() {
   };
   const handleEdit = (product) => {
     router.push(`/pos/${product.id_venta}`);
+  };
+
+  const handleDelete = (row) => {
+    setPedidoACancelar(row);
+    setCancellationModalOpen(true);
+  };
+
+  const confirmCancellation = async (motivo) => {
+    setCanceling(true);
+    try {
+      await api.patch(`/pos/${pedidoACancelar.id_venta}/cancelar?motivo_cancelacion=${encodeURIComponent(motivo)}`);
+      fetchTodosPedidos();
+      setCancellationModalOpen(false);
+      setPedidoACancelar(null);
+    } catch (error) {
+      console.error(error);
+      alert("Error al cancelar el pedido: " + (error.response?.data?.message || error.message));
+    } finally {
+      setCanceling(false);
+    }
   };
 
   // Cargar pedidos al montar el componente
@@ -139,7 +164,10 @@ export default function TodosPedidosPage() {
 
         // Determinar el color y estilo según el tipo de detalle
         let badgeClass = "bg-blue-100 text-blue-800";
-        if (row.detalle.includes("Pago realizado")) {
+
+        if (row.status === 5) {
+          badgeClass = "bg-red-100 text-red-800";
+        } else if (row.detalle.includes("Pago realizado")) {
           badgeClass = "bg-green-100 text-green-800";
         } else if (row.detalle.includes("terminal")) {
           badgeClass = "bg-purple-100 text-purple-800";
@@ -159,27 +187,25 @@ export default function TodosPedidosPage() {
       accessor: "actions",
       render: (row) => (
         <div className="flex justify-center gap-2">
-          <button
-            onClick={() => handleEdit(row)}
-            className="text-blue-600 hover:text-blue-800 transition-colors"
-            title="Editar"
-          >
-            <FaEdit size={18} />
-          </button>
+          {row.status !== 5 && (
+            <>
+              <button
+                onClick={() => handleEdit(row)}
+                className="text-blue-600 hover:text-blue-800 transition-colors"
+                title="Editar"
+              >
+                <FaEdit size={18} />
+              </button>
 
-          <Popconfirm
-            title="¿Seguro que quiere eliminar?"
-            okText="Sí"
-            cancelText="No"
-            onConfirm={() => handleDelete(row)}
-          >
-            <button
-              className="text-red-600 hover:text-red-800 transition-colors"
-              title="Eliminar"
-            >
-              <FaTrash size={18} />
-            </button>
-          </Popconfirm>
+              <button
+                onClick={() => handleDelete(row)}
+                className="text-red-600 hover:text-red-800 transition-colors"
+                title="Eliminar"
+              >
+                <FaTrash size={18} />
+              </button>
+            </>
+          )}
 
           {
             !row.pagado && (
@@ -262,6 +288,7 @@ export default function TodosPedidosPage() {
               <option value="0">Esperando</option>
               <option value="1">Preparando</option>
               <option value="2">Completado</option>
+              <option value="5">Cancelado</option>
             </select>
 
             <button
@@ -346,6 +373,16 @@ export default function TodosPedidosPage() {
           />
         )
       }
+
+      <CancellationModal
+        isOpen={cancellationModalOpen}
+        onClose={() => {
+          setCancellationModalOpen(false);
+          setPedidoACancelar(null);
+        }}
+        onConfirm={confirmCancellation}
+        loading={canceling}
+      />
     </div >
   );
 }
