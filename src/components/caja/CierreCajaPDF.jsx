@@ -40,17 +40,28 @@ const styles = StyleSheet.create({
     },
     infoGrid: {
         display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+    },
+    infoRow: {
+        display: 'flex',
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 10
+        justifyContent: 'space-between',
+        gap: 10,
     },
     infoCard: {
-        width: '48%',
+        flex: 1,
         padding: 10,
         backgroundColor: '#f9fafb',
         borderRadius: 6,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: '#e5e7eb',
+    },
+    infoCardFirstRow: {
+        flex: 1,
+    },
+    infoCardSecondRow: {
+        flex: 1,
     },
     infoLabel: {
         fontSize: 9,
@@ -64,24 +75,21 @@ const styles = StyleSheet.create({
         color: '#111827'
     },
     paymentMethod: {
-        // Eliminamos el estilo original de paymentMethod
-        // Lo reemplazamos con un estilo más compacto para la cuadrícula
-        padding: 8, // Reducido
+        padding: 8,
         backgroundColor: '#f9fafb',
         borderRadius: 6,
         borderWidth: 1,
         borderColor: '#e5e7eb',
-        // Añadimos propiedades para que se comporte como un ítem de grid
         flex: 1,
-        minWidth: '30%', // Ajusta según sea necesario
-        margin: 2, // Espacio entre ítems
+        minWidth: '30%',
+        margin: 2,
     },
-    paymentGrid: { // Añadimos este nuevo estilo para contener la cuadrícula
+    paymentGrid: {
         display: 'flex',
-        flexDirection: 'row', // Disposición horizontal
-        flexWrap: 'wrap', // Permitir envoltura si no caben en una línea
-        justifyContent: 'space-between', // Distribuir espacio entre ítems
-        gap: 4, // Pequeño espacio entre ítems
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        gap: 4,
     },
     paymentLabel: {
         fontSize: 11,
@@ -340,25 +348,32 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Información General</Text>
                     <View style={styles.infoGrid}>
-                        <View style={styles.infoCard}>
-                            <Text style={styles.infoLabel}>Fondo Inicial</Text>
-                            <Text style={styles.infoValue}>{formatCurrency(montoInicial)}</Text>
+                        {/* Fila Superior - 3 Cards */}
+                        <View style={styles.infoRow}>
+                            <View style={[styles.infoCard, styles.infoCardFirstRow]}>
+                                <Text style={styles.infoLabel}>Fondo Inicial</Text>
+                                <Text style={styles.infoValue}>{formatCurrency(montoInicial)}</Text>
+                            </View>
+                            <View style={[styles.infoCard, styles.infoCardFirstRow]}>
+                                <Text style={styles.infoLabel}>Total Ventas</Text>
+                                <Text style={styles.infoValue}>{formatCurrency(totalVentas)}</Text>
+                            </View>
+                            <View style={[styles.infoCard, styles.infoCardFirstRow]}>
+                                <Text style={styles.infoLabel}>Número de Ventas</Text>
+                                <Text style={styles.infoValue}>{cajaDetails.numero_ventas || 0}</Text>
+                            </View>
                         </View>
-                        <View style={styles.infoCard}>
-                            <Text style={styles.infoLabel}>Total Ventas</Text>
-                            <Text style={styles.infoValue}>{formatCurrency(totalVentas)}</Text>
-                        </View>
-                        <View style={styles.infoCard}>
-                            <Text style={styles.infoLabel}>Número de Ventas</Text>
-                            <Text style={styles.infoValue}>{cajaDetails.numero_ventas || 0}</Text>
-                        </View>
-                        <View style={styles.infoCard}>
-                            <Text style={styles.infoLabel}>Total Gastos</Text>
-                            <Text style={[styles.infoValue, styles.textRed]}>{formatCurrency(totalGastos)}</Text>
-                        </View>
-                        <View style={styles.infoCard}>
-                            <Text style={styles.infoLabel}>Balance Esperado</Text>
-                            <Text style={styles.infoValue}>{formatCurrency(balanceEsperado)}</Text>
+
+                        {/* Fila Inferior - 2 Cards */}
+                        <View style={styles.infoRow}>
+                            <View style={[styles.infoCard, styles.infoCardSecondRow]}>
+                                <Text style={styles.infoLabel}>Total Gastos</Text>
+                                <Text style={[styles.infoValue, styles.textRed]}>{formatCurrency(totalGastos)}</Text>
+                            </View>
+                            <View style={[styles.infoCard, styles.infoCardSecondRow]}>
+                                <Text style={styles.infoLabel}>Balance Esperado</Text>
+                                <Text style={styles.infoValue}>{formatCurrency(balanceEsperado)}</Text>
+                            </View>
                         </View>
                     </View>
                 </View>
