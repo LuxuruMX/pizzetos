@@ -26,14 +26,12 @@ export default function CajaControlPanel({ cajaId, onClose }) {
         observaciones_cierre: ''
     });
 
-    // Estado para desglose de ventas
     // Estado para desglose de ventas y gastos
     const [ventasData, setVentasData] = useState([]);
-    const [gastosData, setGastosData] = useState([]); // Nueva variable para gastos
+    const [gastosData, setGastosData] = useState([]);
     const [loadingVentas, setLoadingVentas] = useState(false);
-    const [loadingGastos, setLoadingGastos] = useState(false); // Estado de carga para gastos
     const [showVentas, setShowVentas] = useState(false);
-    const [showGastos, setShowGastos] = useState(false); // Toggle para gastos
+    const [showGastos, setShowGastos] = useState(false);
 
     const [isMounted, setIsMounted] = useState(false);
 
@@ -49,12 +47,18 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                 const data = await getCaja(cajaId);
                 setCajaDetails(data);
 
-                // Fetch gastos immediately to include in balance calculation
+                // Fetch gastos AND ventas immediately to include in balance calculation and PDF
                 try {
-                    const gastos = await getGastosCaja(cajaId);
+                    const [gastos, ventas] = await Promise.all([
+                        getGastosCaja(cajaId),
+                        getVentasCaja(cajaId)
+                    ]);
                     setGastosData(gastos);
+                    setVentasData(ventas);
                 } catch (err) {
-                    console.error("Error fetching gastos:", err);
+                    console.error("Error fetching gastos/ventas:", err);
+                    // Still load the page even if auxiliary data fails? 
+                    // Or maybe handle partial failures. For now just log.
                 }
 
             } catch (error) {
@@ -109,19 +113,8 @@ export default function CajaControlPanel({ cajaId, onClose }) {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num);
     };
 
-    const handleToggleVentas = async () => {
-        if (!showVentas && ventasData.length === 0) {
-            try {
-                setLoadingVentas(true);
-                const data = await getVentasCaja(cajaId);
-                setVentasData(data);
-            } catch (error) {
-                console.error('Error al cargar ventas:', error);
-                setMessage({ type: 'error', text: 'Error al cargar el detalle de ventas' });
-            } finally {
-                setLoadingVentas(false);
-            }
-        }
+    const handleToggleVentas = () => {
+        // Data is already pre-fetched
         setShowVentas(!showVentas);
     };
 
