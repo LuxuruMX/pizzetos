@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
 import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS, fetchPizzaDescriptions } from '@/services/orderService';
+import { fetchIngredientes, fetchTamanosPizzas } from '@/services/pricesService';
 import { useCart } from '@/hooks/useCart';
 import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
@@ -12,6 +13,7 @@ import PaymentModal from '@/components/ui/PaymentModal';
 import AddressSelectionModal from '@/components/ui/AddressSelectionModal';
 import DeliveryPaymentModal from '@/components/ui/DeliveryPaymentModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
+import CustomPizzaModal from '@/components/ui/CustomPizzaModal';
 import { MdComment } from "react-icons/md";
 
 const decodeCartFromUrl = () => {
@@ -41,6 +43,7 @@ const POS = () => {
     total,
     agregarAlCarrito,
     agregarPaquete,
+    agregarPizzaCustom,
     actualizarCantidad,
     eliminarDelCarrito,
     limpiarCarrito,
@@ -82,6 +85,9 @@ const POS = () => {
   const [modalPaquete1, setModalPaquete1] = useState(false);
   const [modalPaquete2, setModalPaquete2] = useState(false);
   const [modalPaquete3, setModalPaquete3] = useState(false);
+  const [modalCustomPizza, setModalCustomPizza] = useState(false);
+  const [ingredientes, setIngredientes] = useState([]);
+  const [tamanosPizzas, setTamanosPizzas] = useState([]);
 
   // Estado para auto-selección de tamaño (pizzas y mariscos)
   const [ultimoTamanoSeleccionado, setUltimoTamanoSeleccionado] = useState(null);
@@ -101,10 +107,12 @@ const POS = () => {
       // Si hay id_caja, procedemos a cargar los datos
       try {
         setLoading(true);
-        const [productosData, clientesData, descripcionesData] = await Promise.all([
+        const [productosData, clientesData, descripcionesData, ingredientesData, tamanosData] = await Promise.all([
           fetchProductosPorCategoria(),
           catalogsService.getNombresClientes(),
-          fetchPizzaDescriptions()
+          fetchPizzaDescriptions(),
+          fetchIngredientes(),
+          fetchTamanosPizzas()
         ]);
 
         if (descripcionesData) {
@@ -118,6 +126,8 @@ const POS = () => {
           label: cliente.nombre || cliente.razon_social || 'Nombre no disponible',
         }));
         setClientes(opcionesClientes);
+        setIngredientes(ingredientesData || []);
+        setTamanosPizzas(tamanosData || []);
       } catch (error) {
         console.error('Error al cargar datos:', error);
       } finally {
@@ -358,6 +368,22 @@ const POS = () => {
     setModalPaquete3(false);
   };
 
+  const handleConfirmarCustomPizza = (customPizzaData) => {
+    // Get ingredient names for display
+    const ingredientesNombres = customPizzaData.ingredientes
+      .map(idIng => {
+        const ing = ingredientes.find(i => i.id_ingrediente === idIng);
+        return ing ? ing.nombre : '';
+      })
+      .filter(nombre => nombre !== '');
+
+    agregarPizzaCustom({
+      ...customPizzaData,
+      ingredientesNombres
+    });
+    setModalCustomPizza(false);
+  };
+
   const handleConfirmarDireccion = (cliente, idDireccion, fecha = null) => {
     setClienteSeleccionado(cliente);
     setDireccionSeleccionada(idDireccion);
@@ -429,6 +455,12 @@ const POS = () => {
             className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow"
           >
             Paquete 3
+          </button>
+          <button
+            onClick={() => setModalCustomPizza(true)}
+            className="bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors shadow"
+          >
+            Por Ingrediente
           </button>
         </div>
       </div>
@@ -561,6 +593,14 @@ const POS = () => {
         onClose={() => setModalPagoDomicilioAbierto(false)}
         total={total}
         onConfirm={handleConfirmarPagoDomicilio}
+      />
+
+      <CustomPizzaModal
+        isOpen={modalCustomPizza}
+        onClose={() => setModalCustomPizza(false)}
+        tamanos={tamanosPizzas}
+        ingredientes={ingredientes}
+        onConfirmar={handleConfirmarCustomPizza}
       />
     </div>
   );

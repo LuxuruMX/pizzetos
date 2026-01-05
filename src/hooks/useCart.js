@@ -121,6 +121,35 @@ export const useCart = (initialCartFromUrl = []) => {
     });
   };
 
+  const agregarPizzaCustom = (customPizza) => {
+    setOrden((prevOrden) => {
+      const idUnico = `custom_pizza_${Date.now()}`;
+      const ingredientesNombres = customPizza.ingredientesNombres || [];
+      const nombreIngredientes = ingredientesNombres.length > 0 
+        ? ingredientesNombres.slice(0, 3).join(', ') + (ingredientesNombres.length > 3 ? '...' : '')
+        : 'Personalizada';
+
+      const nuevaPizza = {
+        id: idUnico,
+        tipoId: 'custom_pizza',
+        esCustomPizza: true,
+        nombre: `Pizza ${customPizza.nombreTamano} - ${nombreIngredientes}`,
+        precioOriginal: customPizza.precio,
+        precioUnitario: customPizza.precio,
+        cantidad: 1,
+        subtotal: customPizza.precio,
+        tamano: customPizza.nombreTamano,
+        ingredientes: {
+          tamano: customPizza.tamano,
+          ingredientes: customPizza.ingredientes
+        }
+      };
+
+      return recalcularPrecios([...prevOrden, nuevaPizza]);
+    });
+  };
+
+
   const agregarAlCarrito = (producto, tipoId) => {
     const id = producto[tipoId];
     const precioOriginal = parseFloat(producto.precio);
@@ -289,6 +318,7 @@ export const useCart = (initialCartFromUrl = []) => {
     total,
     agregarAlCarrito,
     agregarPaquete,
+    agregarPizzaCustom,
     actualizarCantidad,
     eliminarDelCarrito,
     limpiarCarrito,
