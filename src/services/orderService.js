@@ -179,6 +179,20 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
       return itemData;
     }
     
+    // Si es una pizza custom (por ingrediente)
+    if (item.esCustomPizza) {
+      const itemData = {
+        cantidad: parseInt(item.cantidad),
+        precio_unitario: parseFloat(item.precioUnitario),
+        ingredientes: {
+          tamano: parseInt(item.ingredientes.tamano),
+          ingredientes: item.ingredientes.ingredientes.map(id => parseInt(id))
+        },
+        status: 1
+      };
+      return itemData;
+    }
+    
     // Si es un item agrupado (pizzas/mariscos con productos múltiples)
     if (item.productos && Array.isArray(item.productos)) {
       return item.productos.map(producto => {
