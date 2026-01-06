@@ -157,8 +157,8 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
       const itemData = {
         cantidad: parseInt(item.cantidad),
         precio_unitario: parseFloat(item.precioUnitario),
-        id_paquete: item.datoPaquete.id_paquete,
-        id_refresco: item.datoPaquete.id_refresco,
+        id_paquete: parseInt(item.datoPaquete.id_paquete),
+        id_refresco: parseInt(item.datoPaquete.id_refresco),
         status: 1
       };
 
@@ -299,6 +299,7 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
   }
 
   try {
+    console.log('Payload FINAL enviado a API /pos/:', JSON.stringify(ordenParaEnviar, null, 2));
     const response = await api.post('/pos/', ordenParaEnviar);
     return response.data;
   } catch (error) {
