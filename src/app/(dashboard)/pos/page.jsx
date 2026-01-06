@@ -569,7 +569,7 @@ const POS = () => {
         onClose={() => setModalPaquete2(false)}
         onConfirmar={handleConfirmarPaquete2}
         pizzas={productos.pizzas}
-        hamburguesas={productos.hamburguesas}
+        hamburguesas={productos.hamburguesas.filter(h => h.nombre.toLowerCase().includes('sencilla'))}
         alitas={productos.alitas}
       />
 
