@@ -183,6 +183,14 @@ export default function Pedidos() {
               <p className="text-xs text-gray-600">
                 {prod.tipo}
               </p>
+              {prod.es_personalizado && prod.detalles_ingredientes && (
+                <div className="mt-1 text-xs bg-white/50 p-1 rounded">
+                  <p className="font-semibold text-gray-700">Tamaño: {prod.detalles_ingredientes.tamano}</p>
+                  <p className="text-gray-600">
+                    Ingredientes ({prod.detalles_ingredientes.cantidad_ingredientes}): {prod.detalles_ingredientes.ingredientes.join(', ')}
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -404,11 +412,26 @@ export default function Pedidos() {
                             'bg-gray-100 border-gray-200'
                         }`}>
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="flex-1">
                             <p className="font-bold text-lg">
                               {prod.cantidad}x {prod.nombre || 'Producto sin nombre'}
                             </p>
                             <p className="text-sm text-gray-600">{prod.tipo}</p>
+                            {prod.es_personalizado && prod.detalles_ingredientes && (
+                              <div className="mt-2 bg-white/70 p-3 rounded border border-gray-200">
+                                <p className="font-semibold text-sm text-gray-800 mb-1">
+                                  🍕 Tamaño: {prod.detalles_ingredientes.tamano}
+                                </p>
+                                <p className="text-sm text-gray-700">
+                                  <span className="font-semibold">Ingredientes ({prod.detalles_ingredientes.cantidad_ingredientes}):</span>
+                                </p>
+                                <ul className="mt-1 ml-4 list-disc text-sm text-gray-600">
+                                  {prod.detalles_ingredientes.ingredientes.map((ing, ingIdx) => (
+                                    <li key={ingIdx}>{ing}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
