@@ -5,7 +5,7 @@ import Card from '@/components/ui/PedidosCard'
 import { IoMailOpenSharp, IoSend, IoReload, IoClose } from "react-icons/io5";
 import { FaClock } from "react-icons/fa";
 import { PiCookingPotFill } from "react-icons/pi";
-import { MdComment } from "react-icons/md";
+import { MdComment, MdExpandMore, MdExpandLess } from "react-icons/md";
 import api from '@/services/api';
 
 export default function Pedidos() {
@@ -15,6 +15,14 @@ export default function Pedidos() {
   const [modalOpen, setModalOpen] = useState(false);
   const [pedidoDetalle, setPedidoDetalle] = useState(null);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
+  const [expandedIngredients, setExpandedIngredients] = useState({});
+
+  const toggleIngredientes = (prodIndex) => {
+    setExpandedIngredients(prev => ({
+      ...prev,
+      [prodIndex]: !prev[prodIndex]
+    }));
+  };
 
   const fetchPedidos = async () => {
     setLoading(true);
@@ -418,18 +426,40 @@ export default function Pedidos() {
                             </p>
                             <p className="text-sm text-gray-600">{prod.tipo}</p>
                             {prod.es_personalizado && prod.detalles_ingredientes && (
-                              <div className="mt-2 bg-white/70 p-3 rounded border border-gray-200">
-                                <p className="font-semibold text-sm text-gray-800 mb-1">
-                                  🍕 Tamaño: {prod.detalles_ingredientes.tamano}
-                                </p>
-                                <p className="text-sm text-gray-700">
-                                  <span className="font-semibold">Ingredientes ({prod.detalles_ingredientes.cantidad_ingredientes}):</span>
-                                </p>
-                                <ul className="mt-1 ml-4 list-disc text-sm text-gray-600">
-                                  {prod.detalles_ingredientes.ingredientes.map((ing, ingIdx) => (
-                                    <li key={ingIdx}>{ing}</li>
-                                  ))}
-                                </ul>
+                              <div className="mt-3 bg-orange-50 p-3 rounded-lg border border-orange-100">
+                                <div className="flex justify-between items-center cursor-pointer mb-2"
+                                  onClick={() => toggleIngredientes(idx)}>
+                                  <div className="flex items-center gap-2">
+                                    <div>
+                                      <p className="text-xs text-orange-600 font-bold uppercase tracking-wide">Tamaño Personalizado</p>
+                                      <p className="font-bold text-gray-800">{prod.detalles_ingredientes.tamano}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="bg-orange-200 text-orange-800 text-xs font-bold px-2 py-0.5 rounded-full">
+                                      {prod.detalles_ingredientes.cantidad_ingredientes}
+                                    </span>
+                                    {expandedIngredients[idx] ? <MdExpandLess /> : <MdExpandMore />}
+                                  </div>
+                                </div>
+
+                                {expandedIngredients[idx] && (
+                                  <div className="mt-2 pt-2 border-t border-orange-200">
+                                    <p className="text-xs text-orange-600 font-bold uppercase tracking-wide mb-2">
+                                      Ingredientes Seleccionados
+                                    </p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {prod.detalles_ingredientes.ingredientes.map((ing, ingIdx) => (
+                                        <span
+                                          key={ingIdx}
+                                          className="bg-white px-2 py-1 rounded text-xs font-medium text-gray-700 border border-orange-200"
+                                        >
+                                          {ing}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
