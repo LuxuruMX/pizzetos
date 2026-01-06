@@ -60,8 +60,99 @@ export const useCart = (initialCartFromUrl = []) => {
 
   // Función para recalcular todos los precios del carrito
   const recalcularPrecios = (nuevaOrden) => {
+    // 1. Identificar y agrupar Pizzas Custom por tamaño
+    const customPizzasGrouped = {};
+    const customPizzaIds = new Set();
+
+    nuevaOrden.forEach(item => {
+      if (item.esCustomPizza) {
+        const tamano = item.ingredientes?.tamano || 'unknown'; 
+        // Nota: 'tamano' en ingredientes es el ID del tamaño, 'tamano' en item root es el nombre.
+        // Usaremos el ID del tamaño si existe en ingredientes para agrupar, es más seguro.
+        // Si no, fallback al nombre.
+        const key = item.ingredientes?.tamano || item.tamano;
+        
+        if (!customPizzasGrouped[key]) {
+          customPizzasGrouped[key] = [];
+        }
+        customPizzasGrouped[key].push(item);
+        customPizzaIds.add(item.id);
+      }
+    });
+
+    // 2. Calcular costos para Custom Pizzas
+    const customPizzaCosts = {}; // id -> { subtotal, precioUnitario }
+
+    Object.keys(customPizzasGrouped).forEach(key => {
+      const items = customPizzasGrouped[key];
+      
+      // Expandir items a unidades individuales para ordenar por precio
+      const unidades = [];
+      items.forEach(item => {
+        for (let i = 0; i < item.cantidad; i++) {
+          unidades.push({
+            itemId: item.id,
+            precio: item.precioOriginal
+          });
+        }
+      });
+
+      // Ordenar por precio descendente (primero los caros, para cobrarlos en pares)
+      unidades.sort((a, b) => b.precio - a.precio);
+
+      const pares = Math.floor(unidades.length / 2);
+      const sobra = unidades.length % 2;
+
+      // Aplicar lógica:
+      // Pares: El primero (caro) se paga full, el segundo (barato) es gratis (2x1)
+      // Sobra: Se paga con 40% de descuento (x 0.6)
+      
+      const costosPorUnitId = unidades.map(() => 0); // Placeholder
+
+      let unitIndex = 0;
+      
+      // Procesar pares
+      for (let i = 0; i < pares; i++) {
+        // Primer item del par (Caro) - Paga 100%
+        costosPorUnitId[unitIndex] = unidades[unitIndex].precio;
+        unitIndex++;
+        
+        // Segundo item del par (Barato) - Paga 0%
+        costosPorUnitId[unitIndex] = 0;
+        unitIndex++;
+      }
+
+      // Procesar sobra
+      if (sobra > 0) {
+        costosPorUnitId[unitIndex] = unidades[unitIndex].precio * 0.6;
+        unitIndex++;
+      }
+
+      // Re-agregar costos a los items originales
+      unidades.forEach((u, idx) => {
+        if (!customPizzaCosts[u.itemId]) {
+          customPizzaCosts[u.itemId] = { total: 0, count: 0 };
+        }
+        customPizzaCosts[u.itemId].total += costosPorUnitId[idx];
+        customPizzaCosts[u.itemId].count += 1;
+      });
+    });
+
     return nuevaOrden.map(item => {
-      // Los paquetes no tienen descuento 2x1
+      // Caso 1: Custom Pizza (Calculado arriba)
+      if (item.esCustomPizza) {
+        const costData = customPizzaCosts[item.id];
+        if (costData) {
+          return {
+            ...item,
+            subtotal: costData.total,
+            precioUnitario: item.cantidad > 0 ? (costData.total / item.cantidad) : 0
+          };
+        }
+        return item; // Should not happen if logic is correct
+      }
+
+      // Caso 2: Paquetes (Sin cambios)
       if (item.esPaquete) {
         return {
           ...item,
@@ -69,6 +160,7 @@ export const useCart = (initialCartFromUrl = []) => {
         };
       }
 
+      // Caso 3: Items normales
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
 
       if (!categoriasConDescuento.includes(item.tipoId)) {
@@ -79,6 +171,7 @@ export const useCart = (initialCartFromUrl = []) => {
         };
       }
 
+      // Normales con descuento (Pizzas normales, Mariscos)
       const { precioUnitario, subtotal } = calcularPrecioYSubtotal(
         item.precioOriginal,
         item.cantidad

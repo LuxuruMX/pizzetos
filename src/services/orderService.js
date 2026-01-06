@@ -283,9 +283,7 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
       const fecha = new Date(datosExtra.fecha_entrega);
       ordenParaEnviar.fecha_entrega = fecha.toISOString();
     }
-    // No lleva mesa ni pagos por ahora (según ejemplo user, aunque el JSON ejemplo muestra `pagos` array vacío y status 0)
-    // El usuario dijo "enviara casi lo mismo que la opcion a domicilio pero con el extra de fecha_entrega"
-    // UPDATE: El usuario pidio incluir pagos (anticipo)
+
     ordenParaEnviar.pagos = pagos.map(p => ({
       id_metpago: parseInt(p.id_metpago),
       monto: parseFloat(p.monto),
