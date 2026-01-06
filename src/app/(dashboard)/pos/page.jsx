@@ -194,6 +194,9 @@ const POS = () => {
         datosExtra.fecha_entrega = fechaEntrega;
       }
 
+      const payload = { orden, datosExtra, comentarios, tipoServicio, pagos };
+      console.log('Enviando orden al backend (handleEnviarOrden):', JSON.stringify(payload, null, 2));
+
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
 
       limpiarCarrito();
@@ -227,6 +230,9 @@ const POS = () => {
       if (nombreClie.trim()) {
         datosExtra.nombreClie = nombreClie;
       }
+      const payload = { orden, datosExtra, comentarios, tipoServicio, pagosConfirmados };
+      console.log('Enviando orden al backend (enviarOrdenConPagos):', JSON.stringify(payload, null, 2));
+
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
       limpiarCarrito();
       setComentarios('');
@@ -248,6 +254,10 @@ const POS = () => {
       };
       // Convertir pagoData a array de pagos
       const pagosArray = pagoData ? [pagoData] : [];
+
+      const payload = { orden, datosExtra, comentarios, tipoServicio, pagosArray };
+      console.log('Enviando orden al backend (enviarOrdenDomicilio):', JSON.stringify(payload, null, 2));
+
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosArray);
       limpiarCarrito();
       setComentarios('');
@@ -271,6 +281,9 @@ const POS = () => {
         id_direccion: idDireccion,
         fecha_entrega: fecha
       };
+      const payload = { orden, datosExtra, comentarios, tipoServicio, pagosConfirmados };
+      console.log('Enviando orden al backend (enviarOrdenEspecial):', JSON.stringify(payload, null, 2));
+
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
       limpiarCarrito();
       setComentarios('');
