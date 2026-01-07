@@ -88,12 +88,55 @@ const POS = () => {
   const [modalCustomPizza, setModalCustomPizza] = useState(false);
   const [ingredientes, setIngredientes] = useState([]);
   const [tamanosPizzas, setTamanosPizzas] = useState([]);
+  const [grupoRectangularIncompleto, setGrupoRectangularIncompleto] = useState(false);
+  const [grupoBarraMagnoIncompleto, setGrupoBarraMagnoIncompleto] = useState(false);
 
   // Estado para auto-selección de tamaño (pizzas y mariscos)
   const [ultimoTamanoSeleccionado, setUltimoTamanoSeleccionado] = useState(null);
   const [usarTamanoAutomatico, setUsarTamanoAutomatico] = useState(false);
 
   // Efecto para verificar id_caja y cargar datos
+
+  useEffect(() => {
+    const hayRectangulares = orden.some(item => item.tipoId === 'id_rec');
+    const cantidadTotalRectangulares = orden.reduce((acc, item) => {
+      if (item.tipoId === 'id_rec') {
+        return acc + item.cantidad;
+      }
+      return acc;
+    }, 0);
+
+    // Si hay rectangulares en el carrito y no suman 4, entonces grupo incompleto
+    if (hayRectangulares && cantidadTotalRectangulares !== 4) {
+      setGrupoRectangularIncompleto(true);
+    } else {
+      setGrupoRectangularIncompleto(false);
+    }
+  }, [orden]);
+
+
+  useEffect(() => {
+    const tiposRevisar = ['id_barr', 'id_magno'];
+    let hayIncompleto = false;
+
+    for (const tipo of tiposRevisar) {
+      const hayProducto = orden.some(item => item.tipoId === tipo);
+      const cantidadTotal = orden.reduce((acc, item) => {
+        if (item.tipoId === tipo) {
+          return acc + item.cantidad;
+        }
+        return acc;
+      }, 0);
+
+      if (hayProducto && cantidadTotal !== 2) {
+        hayIncompleto = true;
+        break;
+      }
+    }
+    setGrupoBarraMagnoIncompleto(hayIncompleto);
+  }, [orden]);
+
+
   useEffect(() => {
     const checkAndRedirect = async () => {
       const idCaja = localStorage.getItem('id_caja');
@@ -145,6 +188,14 @@ const POS = () => {
   // (handleEnviarOrden, handleConfirmarPagos, etc.)
 
   const handleEnviarOrden = async () => {
+    // Validar que los grupos de Pizza Rectangular tengan exactamente 4 items
+    const gruposRectangularesIncompletos = orden.some(item => item.tipoId === 'id_rec' && item.cantidad < 4);
+
+    if (gruposRectangularesIncompletos) {
+      alert('Debes completar 4 porciones para la pizza Rectangular. Cada grupo debe tener 4 items.');
+      return;
+    }
+
     if (tipoServicio === 2) { // Domicilio
       if (!clienteSeleccionado || !direccionSeleccionada) {
         setModalDireccionAbierto(true);
@@ -428,12 +479,27 @@ const POS = () => {
       });
       return Object.values(nombresUnicos);
     }
+
+    // Multiplicar por 4 el precio de las rectangulares para mostrar
+    if (categoriaActiva === 'rectangular') {
+      return productosCategoria.map(producto => ({
+        ...producto,
+        precio: parseFloat(producto.precio) * 4
+      }));
+    }
+
+    if (categoriaActiva === 'barra' || categoriaActiva === 'magno') {
+      return productosCategoria.map(producto => ({
+        ...producto,
+        precio: parseFloat(producto.precio) * 2
+      }));
+    }
+
+
     return productosCategoria;
   };
 
-  // Renderizado condicional si aún está cargando o si se está redirigiendo
-  // Puedes mostrar un mensaje temporal mientras decide si redirigir o no.
-  // Por ejemplo, si la redirección es instantánea, puede ser apenas perceptible.
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-4 bg-gray-100 min-h-screen flex items-center justify-center">
@@ -486,6 +552,7 @@ const POS = () => {
           productos={procesarProductos()}
           onProductoClick={handleProductoClick}
           mostrarPrecio={!categoriasConModal.includes(categoriaActiva)}
+          deshabilitarCategorias={grupoRectangularIncompleto || grupoBarraMagnoIncompleto}
         />
 
         <CartSection

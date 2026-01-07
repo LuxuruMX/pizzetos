@@ -40,6 +40,7 @@ export const useCart = (initialCartFromUrl = []) => {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -67,8 +68,7 @@ export const useCart = (initialCartFromUrl = []) => {
     nuevaOrden.forEach(item => {
       if (item.esCustomPizza) {
         const tamano = item.ingredientes?.tamano || 'unknown'; 
-        // Nota: 'tamano' en ingredientes es el ID del tamaño, 'tamano' en item root es el nombre.
-        // Usaremos el ID del tamaño si existe en ingredientes para agrupar, es más seguro.
+
         // Si no, fallback al nombre.
         const key = item.ingredientes?.tamano || item.tamano;
         
@@ -164,6 +164,21 @@ export const useCart = (initialCartFromUrl = []) => {
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
 
       if (!categoriasConDescuento.includes(item.tipoId)) {
+        if (item.tipoId === 'id_rec') {
+          return {
+            ...item,
+            precioUnitario: item.precioOriginal,
+            subtotal: item.precioOriginal
+          };
+        }
+        if (item.tipoId === 'id_barr' || item.tipoId === 'id_magno') {
+          return {
+            ...item,
+            precioUnitario: item.precioOriginal,
+            subtotal: item.precioOriginal
+          };
+        }
+
         return {
           ...item,
           precioUnitario: item.precioOriginal,
@@ -250,6 +265,105 @@ export const useCart = (initialCartFromUrl = []) => {
     const nombre = producto.nombre;
 
     setOrden((prevOrden) => {
+      
+      // Lógica específica para agrupar id_rect en grupos de 4
+      if (tipoId === 'id_rec') {
+        // Buscar un grupo existente que tenga menos de 4 items
+        const grupoExistente = prevOrden.find(
+          (item) => item.tipoId === tipoId && !item.esPaquete && item.cantidad < 4
+        );
+
+        let nuevaOrden;
+
+        if (grupoExistente) {
+           nuevaOrden = prevOrden.map((item) => {
+             if (item.id === grupoExistente.id) {
+               const productoExistente = item.productos.find(p => p.id === id);
+               let nuevosProductos;
+               if (productoExistente) {
+                 nuevosProductos = item.productos.map(p => 
+                   p.id === id ? { ...p, cantidad: p.cantidad + 1 } : p
+                 );
+               } else {
+                 nuevosProductos = [...item.productos, { id, nombre, cantidad: 1 }];
+               }
+               return {
+                 ...item,
+                 cantidad: item.cantidad + 1,
+                 productos: nuevosProductos
+               };
+             }
+             return item;
+           });
+        } else {
+           // Crear nuevo grupo
+           nuevaOrden = [
+             ...prevOrden,
+             {
+               id: `${tipoId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+               tipoId,
+               nombre: `Rectangular`,
+               precioOriginal,
+               precioUnitario: precioOriginal,
+               cantidad: 1,
+               subtotal: precioOriginal,
+               productos: [{ id, nombre, cantidad: 1 }],
+               esPaquete: false
+             }
+           ];
+        }
+        return recalcularPrecios(nuevaOrden);
+      }
+
+      // Lógica específica para agrupar id_barr e id_magno en grupos de 2
+      if (tipoId === 'id_barr' || tipoId === 'id_magno') {
+        // Buscar un grupo existente que tenga menos de 2 items
+        const grupoExistente = prevOrden.find(
+          (item) => item.tipoId === tipoId && !item.esPaquete && item.cantidad < 2
+        );
+
+        let nuevaOrden;
+
+        if (grupoExistente) {
+           nuevaOrden = prevOrden.map((item) => {
+             if (item.id === grupoExistente.id) {
+               const productoExistente = item.productos.find(p => p.id === id);
+               let nuevosProductos;
+               if (productoExistente) {
+                 nuevosProductos = item.productos.map(p => 
+                   p.id === id ? { ...p, cantidad: p.cantidad + 1 } : p
+                 );
+               } else {
+                 nuevosProductos = [...item.productos, { id, nombre, cantidad: 1 }];
+               }
+               return {
+                 ...item,
+                 cantidad: item.cantidad + 1,
+                 productos: nuevosProductos
+               };
+             }
+             return item;
+           });
+        } else {
+           // Crear nuevo grupo
+           nuevaOrden = [
+             ...prevOrden,
+             {
+               id: `${tipoId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+               tipoId,
+               nombre: `${tipoId === 'id_barr' ? 'Barra' : 'Magno'}`,
+               precioOriginal,
+               precioUnitario: precioOriginal,
+               cantidad: 1,
+               subtotal: precioOriginal,
+               productos: [{ id, nombre, cantidad: 1 }],
+               esPaquete: false
+             }
+           ];
+        }
+        return recalcularPrecios(nuevaOrden);
+      }
+
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
 
       if (categoriasConDescuento.includes(tipoId)) {
