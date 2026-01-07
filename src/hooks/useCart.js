@@ -163,7 +163,6 @@ export const useCart = (initialCartFromUrl = []) => {
 
       // Caso 3: Items normales
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
-      const categoriasAgrupadasSinDescuento = ['id_hamb', 'id_alis']; 
 
       if (!categoriasConDescuento.includes(item.tipoId)) {
         return {
@@ -291,6 +290,57 @@ export const useCart = (initialCartFromUrl = []) => {
                id: `${tipoId}_${tamano}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                tipoId,
                nombre: `Rectangular ${tamano}`,
+               precioOriginal,
+               precioUnitario: precioOriginal,
+               cantidad: 1,
+               subtotal: precioOriginal,
+               tamano,
+               productos: [{ id, nombre, cantidad: 1 }],
+               esPaquete: false
+             }
+           ];
+        }
+        return recalcularPrecios(nuevaOrden);
+      }
+
+      // Lógica específica para agrupar id_barr e id_magno en grupos de 2
+      if (tipoId === 'id_barr' || tipoId === 'id_magno') {
+        const tamano = producto.subcategoria || producto.tamano || producto.tamaño || 'N/A';
+        // Buscar un grupo existente que tenga menos de 2 items
+        const grupoExistente = prevOrden.find(
+          (item) => item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete && item.cantidad < 2
+        );
+
+        let nuevaOrden;
+
+        if (grupoExistente) {
+           nuevaOrden = prevOrden.map((item) => {
+             if (item.id === grupoExistente.id) {
+               const productoExistente = item.productos.find(p => p.id === id);
+               let nuevosProductos;
+               if (productoExistente) {
+                 nuevosProductos = item.productos.map(p => 
+                   p.id === id ? { ...p, cantidad: p.cantidad + 1 } : p
+                 );
+               } else {
+                 nuevosProductos = [...item.productos, { id, nombre, cantidad: 1 }];
+               }
+               return {
+                 ...item,
+                 cantidad: item.cantidad + 1,
+                 productos: nuevosProductos
+               };
+             }
+             return item;
+           });
+        } else {
+           // Crear nuevo grupo
+           nuevaOrden = [
+             ...prevOrden,
+             {
+               id: `${tipoId}_${tamano}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+               tipoId,
+               nombre: `${tipoId === 'id_barr' ? 'Barra' : 'Magno'} ${tamano}`,
                precioOriginal,
                precioUnitario: precioOriginal,
                cantidad: 1,
