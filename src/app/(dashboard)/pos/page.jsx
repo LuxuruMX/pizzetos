@@ -488,6 +488,14 @@ const POS = () => {
       }));
     }
 
+    if (categoriaActiva === 'barra' || categoriaActiva === 'magno') {
+      return productosCategoria.map(producto => ({
+        ...producto,
+        precio: parseFloat(producto.precio) * 2
+      }));
+    }
+
+
     return productosCategoria;
   };
 

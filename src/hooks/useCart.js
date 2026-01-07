@@ -68,8 +68,7 @@ export const useCart = (initialCartFromUrl = []) => {
     nuevaOrden.forEach(item => {
       if (item.esCustomPizza) {
         const tamano = item.ingredientes?.tamano || 'unknown'; 
-        // Nota: 'tamano' en ingredientes es el ID del tamaño, 'tamano' en item root es el nombre.
-        // Usaremos el ID del tamaño si existe en ingredientes para agrupar, es más seguro.
+
         // Si no, fallback al nombre.
         const key = item.ingredientes?.tamano || item.tamano;
         
@@ -166,6 +165,13 @@ export const useCart = (initialCartFromUrl = []) => {
 
       if (!categoriasConDescuento.includes(item.tipoId)) {
         if (item.tipoId === 'id_rec') {
+          return {
+            ...item,
+            precioUnitario: item.precioOriginal,
+            subtotal: item.precioOriginal
+          };
+        }
+        if (item.tipoId === 'id_barr' || item.tipoId === 'id_magno') {
           return {
             ...item,
             precioUnitario: item.precioOriginal,
