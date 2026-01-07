@@ -145,6 +145,14 @@ const POS = () => {
   // (handleEnviarOrden, handleConfirmarPagos, etc.)
 
   const handleEnviarOrden = async () => {
+    // Validar que los grupos de Pizza Rectangular tengan exactamente 4 items
+    const gruposRectangularesIncompletos = orden.some(item => item.tipoId === 'id_rec' && item.cantidad < 4);
+
+    if (gruposRectangularesIncompletos) {
+      alert('Debes completar 4 porciones para la pizza Rectangular. Cada grupo debe tener 4 items.');
+      return;
+    }
+
     if (tipoServicio === 2) { // Domicilio
       if (!clienteSeleccionado || !direccionSeleccionada) {
         setModalDireccionAbierto(true);
@@ -428,12 +436,19 @@ const POS = () => {
       });
       return Object.values(nombresUnicos);
     }
+
+    // Multiplicar por 4 el precio de las rectangulares para mostrar
+    if (categoriaActiva === 'rectangular') {
+      return productosCategoria.map(producto => ({
+        ...producto,
+        precio: parseFloat(producto.precio) * 4
+      }));
+    }
+
     return productosCategoria;
   };
 
-  // Renderizado condicional si aún está cargando o si se está redirigiendo
-  // Puedes mostrar un mensaje temporal mientras decide si redirigir o no.
-  // Por ejemplo, si la redirección es instantánea, puede ser apenas perceptible.
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-4 bg-gray-100 min-h-screen flex items-center justify-center">

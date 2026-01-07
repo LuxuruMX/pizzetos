@@ -165,6 +165,14 @@ export const useCart = (initialCartFromUrl = []) => {
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
 
       if (!categoriasConDescuento.includes(item.tipoId)) {
+        if (item.tipoId === 'id_rec') {
+          return {
+            ...item,
+            precioUnitario: 365,
+            subtotal: 365
+          };
+        }
+
         return {
           ...item,
           precioUnitario: item.precioOriginal,
