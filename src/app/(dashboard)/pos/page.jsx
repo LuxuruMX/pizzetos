@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
 import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS, fetchPizzaDescriptions } from '@/services/orderService';
@@ -88,12 +88,32 @@ const POS = () => {
   const [modalCustomPizza, setModalCustomPizza] = useState(false);
   const [ingredientes, setIngredientes] = useState([]);
   const [tamanosPizzas, setTamanosPizzas] = useState([]);
+  const [grupoRectangularIncompleto, setGrupoRectangularIncompleto] = useState(false);
 
   // Estado para auto-selección de tamaño (pizzas y mariscos)
   const [ultimoTamanoSeleccionado, setUltimoTamanoSeleccionado] = useState(null);
   const [usarTamanoAutomatico, setUsarTamanoAutomatico] = useState(false);
 
   // Efecto para verificar id_caja y cargar datos
+
+  useEffect(() => {
+    const hayRectangulares = orden.some(item => item.tipoId === 'id_rec');
+    const cantidadTotalRectangulares = orden.reduce((acc, item) => {
+      if (item.tipoId === 'id_rec') {
+        return acc + item.cantidad;
+      }
+      return acc;
+    }, 0);
+
+    // Si hay rectangulares en el carrito y no suman 4, entonces grupo incompleto
+    if (hayRectangulares && cantidadTotalRectangulares !== 4) {
+      setGrupoRectangularIncompleto(true);
+    } else {
+      setGrupoRectangularIncompleto(false);
+    }
+  }, [orden]);
+
+
   useEffect(() => {
     const checkAndRedirect = async () => {
       const idCaja = localStorage.getItem('id_caja');
@@ -501,6 +521,7 @@ const POS = () => {
           productos={procesarProductos()}
           onProductoClick={handleProductoClick}
           mostrarPrecio={!categoriasConModal.includes(categoriaActiva)}
+          deshabilitarCategorias={grupoRectangularIncompleto}
         />
 
         <CartSection
