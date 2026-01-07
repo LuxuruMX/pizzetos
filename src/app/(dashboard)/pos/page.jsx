@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
 import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS, fetchPizzaDescriptions } from '@/services/orderService';
@@ -89,6 +89,7 @@ const POS = () => {
   const [ingredientes, setIngredientes] = useState([]);
   const [tamanosPizzas, setTamanosPizzas] = useState([]);
   const [grupoRectangularIncompleto, setGrupoRectangularIncompleto] = useState(false);
+  const [grupoBarraMagnoIncompleto, setGrupoBarraMagnoIncompleto] = useState(false);
 
   // Estado para auto-selección de tamaño (pizzas y mariscos)
   const [ultimoTamanoSeleccionado, setUltimoTamanoSeleccionado] = useState(null);
@@ -111,6 +112,28 @@ const POS = () => {
     } else {
       setGrupoRectangularIncompleto(false);
     }
+  }, [orden]);
+
+
+  useEffect(() => {
+    const tiposRevisar = ['id_barr', 'id_magno'];
+    let hayIncompleto = false;
+
+    for (const tipo of tiposRevisar) {
+      const hayProducto = orden.some(item => item.tipoId === tipo);
+      const cantidadTotal = orden.reduce((acc, item) => {
+        if (item.tipoId === tipo) {
+          return acc + item.cantidad;
+        }
+        return acc;
+      }, 0);
+
+      if (hayProducto && cantidadTotal !== 2) {
+        hayIncompleto = true;
+        break;
+      }
+    }
+    setGrupoBarraMagnoIncompleto(hayIncompleto);
   }, [orden]);
 
 
@@ -521,7 +544,7 @@ const POS = () => {
           productos={procesarProductos()}
           onProductoClick={handleProductoClick}
           mostrarPrecio={!categoriasConModal.includes(categoriaActiva)}
-          deshabilitarCategorias={grupoRectangularIncompleto}
+          deshabilitarCategorias={grupoRectangularIncompleto || grupoBarraMagnoIncompleto}
         />
 
         <CartSection
