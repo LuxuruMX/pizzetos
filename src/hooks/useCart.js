@@ -254,10 +254,9 @@ export const useCart = (initialCartFromUrl = []) => {
       
       // Lógica específica para agrupar id_rect en grupos de 4
       if (tipoId === 'id_rec') {
-        const tamano = producto.subcategoria || producto.tamano || producto.tamaño || 'N/A';
         // Buscar un grupo existente que tenga menos de 4 items
         const grupoExistente = prevOrden.find(
-          (item) => item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete && item.cantidad < 4
+          (item) => item.tipoId === tipoId && !item.esPaquete && item.cantidad < 4
         );
 
         let nuevaOrden;
@@ -287,14 +286,13 @@ export const useCart = (initialCartFromUrl = []) => {
            nuevaOrden = [
              ...prevOrden,
              {
-               id: `${tipoId}_${tamano}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+               id: `${tipoId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                tipoId,
-               nombre: `Rectangular ${tamano}`,
+               nombre: `Rectangular`,
                precioOriginal,
                precioUnitario: precioOriginal,
                cantidad: 1,
                subtotal: precioOriginal,
-               tamano,
                productos: [{ id, nombre, cantidad: 1 }],
                esPaquete: false
              }
@@ -305,10 +303,9 @@ export const useCart = (initialCartFromUrl = []) => {
 
       // Lógica específica para agrupar id_barr e id_magno en grupos de 2
       if (tipoId === 'id_barr' || tipoId === 'id_magno') {
-        const tamano = producto.subcategoria || producto.tamano || producto.tamaño || 'N/A';
         // Buscar un grupo existente que tenga menos de 2 items
         const grupoExistente = prevOrden.find(
-          (item) => item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete && item.cantidad < 2
+          (item) => item.tipoId === tipoId && !item.esPaquete && item.cantidad < 2
         );
 
         let nuevaOrden;
@@ -338,14 +335,13 @@ export const useCart = (initialCartFromUrl = []) => {
            nuevaOrden = [
              ...prevOrden,
              {
-               id: `${tipoId}_${tamano}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+               id: `${tipoId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                tipoId,
-               nombre: `${tipoId === 'id_barr' ? 'Barra' : 'Magno'} ${tamano}`,
+               nombre: `${tipoId === 'id_barr' ? 'Barra' : 'Magno'}`,
                precioOriginal,
                precioUnitario: precioOriginal,
                cantidad: 1,
                subtotal: precioOriginal,
-               tamano,
                productos: [{ id, nombre, cantidad: 1 }],
                esPaquete: false
              }
