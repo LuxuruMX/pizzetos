@@ -2,13 +2,14 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useRef } from 'react';
 import ProductCard from "@/components/ui/ProductCard"
 
-const ProductsSection = ({ 
-  categorias, 
-  categoriaActiva, 
+const ProductsSection = ({
+  categorias,
+  categoriaActiva,
   onCategoriaChange,
-  productos, 
+  productos,
   onProductoClick,
-  mostrarPrecio = true
+  mostrarPrecio = true,
+  deshabilitarCategorias = false
 }) => {
   const categoriesContainerRef = useRef(null);
 
@@ -24,18 +25,31 @@ const ProductsSection = ({
   };
 
   return (
-    <div className="w-2/3 ml-6 flex flex-col overflow-y-auto" 
-         style={{ maxHeight: 'calc(100vh - 8rem)' }}>
+    <div className="w-2/3 ml-6 flex flex-col overflow-y-auto"
+      style={{ maxHeight: 'calc(100vh - 8rem)' }}>
       <div className="px-6 pt-6">
 
         {/* Contenedor para Categorías con Scroll Horizontal y Flechas */}
         <div className="relative mb-4">
+          {/* Mensaje de advertencia cuando hay grupo incompleto */}
+          {deshabilitarCategorias && (
+            <div className="mb-2 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 rounded">
+              <p className="text-sm font-medium">
+                Completa las 4 porciones de Pizza Rectangular antes de cambiar de categoría
+              </p>
+            </div>
+          )}
+
           <div className="border border-gray-300 rounded-lg p-1 shadow-sm bg-white">
             <div className="flex items-center">
               {/* Flecha Izquierda */}
               <button
                 onClick={() => scroll('left', categoriesContainerRef)}
-                className="p-2 text-gray-600 hover:bg-gray-200 rounded-full mr-1 flex-shrink-0 z-10"
+                disabled={deshabilitarCategorias}
+                className={`p-2 rounded-full mr-1 flex-shrink-0 z-10 ${deshabilitarCategorias
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
+                  }`}
                 aria-label="Desplazar categorías a la izquierda"
               >
                 <FaChevronLeft className="h-5 w-5" />
@@ -47,26 +61,38 @@ const ProductsSection = ({
                 className="flex-1 overflow-x-auto hide-scrollbar flex justify-start py-1"
               >
                 <div className="flex space-x-4 min-w-max">
-                  {categorias.map((categoria) => (
-                    <button
-                      key={categoria}
-                      onClick={() => onCategoriaChange(categoria)}
-                      className={`px-4 py-2 rounded-lg flex-shrink-0 ${
-                        categoriaActiva === categoria
+                  {categorias.map((categoria) => {
+                    const esActiva = categoriaActiva === categoria;
+                    const estaDeshabilitada = deshabilitarCategorias && !esActiva;
+
+                    return (
+                      <button
+                        key={categoria}
+                        onClick={() => onCategoriaChange(categoria)}
+                        disabled={estaDeshabilitada}
+                        className={`px-4 py-2 rounded-lg flex-shrink-0 transition-all ${esActiva
                           ? 'bg-orange-400 text-white'
-                          : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-                      }`}
-                    >
-                      {categoria.charAt(0).toUpperCase() + categoria.slice(1)}
-                    </button>
-                  ))}
+                          : estaDeshabilitada
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                            : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                          }`}
+                        title={estaDeshabilitada ? 'Completa las 4 porciones rectangulares primero' : ''}
+                      >
+                        {categoria.charAt(0).toUpperCase() + categoria.slice(1)}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Flecha Derecha */}
               <button
                 onClick={() => scroll('right', categoriesContainerRef)}
-                className="p-2 text-gray-600 hover:bg-gray-200 rounded-full ml-1 flex-shrink-0 z-10"
+                disabled={deshabilitarCategorias}
+                className={`p-2 rounded-full ml-1 flex-shrink-0 z-10 ${deshabilitarCategorias
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
+                  }`}
                 aria-label="Desplazar categorías a la derecha"
               >
                 <FaChevronRight className="h-5 w-5" />
