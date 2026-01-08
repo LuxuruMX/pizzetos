@@ -199,6 +199,16 @@ export default function Pedidos() {
                   </p>
                 </div>
               )}
+              {prod.especialidades && prod.especialidades.length > 0 && (
+                <div className="mt-1 text-xs bg-blue-50 p-1 rounded border border-blue-100">
+                  <p className="font-semibold text-blue-800">Especialidades:</p>
+                  <ul className="list-disc list-inside text-blue-700">
+                    {prod.especialidades.map((esp, i) => (
+                      <li key={i} className="truncate">{esp}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -460,6 +470,24 @@ export default function Pedidos() {
                                     </div>
                                   </div>
                                 )}
+                              </div>
+                            )}
+
+                            {prod.especialidades && prod.especialidades.length > 0 && (
+                              <div className="mt-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <p className="text-xs text-blue-600 font-bold uppercase tracking-wide mb-2">
+                                  Especialidades
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {prod.especialidades.map((esp, i) => (
+                                    <span
+                                      key={i}
+                                      className="bg-white px-2 py-1 rounded text-xs font-medium text-blue-800 border border-blue-200 shadow-sm"
+                                    >
+                                      {esp}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>

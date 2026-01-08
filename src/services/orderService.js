@@ -193,6 +193,24 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
       return itemData;
     }
     
+    // Si es un item agrupado especial (rectangular, barra, magno)
+    const gruposEspeciales = ['id_rec', 'id_barr', 'id_magno'];
+    if (gruposEspeciales.includes(item.tipoId) && item.productos && Array.isArray(item.productos)) {
+      const ids = [];
+      item.productos.forEach(p => {
+        for (let i = 0; i < p.cantidad; i++) {
+          ids.push(parseInt(p.id));
+        }
+      });
+
+      return {
+        cantidad: 1, // Se envía como 1 paquete/grupo
+        precio_unitario: parseFloat(item.precioUnitario),
+        [item.tipoId]: ids,
+        status: 1
+      };
+    }
+
     // Si es un item agrupado (pizzas/mariscos con productos múltiples)
     if (item.productos && Array.isArray(item.productos)) {
       return item.productos.map(producto => {
