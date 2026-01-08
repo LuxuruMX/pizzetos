@@ -198,11 +198,31 @@ const POS = () => {
   // (handleEnviarOrden, handleConfirmarPagos, etc.)
 
   const handleEnviarOrden = async () => {
-    // Validar que los grupos de Pizza Rectangular tengan exactamente 4 items
-    const gruposRectangularesIncompletos = orden.some(item => item.tipoId === 'id_rec' && item.cantidad < 4);
+    // Validar que los grupos de Pizza Rectangular tengan exactamente 4 items (slices) por grupo base
+    const gruposRectangularesIncompletos = orden.some(item => {
+      if (item.tipoId === 'id_rec') {
+        const slices = item.productos ? item.productos.reduce((acc, p) => acc + p.cantidad, 0) : 0;
+        return slices < 4;
+      }
+      return false;
+    });
 
     if (gruposRectangularesIncompletos) {
-      alert('Debes completar 4 porciones para la pizza Rectangular. Cada grupo debe tener 4 items.');
+      alert('Debes completar 4 porciones para cada pizza Rectangular.');
+      return;
+    }
+
+    // Validar grupos de Barra y Magno (2 items)
+    const gruposDoblesIncompletos = orden.some(item => {
+      if (item.tipoId === 'id_barr' || item.tipoId === 'id_magno') {
+        const slices = item.productos ? item.productos.reduce((acc, p) => acc + p.cantidad, 0) : 0;
+        return slices < 2;
+      }
+      return false;
+    });
+
+    if (gruposDoblesIncompletos) {
+      alert('Debes completar 2 porciones para cada pizza Barra o Magno.');
       return;
     }
 
