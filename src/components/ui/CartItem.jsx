@@ -67,10 +67,28 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
         <div className="flex justify-between items-start mb-2">
           <div className="flex-1">
             <h3 className="font-semibold text-gray-800">{item.nombre}</h3>
-            <p className="text-sm text-gray-600">
-              Cantidad total: {item.cantidad} | 
-              Precio c/u: ${item.precioUnitario.toFixed(2)}
-            </p>
+            <div className="text-sm text-gray-600">
+              <div className="flex items-center gap-2 mt-1">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onUpdateQuantity(item.id, item.tipoId, item.cantidad - 1); }}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded p-1 transition-colors"
+                >
+                  <FaMinus size={12} />
+                </button>
+                <span className="font-bold text-gray-800 text-sm">
+                  {item.cantidad}
+                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onUpdateQuantity(item.id, item.tipoId, item.cantidad + 1); }}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded p-1 transition-colors"
+                >
+                  <FaPlus size={12} />
+                </button>
+                <span className="text-sm text-gray-600 ml-2">
+                  | Precio c/u: ${item.precioUnitario.toFixed(2)}
+                </span>
+              </div>
+            </div>
           </div>
           <button
             onClick={() => onRemove(item.id, item.tipoId)}

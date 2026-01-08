@@ -99,9 +99,14 @@ const POS = () => {
 
   useEffect(() => {
     const hayRectangulares = orden.some(item => item.tipoId === 'id_rec');
+    // Calcular total de porciones/slices reales
     const cantidadTotalRectangulares = orden.reduce((acc, item) => {
       if (item.tipoId === 'id_rec') {
-        return acc + item.cantidad;
+        if (item.productos && Array.isArray(item.productos)) {
+          const slicesEnGrupo = item.productos.reduce((s, p) => s + p.cantidad, 0);
+          return acc + (slicesEnGrupo * item.cantidad);
+        }
+        return acc + item.cantidad; // Fallback
       }
       return acc;
     }, 0);
@@ -121,8 +126,13 @@ const POS = () => {
 
     for (const tipo of tiposRevisar) {
       const hayProducto = orden.some(item => item.tipoId === tipo);
+
       const cantidadTotal = orden.reduce((acc, item) => {
         if (item.tipoId === tipo) {
+          if (item.productos && Array.isArray(item.productos)) {
+            const slicesEnGrupo = item.productos.reduce((s, p) => s + p.cantidad, 0);
+            return acc + (slicesEnGrupo * item.cantidad);
+          }
           return acc + item.cantidad;
         }
         return acc;

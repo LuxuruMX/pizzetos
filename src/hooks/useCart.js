@@ -168,14 +168,14 @@ export const useCart = (initialCartFromUrl = []) => {
           return {
             ...item,
             precioUnitario: item.precioOriginal,
-            subtotal: item.precioOriginal
+            subtotal: item.precioOriginal * item.cantidad
           };
         }
         if (item.tipoId === 'id_barr' || item.tipoId === 'id_magno') {
           return {
             ...item,
             precioUnitario: item.precioOriginal,
-            subtotal: item.precioOriginal
+            subtotal: item.precioOriginal * item.cantidad
           };
         }
 
@@ -268,9 +268,10 @@ export const useCart = (initialCartFromUrl = []) => {
       
       // Lógica específica para agrupar id_rect en grupos de 4
       if (tipoId === 'id_rec') {
-        // Buscar un grupo existente que tenga menos de 4 items
+        // Buscar un grupo existente que tenga menos de 4 items (slices)
         const grupoExistente = prevOrden.find(
-          (item) => item.tipoId === tipoId && !item.esPaquete && item.cantidad < 4
+          (item) => item.tipoId === tipoId && !item.esPaquete && 
+          (item.productos.reduce((acc, p) => acc + p.cantidad, 0) < 4)
         );
 
         let nuevaOrden;
@@ -289,7 +290,7 @@ export const useCart = (initialCartFromUrl = []) => {
                }
                return {
                  ...item,
-                 cantidad: item.cantidad + 1,
+                 // No incrementamos item.cantidad, esa es la cantidad de GRUPOS
                  productos: nuevosProductos
                };
              }
@@ -305,7 +306,7 @@ export const useCart = (initialCartFromUrl = []) => {
                nombre: `Rectangular`,
                precioOriginal,
                precioUnitario: precioOriginal,
-               cantidad: 1,
+               cantidad: 1, // 1 Grupo
                subtotal: precioOriginal,
                productos: [{ id, nombre, cantidad: 1 }],
                esPaquete: false
@@ -319,7 +320,8 @@ export const useCart = (initialCartFromUrl = []) => {
       if (tipoId === 'id_barr' || tipoId === 'id_magno') {
         // Buscar un grupo existente que tenga menos de 2 items
         const grupoExistente = prevOrden.find(
-          (item) => item.tipoId === tipoId && !item.esPaquete && item.cantidad < 2
+          (item) => item.tipoId === tipoId && !item.esPaquete && 
+          (item.productos.reduce((acc, p) => acc + p.cantidad, 0) < 2)
         );
 
         let nuevaOrden;
@@ -338,7 +340,7 @@ export const useCart = (initialCartFromUrl = []) => {
                }
                return {
                  ...item,
-                 cantidad: item.cantidad + 1,
+                 // No incrementamos item.cantidad
                  productos: nuevosProductos
                };
              }
@@ -354,7 +356,7 @@ export const useCart = (initialCartFromUrl = []) => {
                nombre: `${tipoId === 'id_barr' ? 'Barra' : 'Magno'}`,
                precioOriginal,
                precioUnitario: precioOriginal,
-               cantidad: 1,
+               cantidad: 1, // 1 Grupo
                subtotal: precioOriginal,
                productos: [{ id, nombre, cantidad: 1 }],
                esPaquete: false
@@ -463,9 +465,17 @@ export const useCart = (initialCartFromUrl = []) => {
           if (productoId && item.productos) {
             const diferencia = nuevaCantidad - item.productos.find(p => p.id === productoId).cantidad;
 
+            // Para grupos especiales, la cantidad del padre es la cantidad de GRUPOS, no la suma de producots
+            const gruposEspeciales = ['id_rec', 'id_barr', 'id_magno'];
+            let nuevaCantidadPadre = item.cantidad + diferencia;
+            
+            if (gruposEspeciales.includes(item.tipoId)) {
+                nuevaCantidadPadre = item.cantidad; // No cambia al mover subproductos
+            }
+
             return {
               ...item,
-              cantidad: item.cantidad + diferencia,
+              cantidad: nuevaCantidadPadre,
               productos: item.productos.map(p =>
                 p.id === productoId ? { ...p, cantidad: nuevaCantidad } : p
               )

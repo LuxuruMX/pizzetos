@@ -204,7 +204,7 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
       });
 
       return {
-        cantidad: 1, // Se envía como 1 paquete/grupo
+        cantidad: parseInt(item.cantidad), // Se envía la cantidad de grupos
         precio_unitario: parseFloat(item.precioUnitario),
         [item.tipoId]: ids,
         status: 1
