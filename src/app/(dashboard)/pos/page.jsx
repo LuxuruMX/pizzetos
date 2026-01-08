@@ -106,8 +106,8 @@ const POS = () => {
       return acc;
     }, 0);
 
-    // Si hay rectangulares en el carrito y no suman 4, entonces grupo incompleto
-    if (hayRectangulares && cantidadTotalRectangulares !== 4) {
+    // Si hay rectangulares en el carrito y no son multiplos de 4, entonces grupo incompleto
+    if (hayRectangulares && cantidadTotalRectangulares % 4 !== 0) {
       setGrupoRectangularIncompleto(true);
     } else {
       setGrupoRectangularIncompleto(false);
@@ -128,7 +128,7 @@ const POS = () => {
         return acc;
       }, 0);
 
-      if (hayProducto && cantidadTotal !== 2) {
+      if (hayProducto && cantidadTotal % 2 !== 0) {
         hayIncompleto = true;
         break;
       }
