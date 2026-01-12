@@ -192,7 +192,10 @@ export const useCart = (initialCartFromUrl = []) => {
                   tipoId: 'custom_pizza', // Guardar tipoId
                   // Guardar detalles extra si es necesario para edición
                   esCustom: true,
-                  ingredientes: customPizza.ingredientes
+                  ingredientes: {
+                    tamano: customPizza.tamano,
+                    ingredientes: customPizza.ingredientes
+                  }
               }
           ];
           
@@ -219,7 +222,10 @@ export const useCart = (initialCartFromUrl = []) => {
                   cantidad: 1,
                   tipoId: 'custom_pizza', // Guardar tipoId
                   esCustom: true,
-                  ingredientes: customPizza.ingredientes
+                  ingredientes: {
+                    tamano: customPizza.tamano,
+                    ingredientes: customPizza.ingredientes
+                  }
               }]
           });
       }
