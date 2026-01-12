@@ -2,9 +2,20 @@ import { useState } from 'react';
 import { IoClose } from "react-icons/io5";
 
 
-// Modal para Paquete 1 (sin opciones, solo confirmar)
+// Modal para Paquete 1 (con opciones de pizza)
 export const ModalPaquete1 = ({ isOpen, onClose, onConfirmar }) => {
+  const [seleccion, setSeleccion] = useState('mixta'); // 'mixta', 'hawaianas', 'pepperoni'
+
   if (!isOpen) return null;
+
+  const handleConfirmar = () => {
+    let detallePaquete = "4,8"; // Default mixta
+    if (seleccion === 'hawaianas') detallePaquete = "4,4";
+    if (seleccion === 'pepperoni') detallePaquete = "8,8";
+
+    onConfirmar(detallePaquete);
+    setSeleccion('mixta'); // Reset
+  };
 
   return (
     <div className="fixed inset-0 bg-white/30 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
@@ -18,11 +29,37 @@ export const ModalPaquete1 = ({ isOpen, onClose, onConfirmar }) => {
 
         <div className="mb-6">
           <p className="text-gray-700 mb-4">Este paquete incluye:</p>
-          <ul className="list-disc list-inside text-gray-600 space-y-2">
-            <li>2 Pizzas Grandes (Hawaiana y Pepperoni)</li>
+          <ul className="list-disc list-inside text-gray-600 space-y-2 mb-4">
+            <li>2 Pizzas Grandes</li>
             <li>1 Refresco de 2L Jarrito</li>
           </ul>
-          <p className="text-xl font-bold text-green-600 mt-4">Precio: $295.00</p>
+
+          <p className="font-semibold text-gray-800 mb-2">Selecciona tus pizzas:</p>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => setSeleccion('mixta')}
+              className={`p-3 rounded border text-left ${seleccion === 'mixta' ? 'bg-yellow-100 border-yellow-500 ring-1 ring-yellow-500' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}
+            >
+              <div className="font-medium text-gray-900">Combinado</div>
+              <div className="text-xs text-gray-500">1 Hawaiana y 1 Pepperoni</div>
+            </button>
+
+            <button
+              onClick={() => setSeleccion('hawaianas')}
+              className={`p-3 rounded border text-left ${seleccion === 'hawaianas' ? 'bg-yellow-100 border-yellow-500 ring-1 ring-yellow-500' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}
+            >
+              <div className="font-medium text-gray-900">2 Hawaianas</div>
+            </button>
+
+            <button
+              onClick={() => setSeleccion('pepperoni')}
+              className={`p-3 rounded border text-left ${seleccion === 'pepperoni' ? 'bg-yellow-100 border-yellow-500 ring-1 ring-yellow-500' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}
+            >
+              <div className="font-medium text-gray-900">2 Pepperoni</div>
+            </button>
+          </div>
+
+          <p className="text-xl font-bold text-green-600 mt-4 text-center">Precio: $295.00</p>
         </div>
 
         <div className="flex gap-3">
@@ -33,7 +70,7 @@ export const ModalPaquete1 = ({ isOpen, onClose, onConfirmar }) => {
             Cancelar
           </button>
           <button
-            onClick={onConfirmar}
+            onClick={handleConfirmar}
             className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded"
           >
             Agregar
