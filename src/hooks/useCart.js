@@ -61,95 +61,53 @@ export const useCart = (initialCartFromUrl = []) => {
 
   // Función para recalcular todos los precios del carrito
   const recalcularPrecios = (nuevaOrden) => {
-    // 1. Identificar y agrupar Pizzas Custom por tamaño
-    const customPizzasGrouped = {};
-    const customPizzaIds = new Set();
-
-    nuevaOrden.forEach(item => {
-      if (item.esCustomPizza) {
-        const tamano = item.ingredientes?.tamano || 'unknown'; 
-
-        // Si no, fallback al nombre.
-        const key = item.ingredientes?.tamano || item.tamano;
-        
-        if (!customPizzasGrouped[key]) {
-          customPizzasGrouped[key] = [];
-        }
-        customPizzasGrouped[key].push(item);
-        customPizzaIds.add(item.id);
-      }
-    });
-
-    // 2. Calcular costos para Custom Pizzas
-    const customPizzaCosts = {}; // id -> { subtotal, precioUnitario }
-
-    Object.keys(customPizzasGrouped).forEach(key => {
-      const items = customPizzasGrouped[key];
-      
-      // Expandir items a unidades individuales para ordenar por precio
-      const unidades = [];
-      items.forEach(item => {
-        for (let i = 0; i < item.cantidad; i++) {
-          unidades.push({
-            itemId: item.id,
-            precio: item.precioOriginal
-          });
-        }
-      });
-
-      // Ordenar por precio descendente (primero los caros, para cobrarlos en pares)
-      unidades.sort((a, b) => b.precio - a.precio);
-
-      const pares = Math.floor(unidades.length / 2);
-      const sobra = unidades.length % 2;
-
-      // Aplicar lógica:
-      // Pares: El primero (caro) se paga full, el segundo (barato) es gratis (2x1)
-      // Sobra: Se paga con 40% de descuento (x 0.6)
-      
-      const costosPorUnitId = unidades.map(() => 0); // Placeholder
-
-      let unitIndex = 0;
-      
-      // Procesar pares
-      for (let i = 0; i < pares; i++) {
-        // Primer item del par (Caro) - Paga 100%
-        costosPorUnitId[unitIndex] = unidades[unitIndex].precio;
-        unitIndex++;
-        
-        // Segundo item del par (Barato) - Paga 0%
-        costosPorUnitId[unitIndex] = 0;
-        unitIndex++;
-      }
-
-      // Procesar sobra
-      if (sobra > 0) {
-        costosPorUnitId[unitIndex] = unidades[unitIndex].precio * 0.6;
-        unitIndex++;
-      }
-
-      // Re-agregar costos a los items originales
-      unidades.forEach((u, idx) => {
-        if (!customPizzaCosts[u.itemId]) {
-          customPizzaCosts[u.itemId] = { total: 0, count: 0 };
-        }
-        customPizzaCosts[u.itemId].total += costosPorUnitId[idx];
-        customPizzaCosts[u.itemId].count += 1;
-      });
-    });
-
+    // Calcular costos para grupos de Pizzas (Normales, Mariscos, Custom)
+    // El grupo se identifica por tipoId === 'pizza_group'
+    
     return nuevaOrden.map(item => {
-      // Caso 1: Custom Pizza (Calculado arriba)
-      if (item.esCustomPizza) {
-        const costData = customPizzaCosts[item.id];
-        if (costData) {
-          return {
-            ...item,
-            subtotal: costData.total,
-            precioUnitario: item.cantidad > 0 ? (costData.total / item.cantidad) : 0
-          };
+      // Caso 1: Grupo de Pizzas Unificadas
+      if (item.tipoId === 'pizza_group') {
+        // Expandir todos los productos a unidades individuales para ordenar por precio
+        const unidades = [];
+        if (item.productos) {
+            item.productos.forEach(prod => {
+                for (let i = 0; i < prod.cantidad; i++) {
+                    unidades.push({
+                        precio: parseFloat(prod.precio || 0)
+                    });
+                }
+            });
         }
-        return item; // Should not happen if logic is correct
+
+        // Ordenar por precio descendente (primero los caros, para cobrarlos en pares)
+        unidades.sort((a, b) => b.precio - a.precio);
+
+        const pares = Math.floor(unidades.length / 2);
+        const sobra = unidades.length % 2;
+        let nuevoSubtotal = 0;
+
+        let unitIndex = 0;
+        
+        // Procesar pares (2x1: Se paga el más caro del par)
+        for (let i = 0; i < pares; i++) {
+            // Primer item del par (Caro) - Paga 100%
+            nuevoSubtotal += unidades[unitIndex].precio;
+            unitIndex++;
+            // Segundo item del par (Barato) - Paga 0%
+            unitIndex++;
+        }
+
+        // Procesar sobra (Se paga con 40% de descuento -> x 0.6)
+        if (sobra > 0) {
+            nuevoSubtotal += unidades[unitIndex].precio * 0.6;
+            unitIndex++;
+        }
+
+        return {
+            ...item,
+            subtotal: nuevoSubtotal,
+            precioUnitario: unidades.length > 0 ? (nuevoSubtotal / unidades.length) : 0
+        };
       }
 
       // Caso 2: Paquetes (Sin cambios)
@@ -160,42 +118,15 @@ export const useCart = (initialCartFromUrl = []) => {
         };
       }
 
-      // Caso 3: Items normales
-      const categoriasConDescuento = ['id_pizza', 'id_maris'];
-
-      if (!categoriasConDescuento.includes(item.tipoId)) {
-        if (item.tipoId === 'id_rec') {
-          return {
-            ...item,
-            precioUnitario: item.precioOriginal,
-            subtotal: item.precioOriginal * item.cantidad
-          };
-        }
-        if (item.tipoId === 'id_barr' || item.tipoId === 'id_magno') {
-          return {
-            ...item,
-            precioUnitario: item.precioOriginal,
-            subtotal: item.precioOriginal * item.cantidad
-          };
-        }
-
-        return {
-          ...item,
-          precioUnitario: item.precioOriginal,
-          subtotal: item.precioOriginal * item.cantidad
-        };
-      }
-
-      // Normales con descuento (Pizzas normales, Mariscos)
-      const { precioUnitario, subtotal } = calcularPrecioYSubtotal(
-        item.precioOriginal,
-        item.cantidad
-      );
-
+      // Caso 3: Otros Grupos (Rec, Barr, Magno)
+      // Recalcular subtotal basado en cantidad de GRUPOS, no contenido interno variable
+      // (Asumiendo tarifa plana por el grupo, o suma de productos? 
+      //  El código original para Rec/Barr/Magno seteaba precioUnitario fijo al crear.
+      //  Calculamos subtotal = precioUnitario * cantidad (de grupos))
+      
       return {
-        ...item,
-        precioUnitario,
-        subtotal
+          ...item,
+          subtotal: item.precioUnitario * item.cantidad
       };
     });
   };
@@ -231,29 +162,75 @@ export const useCart = (initialCartFromUrl = []) => {
 
   const agregarPizzaCustom = (customPizza) => {
     setOrden((prevOrden) => {
-      const idUnico = `custom_pizza_${Date.now()}`;
+      const tamano = customPizza.nombreTamano || customPizza.tamano;
       const ingredientesNombres = customPizza.ingredientesNombres || [];
       const nombreIngredientes = ingredientesNombres.length > 0 
         ? ingredientesNombres.slice(0, 3).join(', ') + (ingredientesNombres.length > 3 ? '...' : '')
         : 'Personalizada';
+      
+      const idProducto = `custom_${Date.now()}`;
+      const nombreProducto = `Pizza Custom - ${nombreIngredientes}`;
+      const precio = customPizza.precio;
 
-      const nuevaPizza = {
-        id: idUnico,
-        tipoId: 'custom_pizza',
-        esCustomPizza: true,
-        nombre: `Pizza ${customPizza.nombreTamano} - ${nombreIngredientes}`,
-        precioOriginal: customPizza.precio,
-        precioUnitario: customPizza.precio,
-        cantidad: 1,
-        subtotal: customPizza.precio,
-        tamano: customPizza.nombreTamano,
-        ingredientes: {
-          tamano: customPizza.tamano,
-          ingredientes: customPizza.ingredientes
-        }
-      };
+      // Buscar grupo existente por tamaño
+      const existingGroupIndex = prevOrden.findIndex(
+        item => item.tipoId === 'pizza_group' && item.tamano === tamano
+      );
 
-      return recalcularPrecios([...prevOrden, nuevaPizza]);
+      let nuevaOrden = [...prevOrden];
+
+      if (existingGroupIndex >= 0) {
+          // Agregar al grupo existente
+          const group = nuevaOrden[existingGroupIndex];
+          const nuevosProductos = [
+              ...(group.productos || []),
+              {
+                  id: idProducto,
+                  nombre: nombreProducto,
+                  precio: precio,
+                  cantidad: 1,
+                  tipoId: 'custom_pizza', // Guardar tipoId
+                  // Guardar detalles extra si es necesario para edición
+                  esCustom: true,
+                  ingredientes: {
+                    tamano: customPizza.tamano,
+                    ingredientes: customPizza.ingredientes
+                  }
+              }
+          ];
+          
+          nuevaOrden[existingGroupIndex] = {
+              ...group,
+              cantidad: group.cantidad + 1,
+              productos: nuevosProductos
+          };
+      } else {
+          // Crear nuevo grupo
+          nuevaOrden.push({
+              id: `pizza_group_${tamano}`,
+              tipoId: 'pizza_group',
+              nombre: `Pizzas ${tamano}`,
+              tamano: tamano,
+              esPaquete: false,
+              cantidad: 1,
+              precioUnitario: 0, // Se calcula en recalcular
+              subtotal: 0,
+              productos: [{
+                  id: idProducto,
+                  nombre: nombreProducto,
+                  precio: precio,
+                  cantidad: 1,
+                  tipoId: 'custom_pizza', // Guardar tipoId
+                  esCustom: true,
+                  ingredientes: {
+                    tamano: customPizza.tamano,
+                    ingredientes: customPizza.ingredientes
+                  }
+              }]
+          });
+      }
+
+      return recalcularPrecios(nuevaOrden);
     });
   };
 
@@ -369,54 +346,67 @@ export const useCart = (initialCartFromUrl = []) => {
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
 
       if (categoriasConDescuento.includes(tipoId)) {
-        const itemMismoTamano = prevOrden.find(
-          (item) => item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete
+        // Lógica UNIFICADA para Pizzas y Mariscos
+        const existingGroupIndex = prevOrden.findIndex(
+            item => item.tipoId === 'pizza_group' && item.tamano === tamano
         );
 
-        let nuevaOrden;
+        let nuevaOrden = [...prevOrden];
 
-        if (itemMismoTamano) {
-          nuevaOrden = prevOrden.map((item) => {
-            if (item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete) {
-              const productoExistente = item.productos.find(p => p.id === id);
+        if (existingGroupIndex >= 0) {
+            // Grupo existe
+            const group = nuevaOrden[existingGroupIndex];
+            
+            // Buscar si ya existe este producto específico en el grupo
+            const existingProdIndex = group.productos.findIndex(p => p.id === id);
 
-              if (productoExistente) {
-                return {
-                  ...item,
-                  cantidad: item.cantidad + 1,
-                  productos: item.productos.map(p =>
-                    p.id === id ? { ...p, cantidad: p.cantidad + 1 } : p
-                  )
+            let nuevosProductos = [...group.productos];
+            if (existingProdIndex >= 0) {
+                // Aumentar cantidad del producto existente
+                nuevosProductos[existingProdIndex] = {
+                    ...nuevosProductos[existingProdIndex],
+                    cantidad: nuevosProductos[existingProdIndex].cantidad + 1
                 };
-              } else {
-                return {
-                  ...item,
-                  cantidad: item.cantidad + 1,
-                  productos: [...item.productos, { id, nombre, cantidad: 1 }]
-                };
-              }
+            } else {
+                // Agregar nuevo producto al grupo
+                nuevosProductos.push({
+                    id,
+                    nombre,
+                    precio: precioOriginal,
+                    cantidad: 1,
+                    tipoId // Guardar tipoId (id_pizza o id_maris)
+                });
             }
-            return item;
-          });
+
+            nuevaOrden[existingGroupIndex] = {
+                ...group,
+                cantidad: group.cantidad + 1,
+                productos: nuevosProductos
+            };
+
         } else {
-          nuevaOrden = [
-            ...prevOrden,
-            {
-              id: `${tipoId}_${tamano}`,
-              tipoId,
-              nombre: `${tipoId === 'id_pizza' ? 'Pizza' : 'Marisco'} ${tamano}`,
-              precioOriginal,
-              precioUnitario: precioOriginal * 0.6,
-              cantidad: 1,
-              subtotal: precioOriginal * 0.6,
-              tamano,
-              productos: [{ id, nombre, cantidad: 1 }],
-              esPaquete: false
-            },
-          ];
+            // Crear nuevo grupo de Pizzas
+            nuevaOrden.push({
+                id: `pizza_group_${tamano}`,
+                tipoId: 'pizza_group',
+                nombre: `Pizzas ${tamano}`,
+                tamano: tamano,
+                esPaquete: false,
+                cantidad: 1,
+                precioUnitario: 0, 
+                subtotal: 0,
+                productos: [{
+                    id,
+                    nombre,
+                    precio: precioOriginal,
+                    cantidad: 1,
+                    tipoId // Guardar tipoId
+                }]
+            });
         }
 
         return recalcularPrecios(nuevaOrden);
+
       } else {
         const itemExistente = prevOrden.find(
           (item) => item.id === id && item.tipoId === tipoId && !item.esPaquete

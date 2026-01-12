@@ -135,7 +135,7 @@ export const ModalPaquete2 = ({ isOpen, onClose, onConfirmar, pizzas, hamburgues
           </label>
           <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto">
             {pizzas
-              .filter(p => p.tamano === 'Grande Especial')
+              .filter(p => p.tamano === 'Grande')
               .map((pizza) => (
                 <button
                   key={pizza.id_pizza}
@@ -215,7 +215,7 @@ export const ModalPaquete3 = ({ isOpen, onClose, onConfirmar, pizzas }) => {
         <div className="mb-6">
           <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
             {pizzas
-              .filter(p => p.tamano === 'Grande Especial')
+              .filter(p => p.tamano === 'Grande')
               .map((pizza) => (
                 <button
                   key={pizza.id_pizza}
