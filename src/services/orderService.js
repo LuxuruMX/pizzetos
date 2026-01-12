@@ -154,27 +154,42 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
   const items = orden.flatMap(item => {
     // Si es un paquete
     if (item.esPaquete) {
+      let idPizzas = [];
+      
+      // Determinar IDs de pizzas
+      if (item.datoPaquete.detalle_paquete) {
+        // Paquete 1 y 3 usan detalle_paquete como string "4,8"
+        idPizzas = item.datoPaquete.detalle_paquete.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+      } else if (item.datoPaquete.id_pizza) {
+        // Paquete 2 usa id_pizza
+        idPizzas = [parseInt(item.datoPaquete.id_pizza)];
+      } else {
+        // Fallback
+        idPizzas = [0];
+      }
+
+      const paqueteData = {
+          id_paquete: parseInt(item.datoPaquete.id_paquete),
+          id_pizzas: idPizzas,
+          id_refresco: parseInt(item.datoPaquete.id_refresco || 17)
+      };
+
+      // Solo agregar hamburguesa si existe y es mayor a 0
+      if (item.datoPaquete.id_hamb && parseInt(item.datoPaquete.id_hamb) > 0) {
+        paqueteData.id_hamb = parseInt(item.datoPaquete.id_hamb);
+      }
+
+      // Solo agregar alitas si existe y es mayor a 0
+      if (item.datoPaquete.id_alis && parseInt(item.datoPaquete.id_alis) > 0) {
+        paqueteData.id_alis = parseInt(item.datoPaquete.id_alis);
+      }
+
       const itemData = {
         cantidad: parseInt(item.cantidad),
         precio_unitario: parseFloat(item.precioUnitario),
-        id_paquete: parseInt(item.datoPaquete.id_paquete),
-        id_refresco: parseInt(item.datoPaquete.id_refresco),
+        id_paquete: paqueteData,
         status: 1
       };
-
-      // Agregar campos opcionales
-      if (item.datoPaquete.detalle_paquete) {
-        itemData.detalle_paquete = item.datoPaquete.detalle_paquete;
-      }
-      if (item.datoPaquete.id_pizza) {
-        itemData.id_pizza = parseInt(item.datoPaquete.id_pizza);
-      }
-      if (item.datoPaquete.id_hamb) {
-        itemData.id_hamb = parseInt(item.datoPaquete.id_hamb);
-      }
-      if (item.datoPaquete.id_alis) {
-        itemData.id_alis = parseInt(item.datoPaquete.id_alis);
-      }
 
       return itemData;
     }
