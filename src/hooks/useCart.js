@@ -189,6 +189,7 @@ export const useCart = (initialCartFromUrl = []) => {
                   nombre: nombreProducto,
                   precio: precio,
                   cantidad: 1,
+                  tipoId: 'custom_pizza', // Guardar tipoId
                   // Guardar detalles extra si es necesario para edición
                   esCustom: true,
                   ingredientes: customPizza.ingredientes
@@ -216,6 +217,7 @@ export const useCart = (initialCartFromUrl = []) => {
                   nombre: nombreProducto,
                   precio: precio,
                   cantidad: 1,
+                  tipoId: 'custom_pizza', // Guardar tipoId
                   esCustom: true,
                   ingredientes: customPizza.ingredientes
               }]
@@ -365,7 +367,8 @@ export const useCart = (initialCartFromUrl = []) => {
                     id,
                     nombre,
                     precio: precioOriginal,
-                    cantidad: 1
+                    cantidad: 1,
+                    tipoId // Guardar tipoId (id_pizza o id_maris)
                 });
             }
 
@@ -390,7 +393,8 @@ export const useCart = (initialCartFromUrl = []) => {
                     id,
                     nombre,
                     precio: precioOriginal,
-                    cantidad: 1
+                    cantidad: 1,
+                    tipoId // Guardar tipoId
                 }]
             });
         }

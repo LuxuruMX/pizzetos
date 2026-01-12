@@ -211,13 +211,53 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
       };
     }
 
-    // Si es un item agrupado (pizzas/mariscos con productos múltiples)
+    // NUEVO: Manejo de pizza_group (Unificado)
+    if (item.tipoId === 'pizza_group' && item.productos && Array.isArray(item.productos)) {
+      // Expandir productos del grupo a items individuales para el backend
+      return item.productos.flatMap(producto => {
+        const itemsIndividuales = [];
+        
+        // Repetir por cantidad de producto *interno*
+        for (let i = 0; i < producto.cantidad; i++) {
+            if (producto.esCustom || producto.tipoId === 'custom_pizza') {
+               // Es Pizza Custom
+               const itemData = {
+                  cantidad: 1, 
+                  precio_unitario: parseFloat(producto.precio), 
+                  ingredientes: {
+                    // Mapeo simple de tamaño string a ID si fuese necesario, pero aquí ya viene el ID o el objeto ingredientes
+                    // Si producto.ingredientes.tamano es el ID, lo usamos.
+                    tamano: parseInt(producto.ingredientes?.tamano || 0), 
+                    ingredientes: producto.ingredientes?.ingredientes?.map(id => parseInt(id)) || []
+                  },
+                  status: 1
+               };
+               itemsIndividuales.push(itemData);
+            } else {
+               // Es Pizza Normal / Marisco
+               // Usamos el tipoId guardado (id_pizza o id_maris)
+               const tipoIdReal = producto.tipoId || 'id_pizza'; 
+               
+               const itemData = {
+                  cantidad: 1, 
+                  precio_unitario: parseFloat(producto.precio), 
+                  [tipoIdReal]: parseInt(producto.id),
+                  status: 1
+               };
+               itemsIndividuales.push(itemData);
+            }
+        }
+        return itemsIndividuales;
+      });
+    }
+
+    // Si es un item agrupado (pizzas/mariscos con productos múltiples - LEGACY, pero mantenemos por si acaso)
     if (item.productos && Array.isArray(item.productos)) {
       return item.productos.map(producto => {
         const itemData = {
           cantidad: parseInt(producto.cantidad),
           precio_unitario: parseFloat(item.precioUnitario),
-          [item.tipoId]: parseInt(producto.id),  // Usa tipoId del item padre
+          [item.tipoId]: parseInt(producto.id),
           status: 1
         };
         return itemData;
@@ -227,14 +267,14 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
       const itemId = parseInt(item.id);
       
       if (isNaN(itemId)) {
-        console.error('ID inválido encontrado:', item);
-        throw new Error(`El ID del producto "${item.nombre}" no es válido: ${item.id}`);
+        // Ignorar items generados que no sean válidos para backend si se cuelan
+        return [];
       }
 
       const itemData = {
         cantidad: parseInt(item.cantidad),
         precio_unitario: parseFloat(item.precioUnitario),
-        [item.tipoId]: itemId,  // Usa item.tipoId como clave (ej: id_alis, id_hamb)
+        [item.tipoId]: itemId,
         status: 1
       };
       return itemData;
