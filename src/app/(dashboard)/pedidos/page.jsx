@@ -53,7 +53,6 @@ export default function Pedidos() {
       const response = await api.get(`/pos/pedidos-cocina/verificacion/${id_suc}`);
       const newVersion = response.data.version;
 
-      // Si es la primera vez (null) o la version cambio, actualizamos
       if (currentVersion !== newVersion) {
         console.log(`Nueva versión detectada: ${newVersion} (Anterior: ${currentVersion})`);
         setCurrentVersion(newVersion);
@@ -71,17 +70,8 @@ export default function Pedidos() {
     try {
       const response = await api.patch(`/pos/${id_venta}/toggle-preparacion`);
 
-      // Forzar actualización inmediata tras acción de usuario
       if (response.status === 200) {
-        // Reseteamos versión para forzar recarga en siguiente ciclo o llamamos fetch directo
-        // Mejor llamamos checkVersion inmediatamente o fetchPedidos directo.
-        // Al modificar datos, la versión en backend debería cambiar.
-        // Esperamos un momento para que el backend actualice versión?
-        // O simplemente recargamos todo.
         await fetchPedidos();
-        // Opcionalmente podemos llamar checkVersion para actualizar el estado local de la versión
-        // pero fetchPedidos ya trae la data fresca.
-        // Para mantener sincronía, intentamos actualizar la versión:
         const id_suc = getSucursalFromToken();
         if (id_suc) {
           try {
@@ -111,7 +101,6 @@ export default function Pedidos() {
 
       if (response.status === 200) {
         await fetchPedidos();
-        // Actualizar referencia de versión
         const id_suc = getSucursalFromToken();
         if (id_suc) {
           try {
@@ -325,22 +314,6 @@ export default function Pedidos() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-full mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className='text-3xl font-bold text-black'>Pedidos de Cocina</h1>
-
-          <button
-            onClick={fetchPedidos}
-            className="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 flex items-center gap-2"
-            disabled={loading}
-          >
-            {loading ? 'Cargando...' : (
-              <>
-                <IoReload />
-                <span>Actualizar</span>
-              </>
-            )}
-          </button>
-        </div>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
