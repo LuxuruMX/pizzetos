@@ -341,63 +341,46 @@ export default function Pedidos() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-full mx-auto">
-
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             Error: {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Columna En Espera */}
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 min-h-[500px]">
-            <h2 className="text-xl font-bold mb-4 text-gray-700 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-              En Espera ({pedidosEnEspera.length})
-            </h2>
+        {/* Carrusel En Espera */}
+        <div className="bg-red-50 p-4 rounded-lg border border-gray-200 mb-8">
+          <h2 className="text-xl font-bold mb-4 text-gray-700 flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+            En Espera ({pedidosEnEspera.length})
+          </h2>
 
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Fila 1 */}
-              <div className="flex-1 space-y-4">
-                {esperaFila1.map(renderCard)}
-                {esperaFila1.length === 0 && (
-                  <p className="text-gray-500 text-center py-8">No hay pedidos en espera</p>
-                )}
-              </div>
-
-              {/* Fila 2 */}
-              <div className="flex-1 space-y-4">
-                {esperaFila2.map(renderCard)}
-                {esperaFila2.length === 0 && (
-                  <p className="text-gray-500 text-center py-8">No hay pedidos en espera</p>
-                )}
-              </div>
+          {/* Contenedor del carrusel horizontal */}
+          <div className="overflow-x-auto hide-scrollbar pb-2">
+            <div className="flex space-x-4 w-max min-w-full">
+              {pedidosEnEspera.length > 0 ? (
+                pedidosEnEspera.map(renderCard) // Renderiza todos los pedidos en espera en fila horizontal
+              ) : (
+                <p className="text-gray-500 text-center py-8 w-full">No hay pedidos en espera</p>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Columna Preparando */}
-          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 min-h-[500px]">
-            <h2 className="text-xl font-bold mb-4 text-yellow-800 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              Preparando ({pedidosPreparando.length})
-            </h2>
+        {/* Carrusel Preparando */}
+        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+          <h2 className="text-xl font-bold mb-4 text-yellow-800 flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            Preparando ({pedidosPreparando.length})
+          </h2>
 
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Fila 1 */}
-              <div className="flex-1 space-y-4">
-                {preparandoFila1.map(renderCard)}
-                {preparandoFila1.length === 0 && (
-                  <p className="text-gray-500 text-center py-8">No hay pedidos en preparación</p>
-                )}
-              </div>
-
-              {/* Fila 2 */}
-              <div className="flex-1 space-y-4">
-                {preparandoFila2.map(renderCard)}
-                {preparandoFila2.length === 0 && (
-                  <p className="text-gray-500 text-center py-8">No hay pedidos en preparación</p>
-                )}
-              </div>
+          {/* Contenedor del carrusel horizontal */}
+          <div className="overflow-x-auto hide-scrollbar pb-2">
+            <div className="flex space-x-4 w-max min-w-full">
+              {pedidosPreparando.length > 0 ? (
+                pedidosPreparando.map(renderCard) // Renderiza todos los pedidos en preparación en fila horizontal
+              ) : (
+                <p className="text-gray-500 text-center py-8 w-full">No hay pedidos en preparación</p>
+              )}
             </div>
           </div>
         </div>
@@ -614,6 +597,15 @@ export default function Pedidos() {
           </div>
         </div>
       )}
+      <style jsx>{`
+      .hide-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;  /* Chrome, Safari, Opera*/
+      }
+    `}</style>
     </div>
   );
 }
