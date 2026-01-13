@@ -8,6 +8,8 @@ import { PiCookingPotFill } from "react-icons/pi";
 import { MdComment, MdExpandMore, MdExpandLess } from "react-icons/md";
 import api from '@/services/api';
 
+import { getSucursalFromToken } from '@/services/jwt';
+
 export default function Pedidos() {
   const [loading, setLoading] = useState(false);
   const [pedidos, setPedidos] = useState([]);
@@ -16,6 +18,7 @@ export default function Pedidos() {
   const [pedidoDetalle, setPedidoDetalle] = useState(null);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [expandedIngredients, setExpandedIngredients] = useState({});
+  const [currentVersion, setCurrentVersion] = useState(null);
 
   const toggleIngredientes = (prodIndex) => {
     setExpandedIngredients(prev => ({
@@ -39,13 +42,53 @@ export default function Pedidos() {
     }
   };
 
+  const checkVersion = async () => {
+    try {
+      const id_suc = getSucursalFromToken();
+      if (!id_suc) {
+        console.error("No se pudo obtener id_suc del token");
+        return;
+      }
+
+      const response = await api.get(`/pos/pedidos-cocina/verificacion/${id_suc}`);
+      const newVersion = response.data.version;
+
+      // Si es la primera vez (null) o la version cambio, actualizamos
+      if (currentVersion !== newVersion) {
+        console.log(`Nueva versión detectada: ${newVersion} (Anterior: ${currentVersion})`);
+        setCurrentVersion(newVersion);
+        await fetchPedidos();
+      }
+    } catch (err) {
+      console.error('Error verificando versión:', err);
+      // En caso de error en verificación, podríamos intentar fetch directo por seguridad
+      // o simplemente loguear. Por ahora logueamos.
+    }
+  };
+
   // Toggle entre Esperando (0) y Preparando (1)
   const togglePreparacion = async (id_venta) => {
     try {
       const response = await api.patch(`/pos/${id_venta}/toggle-preparacion`);
 
+      // Forzar actualización inmediata tras acción de usuario
       if (response.status === 200) {
-        fetchPedidos();
+        // Reseteamos versión para forzar recarga en siguiente ciclo o llamamos fetch directo
+        // Mejor llamamos checkVersion inmediatamente o fetchPedidos directo.
+        // Al modificar datos, la versión en backend debería cambiar.
+        // Esperamos un momento para que el backend actualice versión?
+        // O simplemente recargamos todo.
+        await fetchPedidos();
+        // Opcionalmente podemos llamar checkVersion para actualizar el estado local de la versión
+        // pero fetchPedidos ya trae la data fresca.
+        // Para mantener sincronía, intentamos actualizar la versión:
+        const id_suc = getSucursalFromToken();
+        if (id_suc) {
+          try {
+            const vResponse = await api.get(`/pos/pedidos-cocina/verificacion/${id_suc}`);
+            setCurrentVersion(vResponse.data.version);
+          } catch (e) { console.error(e); }
+        }
       } else {
         const error = response.data;
         alert(error.detail);
@@ -67,7 +110,15 @@ export default function Pedidos() {
       const response = await api.patch(`/pos/${id_venta}/completar`);
 
       if (response.status === 200) {
-        fetchPedidos();
+        await fetchPedidos();
+        // Actualizar referencia de versión
+        const id_suc = getSucursalFromToken();
+        if (id_suc) {
+          try {
+            const vResponse = await api.get(`/pos/pedidos-cocina/verificacion/${id_suc}`);
+            setCurrentVersion(vResponse.data.version);
+          } catch (e) { console.error(e); }
+        }
       } else {
         const error = response.data;
         alert(error.detail);
@@ -107,11 +158,12 @@ export default function Pedidos() {
 
   // Cargar pedidos al montar el componente
   useEffect(() => {
-    fetchPedidos();
-    // Auto-refresh cada 10 segundos
-    const interval = setInterval(fetchPedidos, 10000);
+    checkVersion();
+    // Auto-refresh verificando versión cada 3 segundos
+    const interval = setInterval(checkVersion, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentVersion]);
+
 
   // Función auxiliar para renderizar una card
   const renderCard = (pedido) => {
