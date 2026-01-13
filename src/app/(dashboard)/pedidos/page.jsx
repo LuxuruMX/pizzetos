@@ -31,7 +31,6 @@ export default function Pedidos() {
     setLoading(true);
     setError(null);
     try {
-      // Ya no enviamos filtros, traemos todo lo activo
       const response = await api.get('/pos/pedidos-cocina');
       setPedidos(response.data.pedidos);
     } catch (err) {
@@ -56,22 +55,42 @@ export default function Pedidos() {
       if (currentVersion !== newVersion) {
         console.log(`Nueva versión detectada: ${newVersion} (Anterior: ${currentVersion})`);
         setCurrentVersion(newVersion);
-        await fetchPedidos();
+        await fetchPedidos(); // Solo aquí recargamos todo si hay cambios globales
       }
     } catch (err) {
       console.error('Error verificando versión:', err);
-      // En caso de error en verificación, podríamos intentar fetch directo por seguridad
-      // o simplemente loguear. Por ahora logueamos.
     }
   };
 
+  // Función para actualizar localmente un pedido específico
+  const updateLocalPedido = (id_venta, updates) => {
+    setPedidos(prevPedidos =>
+      prevPedidos.map(pedido =>
+        pedido.id_venta === id_venta
+          ? { ...pedido, ...updates }
+          : pedido
+      )
+    );
+  };
+
   // Toggle entre Esperando (0) y Preparando (1)
-  const togglePreparacion = async (id_venta) => {
+  const togglePreparacion = async (pedidoActual) => {
+    const { id_venta, status } = pedidoActual;
+
+    // Actualización optimista: cambiar estado inmediatamente
+    const nuevoStatus = status === 0 ? 1 : 0;
+    updateLocalPedido(id_venta, { status: nuevoStatus });
+
     try {
       const response = await api.patch(`/pos/${id_venta}/toggle-preparacion`);
 
-      if (response.status === 200) {
-        await fetchPedidos();
+      if (response.status !== 200) {
+        const error = response.data;
+        alert(error.detail);
+        // Revertir en caso de error
+        updateLocalPedido(id_venta, { status: status });
+      } else {
+        // Actualizar version si es exitoso
         const id_suc = getSucursalFromToken();
         if (id_suc) {
           try {
@@ -79,28 +98,37 @@ export default function Pedidos() {
             setCurrentVersion(vResponse.data.version);
           } catch (e) { console.error(e); }
         }
-      } else {
-        const error = response.data;
-        alert(error.detail);
       }
     } catch (err) {
       console.error('Error al actualizar:', err);
       alert('Error al actualizar el estado del pedido');
+      // Revertir en caso de error de red
+      updateLocalPedido(id_venta, { status: status });
     }
   };
 
   // Completar pedido (1 -> 2)
-  const completarPedido = async (id_venta, status) => {
+  const completarPedido = async (pedidoActual) => {
+    const { id_venta, status } = pedidoActual;
+
     // Solo permitir si está en estado 1 (Preparando)
     if (status !== 1) {
       return;
     }
 
+    // Actualización optimista
+    updateLocalPedido(id_venta, { status: 2 });
+
     try {
       const response = await api.patch(`/pos/${id_venta}/completar`);
 
-      if (response.status === 200) {
-        await fetchPedidos();
+      if (response.status !== 200) {
+        const error = response.data;
+        alert(error.detail);
+        // Revertir en caso de error
+        updateLocalPedido(id_venta, { status: 1 });
+      } else {
+        // Actualizar version si es exitoso
         const id_suc = getSucursalFromToken();
         if (id_suc) {
           try {
@@ -108,13 +136,12 @@ export default function Pedidos() {
             setCurrentVersion(vResponse.data.version);
           } catch (e) { console.error(e); }
         }
-      } else {
-        const error = response.data;
-        alert(error.detail);
       }
     } catch (err) {
       console.error('Error al completar:', err);
       alert('Error al completar el pedido');
+      // Revertir en caso de error de red
+      updateLocalPedido(id_venta, { status: 1 });
     }
   };
 
@@ -166,7 +193,7 @@ export default function Pedidos() {
       {
         icon: <PiCookingPotFill />,
         iconDescription: 'Preparar',
-        onClick: () => togglePreparacion(pedido.id_venta),
+        onClick: () => togglePreparacion(pedido),
         disabled: false
       },
       {
@@ -178,7 +205,7 @@ export default function Pedidos() {
       {
         icon: <IoSend />,
         iconDescription: 'Completar',
-        onClick: () => completarPedido(pedido.id_venta, pedido.status),
+        onClick: () => completarPedido(pedido),
         disabled: pedido.status !== 1
       }
     ];
