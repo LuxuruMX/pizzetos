@@ -430,11 +430,11 @@ const POS = () => {
     }
   };
 
-  const handleConfirmarPaquete1 = () => {
+  const handleConfirmarPaquete1 = (detallePaquete) => {
     agregarPaquete({
       numeroPaquete: 1,
       precio: 295,
-      detallePaquete: "4,8",
+      detallePaquete: detallePaquete, // "4,8", "4,4", o "8,8"
       idRefresco: 17
     });
     setModalPaquete1(false);

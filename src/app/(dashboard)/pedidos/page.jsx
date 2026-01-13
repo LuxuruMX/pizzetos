@@ -199,6 +199,27 @@ export default function Pedidos() {
                   </p>
                 </div>
               )}
+              {prod.tipo === 'Paquete' && prod.detalles_ingredientes && (
+                <div className="mt-1 text-xs bg-yellow-50 p-2 rounded border border-yellow-200">
+                  {prod.detalles_ingredientes.pizzas && prod.detalles_ingredientes.pizzas.length > 0 && (
+                    <div className="mb-1">
+                      <p className="font-semibold text-gray-700">Pizzas:</p>
+                      <ul className="list-disc list-inside ml-1 text-gray-600">
+                        {prod.detalles_ingredientes.pizzas.map((p, i) => <li key={i}>{p}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {prod.detalles_ingredientes.hamburguesa && (
+                    <p className="mb-1"><span className="font-semibold text-gray-700">Hamburguesa:</span> {prod.detalles_ingredientes.hamburguesa}</p>
+                  )}
+                  {prod.detalles_ingredientes.alitas && (
+                    <p className="mb-1"><span className="font-semibold text-gray-700">Alitas:</span> {prod.detalles_ingredientes.alitas}</p>
+                  )}
+                  {prod.detalles_ingredientes.refresco && (
+                    <p><span className="font-semibold text-gray-700">Refresco:</span> {prod.detalles_ingredientes.refresco}</p>
+                  )}
+                </div>
+              )}
               {prod.especialidades && prod.especialidades.length > 0 && (
                 <div className="mt-1 text-xs bg-blue-50 p-1 rounded border border-blue-100">
                   <p className="font-semibold text-blue-800">Especialidades:</p>
@@ -468,6 +489,40 @@ export default function Pedidos() {
                                         </span>
                                       ))}
                                     </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {prod.tipo === 'Paquete' && prod.detalles_ingredientes && (
+                              <div className="mt-3 bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                                <p className="text-xs text-yellow-600 font-bold uppercase tracking-wide mb-2">Contenido del Paquete</p>
+
+                                {prod.detalles_ingredientes.pizzas && prod.detalles_ingredientes.pizzas.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="text-sm font-semibold text-gray-800 mb-1">Pizzas:</p>
+                                    <ul className="list-disc list-inside text-sm text-gray-700 pl-2">
+                                      {prod.detalles_ingredientes.pizzas.map((p, i) => <li key={i}>{p}</li>)}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {prod.detalles_ingredientes.hamburguesa && (
+                                  <div className="mb-1 text-sm">
+                                    <span className="font-bold text-gray-700">Hamburguesa: </span>
+                                    <span className="text-gray-800">{prod.detalles_ingredientes.hamburguesa}</span>
+                                  </div>
+                                )}
+                                {prod.detalles_ingredientes.alitas && (
+                                  <div className="mb-1 text-sm">
+                                    <span className="font-bold text-gray-700">Alitas: </span>
+                                    <span className="text-gray-800">{prod.detalles_ingredientes.alitas}</span>
+                                  </div>
+                                )}
+                                {prod.detalles_ingredientes.refresco && (
+                                  <div className="text-sm">
+                                    <span className="font-bold text-gray-700">Refresco: </span>
+                                    <span className="text-gray-800">{prod.detalles_ingredientes.refresco}</span>
                                   </div>
                                 )}
                               </div>
