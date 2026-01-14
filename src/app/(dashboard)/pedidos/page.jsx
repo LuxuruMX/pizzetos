@@ -19,6 +19,24 @@ export default function Pedidos() {
   const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [expandedIngredients, setExpandedIngredients] = useState({});
   const [currentVersion, setCurrentVersion] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Actualizar el tiempo actual cada minuto
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Actualizar cada 60 segundos
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Función para calcular el tiempo transcurrido en minutos
+  const calcularTiempoTranscurrido = (fechaHora) => {
+    const fechaPedido = new Date(fechaHora);
+    const diffMs = currentTime - fechaPedido;
+    const diffMinutos = Math.floor(diffMs / 60000);
+    return diffMinutos >= 0 ? diffMinutos : 0;
+  };
 
   const toggleIngredientes = (prodIndex) => {
     setExpandedIngredients(prev => ({
@@ -183,9 +201,11 @@ export default function Pedidos() {
 
   // Función auxiliar para renderizar una card
   const renderCard = (pedido) => {
-    const colorTiempo = pedido.tiempo_transcurrido_minutos > 30
+    const tiempoTranscurrido = calcularTiempoTranscurrido(pedido.fecha_hora);
+
+    const colorTiempo = tiempoTranscurrido > 30
       ? 'text-red-600'
-      : pedido.tiempo_transcurrido_minutos > 15
+      : tiempoTranscurrido > 15
         ? 'text-yellow-600'
         : 'text-green-600';
 
@@ -217,7 +237,7 @@ export default function Pedidos() {
             <FaClock className={colorTiempo} />
             <b>Tiempo:</b>
             <span className={colorTiempo}>
-              {pedido.tiempo_transcurrido_minutos} min
+              {tiempoTranscurrido} min
             </span>
           </p>
           <p className="mb-1"><b>Sucursal:</b> {pedido.sucursal}</p>
@@ -358,7 +378,7 @@ export default function Pedidos() {
           <div className="overflow-x-auto hide-scrollbar pb-2">
             <div className="flex space-x-4 w-max min-w-full">
               {pedidosEnEspera.length > 0 ? (
-                pedidosEnEspera.map(renderCard) // Renderiza todos los pedidos en espera en fila horizontal
+                pedidosEnEspera.map(renderCard)
               ) : (
                 <p className="text-gray-500 text-center py-8 w-full">No hay pedidos en espera</p>
               )}
@@ -377,7 +397,7 @@ export default function Pedidos() {
           <div className="overflow-x-auto hide-scrollbar pb-2">
             <div className="flex space-x-4 w-max min-w-full">
               {pedidosPreparando.length > 0 ? (
-                pedidosPreparando.map(renderCard) // Renderiza todos los pedidos en preparación en fila horizontal
+                pedidosPreparando.map(renderCard)
               ) : (
                 <p className="text-gray-500 text-center py-8 w-full">No hay pedidos en preparación</p>
               )}
@@ -435,7 +455,7 @@ export default function Pedidos() {
                   <div>
                     <p className="text-sm text-gray-600">Tiempo transcurrido</p>
                     <p className="font-semibold text-lg text-black">
-                      {pedidoDetalle.tiempo_transcurrido_minutos} minutos
+                      {calcularTiempoTranscurrido(pedidoDetalle.fecha_hora)} minutos
                     </p>
                   </div>
                 </div>
