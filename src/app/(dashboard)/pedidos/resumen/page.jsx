@@ -209,7 +209,7 @@ export default function TodosPedidosPage() {
                   className="text-blue-600 hover:text-blue-800 transition-colors"
                   title="Editar"
                 >
-                  <FaEdit size={18} />
+                  <FaEdit size={22} />
                 </button>
               )}
 
@@ -219,7 +219,7 @@ export default function TodosPedidosPage() {
                   className="text-red-600 hover:text-red-800 transition-colors"
                   title="Eliminar"
                 >
-                  <FaTrash size={18} />
+                  <FaTrash size={22} />
                 </button>
               )}
             </>
@@ -235,7 +235,7 @@ export default function TodosPedidosPage() {
                 className="text-green-600 hover:text-green-800 transition-colors"
                 title="Pagar"
               >
-                <MdOutlinePayments size={20} />
+                <MdOutlinePayments size={22} />
               </button>
             )
           }
