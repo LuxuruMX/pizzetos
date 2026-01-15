@@ -13,7 +13,7 @@ export function useClientes() {
     try {
       setLoading(true);
       setError(null);
-      const data = await clientesService.getAll(); // Llama al servicio de clientes
+      const data = await clientesService.getAll();
       setClientes(data);
     } catch (err) {
       console.error('Error fetching clientes:', err);
@@ -59,17 +59,25 @@ export function useClientes() {
     }
   };
 
-  // deleteCliente
+  // deleteCliente (Toggle status)
   const deleteCliente = async (id) => {
     try {
-      await clientesService.delete(id); // Llama al servicio
-      setClientes(clientes.filter(c => c.id_clie !== id)); // Asume que el ID se llama id_clie
+      const response = await clientesService.deleteCliente(id); // Llama al servicio (PATCH)
+      
+      
+      setClientes(clientes.map(c => {
+        if (c.id_clie === id) {
+
+        }
+        return c;
+      }));
+
       return { success: true };
     } catch (err) {
-      console.error('Error deleting cliente:', err);
+      console.error('Error deleting/toggling cliente:', err);
       return {
         success: false,
-        error: err.response?.data?.detail || 'Error al eliminar cliente'
+        error: err.response?.data?.detail || 'Error al cambiar status del cliente'
       };
     }
   };

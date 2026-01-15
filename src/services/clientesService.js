@@ -27,7 +27,7 @@ export const clientesService = {
 
   // Eliminar un cliente
   async deleteCliente(id) {
-    const response = await api.delete(`/clientes/${id}`); // Endpoint para eliminar
+    const response = await api.patch(`/clientes/${id}`); // Endpoint para eliminar
     return response.data;
   },
 
@@ -35,4 +35,12 @@ export const clientesService = {
     const response = await api.post(`/clientes/${id}/direcciones`, data);
     return response.data;
   },
+  async onlyDirecciones(id) {
+    const response = await api.get(`/clientes/direccion/${id}`);
+    return response.data;
+  },
+  async deleteDireccion(id) {
+    const response = await api.patch(`/clientes/direccion/${id}`);
+    return response.data;
+  }
 };
