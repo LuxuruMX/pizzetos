@@ -123,6 +123,15 @@ export default function ClientesPage() {
       render: (row) => <span>{row.telefono}</span>
     },
     {
+      header: 'STATUS',
+      accessor: 'status',
+      render: (row) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          {row.status ? 'Activo' : 'Inactivo'}
+        </span>
+      )
+    },
+    {
       header: 'ACCIONES',
       accessor: 'actions',
       render: (row) => (

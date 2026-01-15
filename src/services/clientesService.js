@@ -27,7 +27,7 @@ export const clientesService = {
 
   // Eliminar un cliente
   async deleteCliente(id) {
-    const response = await api.delete(`/clientes/${id}`); // Endpoint para eliminar
+    const response = await api.patch(`/clientes/${id}`); // Endpoint para eliminar
     return response.data;
   },
 

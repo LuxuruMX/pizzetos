@@ -13,7 +13,7 @@ export function useClientes() {
     try {
       setLoading(true);
       setError(null);
-      const data = await clientesService.getAll(); // Llama al servicio de clientes
+      const data = await clientesService.getAll();
       setClientes(data);
     } catch (err) {
       console.error('Error fetching clientes:', err);
@@ -62,7 +62,7 @@ export function useClientes() {
   // deleteCliente
   const deleteCliente = async (id) => {
     try {
-      await clientesService.delete(id); // Llama al servicio
+      await clientesService.deleteCliente(id); // Llama al servicio
       setClientes(clientes.filter(c => c.id_clie !== id)); // Asume que el ID se llama id_clie
       return { success: true };
     } catch (err) {
