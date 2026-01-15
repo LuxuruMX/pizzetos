@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NavBar from '@/components/layout/NavBar';
 import NavBarTop from '@/components/layout/NavBarTop';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
@@ -32,6 +34,7 @@ export default function DashboardLayout({ children }) {
         <div className="pt-16"> {/* Ajusta el padding según la altura de tu NavBarTop */}
           <main className="flex-1 overflow-auto p-4 ml-0"> {/* Ajusta el margen izquierdo para el sidebar */}
             {children}
+            <ToastContainer />
           </main>
         </div>
       </div>
