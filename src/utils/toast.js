@@ -1,9 +1,10 @@
 import { toast } from 'react-toastify';
 
-/**
- * Standardized toast notifications for the application.
- * Utilizes react-toastify with a unified configuration.
- */
+const commonToastStyle = {
+  width: '400px', // Ajusta este valor al ancho deseado
+};
+
+
 export const showToast = {
   success: (message, options = {}) => {
     toast.success(message, {
@@ -14,20 +15,22 @@ export const showToast = {
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
-      theme: "light",
+      theme: "colored",
+      style: commonToastStyle,
       ...options,
     });
   },
   error: (message, options = {}) => {
     toast.error(message, {
       position: "top-right",
-      autoClose: 5000,
+      autoClose: 3000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
       theme: "colored",
+      style: commonToastStyle,
       ...options,
     });
   },
@@ -40,20 +43,22 @@ export const showToast = {
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
-      theme: "light",
+      theme: "colored",
+      style: commonToastStyle,
       ...options,
     });
   },
   warning: (message, options = {}) => {
     toast.warning(message, {
       position: "top-right",
-      autoClose: 4000,
+      autoClose: 3000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
-      theme: "light",
+      theme: "colored",
+      style: commonToastStyle,
       ...options,
     });
   },
