@@ -72,6 +72,7 @@ const menuConfig = [
       { name: 'Cargos', path: '/recursos/cargos', icon: TbHierarchy3 },
     ]
   },
+  { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
   {
     name: "Venta",
     icon: MdPointOfSale,
@@ -80,7 +81,6 @@ const menuConfig = [
       { name: 'Resume', path: '/pedidos/resumen', icon: FaBorderAll, permiso: ['ver_venta'] },
       { name: 'Flujo de caja', path: '/caja', icon: TbTransfer, permiso: ['ver_venta', 'crear_venta'] },
       { name: 'Venta', path: '/pos', icon: FaShoppingBasket, permiso: ['ver_venta', 'crear_venta'] },
-      { name: 'Clientes', path: '/clientes', icon: RiCustomerServiceFill },
       { name: 'Pedidos', path: '/pedidos', icon: IoIosAlbums, permiso: 'ver_venta' },
       { name: 'Anticipos', path: '/pedidos/anticipos', icon: MdOutlinePendingActions, permiso: 'ver_venta' },
       { name: 'Gastos', path: '/gastos', icon: FaMoneyBills, permiso: ['ver_venta', 'crear_venta'] }
