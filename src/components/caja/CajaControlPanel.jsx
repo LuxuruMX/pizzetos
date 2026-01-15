@@ -7,6 +7,7 @@ import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaCoins, FaShoppingCart, 
 import Card from '../ui/Card';
 import { getCaja, cerrarCaja, getVentasCaja, getGastosCaja } from '@/services/cajaService';
 import { FaChevronDown, FaChevronUp, FaFileInvoiceDollar } from 'react-icons/fa';
+import ConfirmModal from '../ui/ConfirmModal';
 
 // Importar dinámicamente el componente de PDF para evitar problemas de SSR
 const PDFDownloadButton = dynamic(
@@ -20,6 +21,7 @@ export default function CajaControlPanel({ cajaId, onClose }) {
     const [loadingData, setLoadingData] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [cajaDetails, setCajaDetails] = useState(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const [cierreData, setCierreData] = useState({
         monto_final: '',
@@ -82,9 +84,11 @@ export default function CajaControlPanel({ cajaId, onClose }) {
         setCierreData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleCerrarCaja = async () => {
-        if (!window.confirm('¿Está seguro que desea cerrar la caja?')) return;
+    const handleCerrarCajaClick = () => {
+        setShowConfirmModal(true);
+    };
 
+    const confirmCerrarCaja = async () => {
         setLoading(true);
         setMessage({ type: '', text: '' });
 
@@ -478,7 +482,7 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                                 </div>
 
                                 <button
-                                    onClick={handleCerrarCaja}
+                                    onClick={handleCerrarCajaClick}
                                     disabled={loading || !cierreData.monto_final}
                                     className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-4 rounded-lg transition-colors shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
                                 >
@@ -506,6 +510,16 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                     </div>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={showConfirmModal}
+                onClose={() => setShowConfirmModal(false)}
+                onConfirm={confirmCerrarCaja}
+                title="Cerrar Caja"
+                message="¿Está seguro que desea cerrar la caja? Al cerrar la caja, se guardará el balance final y no podrá registrar más ventas en esta sesión."
+                confirmText="Sí, cerrar caja"
+                cancelText="Cancelar"
+            />
         </div>
     );
 }
