@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useProducts } from '@/hooks/useProducts';
 import { productsService } from '@/services/productsService';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -13,13 +14,13 @@ export default function EditarMagnoPage() {
   const router = useRouter();
   const params = useParams();
   const { updateProduct } = useProducts('magno');
-  
+
   const [formData, setFormData] = useState({
     especialidad: '',
     refresco: '',
     precio: '',
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -37,7 +38,7 @@ export default function EditarMagnoPage() {
       });
     } catch (error) {
       console.error('Error fetching product:', error);
-      alert('Error al cargar el producto');
+      showToast.error('Error al cargar el producto');
     } finally {
       setLoadingData(false);
     }
@@ -53,14 +54,14 @@ export default function EditarMagnoPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.especialidad || !formData.precio) {
-      alert('Por favor completa los campos obligatorios');
+      showToast.warning('Por favor completa los campos obligatorios');
       return;
     }
 
     setLoading(true);
-    
+
     const productData = {
       ...formData,
       precio: parseFloat(formData.precio),
@@ -70,10 +71,10 @@ export default function EditarMagnoPage() {
     setLoading(false);
 
     if (result.success) {
-      alert('Producto actualizado correctamente ✅');
+      showToast.success('Producto actualizado correctamente');
       router.push('/productos/magno');
     } else {
-      alert(result.error);
+      showToast.error(result.error);
     }
   };
 
@@ -93,8 +94,8 @@ export default function EditarMagnoPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/productos/magno')}
           >
@@ -136,15 +137,15 @@ export default function EditarMagnoPage() {
           />
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/productos/magno')}

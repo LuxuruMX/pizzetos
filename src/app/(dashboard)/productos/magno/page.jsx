@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { useProducts } from '@/hooks/useProducts';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
@@ -36,13 +37,12 @@ export default function MagnoPage() {
   };
 
   const handleDelete = async (product) => {
-    if (confirm(`¿Estás seguro de eliminar "${product.especialidad}"?`)) {
-      const result = await deleteProduct(product.id_magno);
-      if (result.success) {
-        alert('Producto eliminado correctamente ✅');
-      } else {
-        alert(result.error);
-      }
+    const result = await deleteProduct(product.id_magno);
+    if (result.success) {
+      showToast.success('Producto eliminado correctamente');
+      window.location.reload();
+    } else {
+      showToast.error(result.error);
     }
   };
 
@@ -51,30 +51,30 @@ export default function MagnoPage() {
   };
 
   if (permisos === null) {
-      return (
-        <div className="p-6">
-          <Card>
-            <div className="text-center py-8">
-              <p className="text-gray-600">Cargando...</p>
-            </div>
-          </Card>
-        </div>
-      );
-    }
+    return (
+      <div className="p-6">
+        <Card>
+          <div className="text-center py-8">
+            <p className="text-gray-600">Cargando...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const columns = [
-    { 
-      header: 'ESPECIALIDAD', 
+    {
+      header: 'ESPECIALIDAD',
       accessor: 'especialidad',
       render: (row) => <span className="font-semibold">{row.especialidad}</span>
     },
-    { 
-      header: 'REFRESCO', 
+    {
+      header: 'REFRESCO',
       accessor: 'refresco',
       render: (row) => <span className="text-gray-700">{row.refresco}</span>
     },
-    { 
-      header: 'PRECIO', 
+    {
+      header: 'PRECIO',
       accessor: 'precio',
       render: (row) => {
         const precio = parseFloat(row.precio);
@@ -96,7 +96,7 @@ export default function MagnoPage() {
               <FaEdit size={18} />
             </button>
           )}
-           {/* Botón Eliminar */}
+          {/* Botón Eliminar */}
           {permisos.eliminar_producto && (
             <Popconfirm
               title="¿Seguro que quiere eliminar?"
@@ -152,9 +152,9 @@ export default function MagnoPage() {
             </p>
           </div>
           {permisos.crear_producto && (
-          <Button icon={FaPlus} onClick={handleAdd}>
-            Añadir
-          </Button>
+            <Button icon={FaPlus} onClick={handleAdd}>
+              Añadir
+            </Button>
           )}
         </div>
 

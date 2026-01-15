@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
 import api from '@/services/api';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -39,7 +40,7 @@ export default function CrearPizzaPage() {
         setEspecialidades(especs);
       } catch (error) {
         console.error('Error fetching data:', error);
-        alert('Error al cargar los datos');
+        showToast.error('Error al cargar los datos');
       } finally {
         setLoadingData(false);
       }
@@ -60,7 +61,7 @@ export default function CrearPizzaPage() {
     e.preventDefault();
 
     if (!formData.especialidad || !formData.tamaño || !formData.categoria) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.warning('Por favor completa todos los campos obligatorios');
       return;
     }
 
@@ -75,10 +76,11 @@ export default function CrearPizzaPage() {
 
       await api.post('/ventas/pizzas', dataToSend); // Ruta para crear
 
+      showToast.success('Pizza creada exitosamente');
       router.push('/productos/pizzas');
     } catch (error) {
       console.error('Error creating pizza:', error);
-      alert('Error al crear la pizza');
+      showToast.error('Error al crear la pizza');
     } finally {
       setLoading(false);
     }

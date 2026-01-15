@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
 import api from '@/services/api';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -12,13 +13,13 @@ import { FaSave, FaArrowLeft } from 'react-icons/fa';
 
 export default function AgregarRefrescosPage() {
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     tamano: '',
     categoria: '',
   });
-  
+
   const [categorias, setCategorias] = useState([]);
   const [tamanos, setTamanos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -34,12 +35,12 @@ export default function AgregarRefrescosPage() {
         catalogsService.getCategorias(),
         catalogsService.getTamanosRefresco()
       ]);
-      
+
       setCategorias(cats);
       setTamanos(tams);
     } catch (error) {
       console.error('Error loading catalogs:', error);
-      alert('Error al cargar los catálogos');
+      showToast.error('Error al cargar los catálogos');
     } finally {
       setLoadingCatalogs(false);
     }
@@ -55,14 +56,14 @@ export default function AgregarRefrescosPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.nombre || !formData.tamano || !formData.categoria) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.warning('Por favor completa todos los campos obligatorios');
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const dataToSend = {
         nombre: formData.nombre,
@@ -71,10 +72,11 @@ export default function AgregarRefrescosPage() {
       };
 
       await api.post('/ventas/refrescos', dataToSend);
+      showToast.success('Refresco creado exitosamente');
       router.push('/productos/refrescos');
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear el producto');
+      showToast.error('Error al crear el producto');
     } finally {
       setLoading(false);
     }
@@ -96,8 +98,8 @@ export default function AgregarRefrescosPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/productos/refrescos')}
           >
@@ -144,15 +146,15 @@ export default function AgregarRefrescosPage() {
           />
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/productos/refrescos')}

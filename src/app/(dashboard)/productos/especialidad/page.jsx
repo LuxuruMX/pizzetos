@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { useProducts } from '@/hooks/useProducts';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
@@ -38,9 +39,10 @@ export default function EspecialidadPage() {
   const handleDelete = async (product) => {
     const result = await deleteProduct(product.id_esp);
     if (result.success) {
+      showToast.success('Producto eliminado exitosamente');
       window.location.reload();
     } else {
-      alert(result.error);
+      showToast.error(result.error);
     }
   };
 
@@ -49,25 +51,25 @@ export default function EspecialidadPage() {
   };
 
   if (permisos === null) {
-      return (
-        <div className="p-6">
-          <Card>
-            <div className="text-center py-8">
-              <p className="text-gray-600">Cargando...</p>
-            </div>
-          </Card>
-        </div>
-      );
-    }
+    return (
+      <div className="p-6">
+        <Card>
+          <div className="text-center py-8">
+            <p className="text-gray-600">Cargando...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const columns = [
-    { 
-      header: 'NOMBRE', 
+    {
+      header: 'NOMBRE',
       accessor: 'nombre',
       render: (row) => <span className="font-semibold">{row.nombre}</span>
     },
-    { 
-      header: 'DESCRIPCIÓN', 
+    {
+      header: 'DESCRIPCIÓN',
       accessor: 'descripcion',
       render: (row) => <span className="text-gray-600">{row.descripcion}</span>
     },
@@ -77,28 +79,28 @@ export default function EspecialidadPage() {
       render: (row) => (
         <div className="flex justify-center gap-2">
           {permisos.modificar_producto && (
-          <button
-            onClick={() => handleEdit(row)}
-            className="text-blue-600 hover:text-blue-800 transition-colors"
-            title="Editar"
+            <button
+              onClick={() => handleEdit(row)}
+              className="text-blue-600 hover:text-blue-800 transition-colors"
+              title="Editar"
             >
-            <FaEdit size={18} />
-          </button>
+              <FaEdit size={18} />
+            </button>
           )}
           {permisos.eliminar_producto && (
-          <Popconfirm
-            title="¿Seguro que quiere eliminar?"
-            okText="Sí"
-            cancelText="No"
-            onConfirm={() => handleDelete(row)}
-          >
-            <button
-              className="text-red-600 hover:text-red-800 transition-colors"
-              title="Eliminar"
+            <Popconfirm
+              title="¿Seguro que quiere eliminar?"
+              okText="Sí"
+              cancelText="No"
+              onConfirm={() => handleDelete(row)}
             >
-              <FaTrash size={18} />
-            </button>
-          </Popconfirm>
+              <button
+                className="text-red-600 hover:text-red-800 transition-colors"
+                title="Eliminar"
+              >
+                <FaTrash size={18} />
+              </button>
+            </Popconfirm>
           )}
         </div>
       )
@@ -140,9 +142,9 @@ export default function EspecialidadPage() {
             </p>
           </div>
           {permisos.crear_producto && (
-          <Button icon={FaPlus} onClick={handleAdd}>
-            Añadir
-          </Button>
+            <Button icon={FaPlus} onClick={handleAdd}>
+              Añadir
+            </Button>
           )}
         </div>
 
