@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { useProducts } from '@/hooks/useProducts'; // Asumiendo que este hook puede ser reutilizado o adaptado
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
@@ -13,7 +14,7 @@ import Popconfirm from '@/components/ui/Popconfirm';
 export default function PizzasPage() {
   const router = useRouter();
   const { products, loading, error, deleteProduct } = useProducts('pizzas');
-  
+
   // Estado para los permisos
   const [permisos, setPermisos] = useState(null);
 
@@ -39,9 +40,10 @@ export default function PizzasPage() {
   const handleDelete = async (product) => {
     const result = await deleteProduct(product.id_pizza);
     if (result.success) {
+      showToast.success('Producto eliminado exitosamente');
       window.location.reload();
     } else {
-      alert(result.error);
+      showToast.error(result.error);
     }
   };
 
@@ -62,18 +64,18 @@ export default function PizzasPage() {
   }
 
   const columns = [
-    { 
-      header: 'ESPECIALIDAD', 
+    {
+      header: 'ESPECIALIDAD',
       accessor: 'especialidad',
       render: (row) => <span className="font-semibold">{row.especialidad}</span>
     },
-    { 
-      header: 'TAMAÑO', 
+    {
+      header: 'TAMAÑO',
       accessor: 'tamaño',
       render: (row) => <span className="text-blue-500 font-medium">{row.tamaño}</span>
     },
-    { 
-      header: 'CATEGORÍA', 
+    {
+      header: 'CATEGORÍA',
       accessor: 'categoria',
       render: (row) => <span className="text-gray-500 italic">{row.categoria}</span>
     },

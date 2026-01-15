@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { productsService } from '@/services/productsService';
 import { catalogsService } from '@/services/catalogsService';
 import api from '@/services/api';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -14,13 +15,13 @@ import { FaSave, FaArrowLeft } from 'react-icons/fa';
 export default function EditarBarraPage() {
   const router = useRouter();
   const params = useParams();
-  
+
   const [formData, setFormData] = useState({
     especialidad: '',
     categoria: '',
     precio: '',
   });
-  
+
   const [categorias, setCategorias] = useState([]);
   const [especialidades, setEspecialidades] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -36,20 +37,20 @@ export default function EditarBarraPage() {
         catalogsService.getCategorias(),
         catalogsService.getEspecialidades()
       ]);
-      
+
       setCategorias(cats);
       setEspecialidades(esps);
-      
+
       const product = await productsService.getById('barra', params.id);
-      
+
       const categoriaEncontrada = cats.find(
         cat => cat.descripcion === product.categoria
       );
-      
+
       const especialidadEncontrada = esps.find(
         esp => esp.nombre === product.especialidad
       );
-      
+
       setFormData({
         especialidad: especialidadEncontrada ? especialidadEncontrada.id_esp : '',
         categoria: categoriaEncontrada ? categoriaEncontrada.id_cat : '',
@@ -57,7 +58,7 @@ export default function EditarBarraPage() {
       });
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('Error al cargar los datos');
+      showToast.error('Error al cargar los datos');
     } finally {
       setLoadingData(false);
     }
@@ -73,14 +74,14 @@ export default function EditarBarraPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.especialidad || !formData.categoria || !formData.precio) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.warning('Por favor completa todos los campos obligatorios');
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const dataToSend = {
         id_especialidad: parseInt(formData.especialidad),
@@ -89,9 +90,11 @@ export default function EditarBarraPage() {
       };
 
       await api.put(`/ventas/barra/${params.id}`, dataToSend);
+      showToast.success('Pizza de barra actualizada exitosamente');
       router.push('/productos/barra');
     } catch (error) {
       console.error('Error updating product:', error);
+      showToast.error('Error al actualizar la pizza de barra');
     } finally {
       setLoading(false);
     }
@@ -113,8 +116,8 @@ export default function EditarBarraPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/productos/barra')}
           >
@@ -163,15 +166,15 @@ export default function EditarBarraPage() {
           />
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/productos/barra')}

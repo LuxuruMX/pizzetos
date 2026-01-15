@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { useProducts } from '@/hooks/useProducts';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
@@ -13,7 +14,7 @@ import Popconfirm from '@/components/ui/Popconfirm';
 export default function AlitasPage() {
   const router = useRouter();
   const { products, loading, error, deleteProduct } = useProducts('alitas');
-  
+
   // Estado para los permisos
   const [permisos, setPermisos] = useState(null);
 
@@ -39,9 +40,10 @@ export default function AlitasPage() {
   const handleDelete = async (product) => {
     const result = await deleteProduct(product.id_alis);
     if (result.success) {
+      showToast.success('Producto eliminado exitosamente');
       window.location.reload();
     } else {
-      alert(result.error);
+      showToast.error(result.error || 'Error al eliminar');
     }
   };
 
@@ -64,21 +66,21 @@ export default function AlitasPage() {
 
   // Columnas de la tabla
   const columns = [
-    { 
-      header: 'ORDEN', 
+    {
+      header: 'ORDEN',
       accessor: 'orden',
       render: (row) => <span className="font-semibold">{row.orden}</span>
     },
-    { 
-      header: 'PRECIO', 
+    {
+      header: 'PRECIO',
       accessor: 'precio',
       render: (row) => {
         const precio = parseFloat(row.precio);
         return <span className="text-blue-500 font-medium">${isNaN(precio) ? '0.00' : precio.toFixed(2)}</span>;
       }
     },
-    { 
-      header: 'CATEGORÍA', 
+    {
+      header: 'CATEGORÍA',
       accessor: 'categoria',
       render: (row) => <span className="text-gray-500 italic">{row.categoria}</span>
     },

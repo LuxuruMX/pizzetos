@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProducts } from '@/hooks/useProducts';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -11,12 +12,12 @@ import { FaSave, FaArrowLeft } from 'react-icons/fa';
 export default function AgregarEspecialidadPage() {
   const router = useRouter();
   const { createProduct } = useProducts('especialidad');
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
   });
-  
+
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -29,9 +30,9 @@ export default function AgregarEspecialidadPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.nombre) {
-      alert('Por favor completa el nombre');
+      showToast.warning('Por favor completa el nombre');
       return;
     }
 
@@ -40,9 +41,10 @@ export default function AgregarEspecialidadPage() {
     setLoading(false);
 
     if (result.success) {
+      showToast.success('Especialidad creada exitosamente');
       router.push('/productos/especialidad');
     } else {
-      alert(result.error);
+      showToast.error(result.error);
     }
   };
 
@@ -50,8 +52,8 @@ export default function AgregarEspecialidadPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/productos/especialidad')}
           >
@@ -82,15 +84,15 @@ export default function AgregarEspecialidadPage() {
           />
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/productos/especialidad')}

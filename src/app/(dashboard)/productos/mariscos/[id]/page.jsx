@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { productsService } from '@/services/productsService';
 import { catalogsService } from '@/services/catalogsService';
 import api from '@/services/api';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -14,14 +15,14 @@ import { FaSave, FaArrowLeft } from 'react-icons/fa';
 export default function EditarMariscosPage() {
   const router = useRouter();
   const params = useParams();
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
     tamano: '',
     categoria: '',
   });
-  
+
   const [categorias, setCategorias] = useState([]);
   const [tamanos, setTamanos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -37,20 +38,20 @@ export default function EditarMariscosPage() {
         catalogsService.getCategorias(),
         catalogsService.getTamanosPizza()
       ]);
-      
+
       setCategorias(cats);
       setTamanos(tams);
-      
+
       const product = await productsService.getById('mariscos', params.id);
-      
+
       const categoriaEncontrada = cats.find(
         cat => cat.descripcion === product.categoria
       );
-      
+
       const tamanoEncontrado = tams.find(
         tam => tam.tamano === product.tamaño
       );
-      
+
       setFormData({
         nombre: product.nombre || '',
         descripcion: product.descripcion || '',
@@ -59,7 +60,7 @@ export default function EditarMariscosPage() {
       });
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('Error al cargar los datos');
+      showToast.error('Error al cargar los datos');
     } finally {
       setLoadingData(false);
     }
@@ -75,14 +76,14 @@ export default function EditarMariscosPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.nombre || !formData.descripcion || !formData.tamano || !formData.categoria) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.warning('Por favor completa todos los campos obligatorios');
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const dataToSend = {
         nombre: formData.nombre,
@@ -92,10 +93,11 @@ export default function EditarMariscosPage() {
       };
 
       await api.put(`/ventas/mariscos/${params.id}`, dataToSend);
+      showToast.success('Pizza de mariscos actualizada exitosamente');
       router.push('/productos/mariscos');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Error al actualizar el producto');
+      showToast.error('Error al actualizar el producto');
     } finally {
       setLoading(false);
     }
@@ -117,8 +119,8 @@ export default function EditarMariscosPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/productos/mariscos')}
           >
@@ -174,15 +176,15 @@ export default function EditarMariscosPage() {
           />
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/productos/mariscos')}

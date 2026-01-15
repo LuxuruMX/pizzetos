@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
 import api from '@/services/api';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -12,14 +13,14 @@ import { FaSave, FaArrowLeft } from 'react-icons/fa';
 
 export default function AgregarMariscosPage() {
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
     tamano: '',
     categoria: '',
   });
-  
+
   const [categorias, setCategorias] = useState([]);
   const [tamanos, setTamanos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -35,12 +36,12 @@ export default function AgregarMariscosPage() {
         catalogsService.getCategorias(),
         catalogsService.getTamanosPizza()
       ]);
-      
+
       setCategorias(cats);
       setTamanos(tams);
     } catch (error) {
       console.error('Error loading catalogs:', error);
-      alert('Error al cargar los catálogos');
+      showToast.error('Error al cargar los catálogos');
     } finally {
       setLoadingCatalogs(false);
     }
@@ -56,14 +57,14 @@ export default function AgregarMariscosPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.nombre || !formData.descripcion || !formData.tamano || !formData.categoria) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.warning('Por favor completa todos los campos obligatorios');
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const dataToSend = {
         nombre: formData.nombre,
@@ -73,10 +74,11 @@ export default function AgregarMariscosPage() {
       };
 
       await api.post('/ventas/mariscos', dataToSend);
+      showToast.success('Pizza de mariscos creada exitosamente');
       router.push('/productos/mariscos');
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear el producto');
+      showToast.error('Error al crear el producto');
     } finally {
       setLoading(false);
     }
@@ -98,8 +100,8 @@ export default function AgregarMariscosPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/productos/mariscos')}
           >
@@ -155,15 +157,15 @@ export default function AgregarMariscosPage() {
           />
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/productos/mariscos')}

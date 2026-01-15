@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useProducts } from '@/hooks/useProducts';
 import { productsService } from '@/services/productsService';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -13,12 +14,12 @@ export default function EditarEspecialidadPage() {
   const router = useRouter();
   const params = useParams();
   const { updateProduct } = useProducts('especialidad');
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -35,7 +36,7 @@ export default function EditarEspecialidadPage() {
       });
     } catch (error) {
       console.error('Error fetching product:', error);
-      alert('Error al cargar el producto');
+      showToast.error('Error al cargar el producto');
     } finally {
       setLoadingData(false);
     }
@@ -51,9 +52,9 @@ export default function EditarEspecialidadPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.nombre) {
-      alert('Por favor completa el nombre');
+      showToast.warning('Por favor completa el nombre');
       return;
     }
 
@@ -62,9 +63,10 @@ export default function EditarEspecialidadPage() {
     setLoading(false);
 
     if (result.success) {
+      showToast.success('Especialidad actualizada exitosamente');
       router.push('/productos/especialidad');
     } else {
-      alert(result.error);
+      showToast.error(result.error);
     }
   };
 
@@ -84,8 +86,8 @@ export default function EditarEspecialidadPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/productos/especialidad')}
           >
@@ -116,15 +118,15 @@ export default function EditarEspecialidadPage() {
           />
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/productos/especialidad')}

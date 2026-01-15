@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { productsService } from '@/services/productsService';
 import { catalogsService } from '@/services/catalogsService';
 import api from '@/services/api';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -14,13 +15,13 @@ import { FaSave, FaArrowLeft } from 'react-icons/fa';
 export default function EditarAlitasPage() {
   const router = useRouter();
   const params = useParams();
-  
+
   const [formData, setFormData] = useState({
     orden: '',
     precio: '',
     categoria: '',
   });
-  
+
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -34,15 +35,15 @@ export default function EditarAlitasPage() {
       // Primero cargar las categorías
       const cats = await catalogsService.getCategorias();
       setCategorias(cats);
-      
+
       // Luego cargar el producto
       const product = await productsService.getById('alitas', params.id);
-      
+
       // Buscar el id_cat basado en la descripción que viene del backend
       const categoriaEncontrada = cats.find(
         cat => cat.descripcion === product.categoria
       );
-      
+
       setFormData({
         orden: product.orden || '',
         precio: product.precio || '',
@@ -50,7 +51,7 @@ export default function EditarAlitasPage() {
       });
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('Error al cargar los datos');
+      showToast.error('Error al cargar los datos');
     } finally {
       setLoadingData(false);
     }
@@ -66,14 +67,14 @@ export default function EditarAlitasPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.orden || !formData.precio || !formData.categoria) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.warning('Por favor completa todos los campos obligatorios');
       return;
     }
 
     setLoading(true);
-    
+
     try {
       // Preparar datos según el formato del backend
       const dataToSend = {
@@ -83,12 +84,14 @@ export default function EditarAlitasPage() {
       };
 
       // Usar el endpoint correcto
+      // Usar el endpoint correcto
       await api.put(`/ventas/alitas/${params.id}`, dataToSend);
-      
+
+      showToast.success('Producto actualizado exitosamente');
       router.push('/productos/alitas');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Error al actualizar el producto');
+      showToast.error('Error al actualizar el producto');
     } finally {
       setLoading(false);
     }
@@ -110,8 +113,8 @@ export default function EditarAlitasPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/productos/alitas')}
           >
@@ -157,15 +160,15 @@ export default function EditarAlitasPage() {
           />
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/productos/alitas')}

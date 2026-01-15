@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
 import api from '@/services/api';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -12,13 +13,13 @@ import { FaSave, FaArrowLeft } from 'react-icons/fa';
 
 export default function AgregarHamburguesasPage() {
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState({
     paquete: '',
     precio: '',
     categoria: '',
   });
-  
+
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingCatalogs, setLoadingCatalogs] = useState(true);
@@ -33,7 +34,7 @@ export default function AgregarHamburguesasPage() {
       setCategorias(cats);
     } catch (error) {
       console.error('Error loading catalogs:', error);
-      alert('Error al cargar los catálogos');
+      showToast.error('Error al cargar los catálogos');
     } finally {
       setLoadingCatalogs(false);
     }
@@ -49,14 +50,14 @@ export default function AgregarHamburguesasPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.paquete || !formData.precio || !formData.categoria) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.warning('Por favor completa todos los campos obligatorios');
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const dataToSend = {
         paquete: formData.paquete,
@@ -65,10 +66,11 @@ export default function AgregarHamburguesasPage() {
       };
 
       await api.post('/ventas/hamburguesas', dataToSend);
+      showToast.success('Hamburguesa creada exitosamente');
       router.push('/productos/hamburguesas');
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear el producto');
+      showToast.error('Error al crear el producto');
     } finally {
       setLoading(false);
     }
@@ -90,8 +92,8 @@ export default function AgregarHamburguesasPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/productos/hamburguesas')}
           >
@@ -137,15 +139,15 @@ export default function AgregarHamburguesasPage() {
           />
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/productos/hamburguesas')}

@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { productsService } from '@/services/productsService';
 import { catalogsService } from '@/services/catalogsService';
 import api from '@/services/api';
+import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -61,7 +62,7 @@ export default function EditarPizzasPage() {
       });
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('Error al cargar los datos');
+      showToast.error('Error al cargar los datos');
     } finally {
       setLoadingData(false);
     }
@@ -79,7 +80,7 @@ export default function EditarPizzasPage() {
     e.preventDefault();
 
     if (!formData.especialidad || !formData.tamaño || !formData.categoria) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.warning('Por favor completa todos los campos obligatorios');
       return;
     }
 
@@ -93,11 +94,11 @@ export default function EditarPizzasPage() {
       };
 
       await api.put(`/ventas/pizzas/${params.id}`, dataToSend);
-
+      showToast.success('Pizza actualizada exitosamente');
       router.push('/productos/pizzas');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Error al actualizar el producto');
+      showToast.error('Error al actualizar el producto');
     } finally {
       setLoading(false);
     }
