@@ -35,4 +35,8 @@ export const clientesService = {
     const response = await api.post(`/clientes/${id}/direcciones`, data);
     return response.data;
   },
+  async onlyDirecciones(id) {
+    const response = await api.get(`/clientes/direccion/${id}`);
+    return response.data;
+  }
 };
