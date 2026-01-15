@@ -38,5 +38,9 @@ export const clientesService = {
   async onlyDirecciones(id) {
     const response = await api.get(`/clientes/direccion/${id}`);
     return response.data;
+  },
+  async deleteDireccion(id) {
+    const response = await api.patch(`/clientes/direccion/${id}`);
+    return response.data;
   }
 };
