@@ -8,7 +8,7 @@ import { clientesService } from '@/services/clientesService';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
-import { FaPlus, FaEdit, FaTrash, FaAddressBook } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaUserTimes, FaAddressBook, FaUserCheck } from 'react-icons/fa';
 import Popconfirm from '@/components/ui/Popconfirm';
 import ModalDirecciones from '@/components/ui/ModalDirecciones';
 import { showToast } from '@/utils/toast';
@@ -83,8 +83,8 @@ export default function ClientesPage() {
   const handleDelete = async (cliente) => {
     const result = await deleteCliente(cliente.id_clie);
     if (result.success) {
-      window.location.reload();
-      showToast.success('Cliente eliminado exitosamente');
+      const nuevoEstado = !cliente.status ? 'activado' : 'desactivado';
+      showToast.success(`Cliente ${nuevoEstado} exitosamente`);
     } else {
       showToast.error(result.error);
     }
@@ -158,21 +158,31 @@ export default function ClientesPage() {
             </button>
           )}
 
-          {/* Botón Eliminar */}
+          {/* Botón Cambiar Status */}
           {permisos.eliminar_venta && (
-            <Popconfirm
-              title="¿Seguro que quiere eliminar este cliente?"
-              okText="Sí"
-              cancelText="No"
-              onConfirm={() => handleDelete(row)}
-            >
-              <button
-                className="text-red-600 hover:text-red-800 transition-colors cursor-pointer"
-                title="Eliminar Cliente"
+            row.status ? (
+              <Popconfirm
+                title="¿Seguro que quiere desactivar este cliente?"
+                okText="Sí"
+                cancelText="No"
+                onConfirm={() => handleDelete(row)}
               >
-                <FaTrash size={22} />
+                <button
+                  className="text-red-600 hover:text-red-800 transition-colors cursor-pointer"
+                  title="Desactivar Cliente"
+                >
+                  <FaUserTimes size={22} />
+                </button>
+              </Popconfirm>
+            ) : (
+              <button
+                onClick={() => handleDelete(row)}
+                className="text-green-600 hover:text-green-800 transition-colors cursor-pointer"
+                title="Activar Cliente"
+              >
+                <FaUserCheck size={22} />
               </button>
-            </Popconfirm>
+            )
           )}
         </div>
       )

@@ -59,17 +59,31 @@ export function useClientes() {
     }
   };
 
-  // deleteCliente
+  // deleteCliente (Toggle status)
   const deleteCliente = async (id) => {
     try {
-      await clientesService.deleteCliente(id); // Llama al servicio
-      setClientes(clientes.filter(c => c.id_clie !== id)); // Asume que el ID se llama id_clie
+      const response = await clientesService.deleteCliente(id); // Llama al servicio (PATCH)
+      
+      // Actualizamos el estado local buscando el cliente y cambiando su status
+      // Si el backend devuelve el objeto actualizado, podríamos usarlo:
+      // const updatedClient = response; 
+      // Pero para ser optimistas/seguros, lo buscamos y lo actualizamos en la lista
+      
+      setClientes(clientes.map(c => {
+        if (c.id_clie === id) {
+          // Si el backend devuelve el cliente actualizado, úsalo. 
+          // Si no, invertimos el status actual como fallback o usamos la respuesta si tiene la estructura correcta.
+          return { ...c, status: !c.status };
+        }
+        return c;
+      }));
+
       return { success: true };
     } catch (err) {
-      console.error('Error deleting cliente:', err);
+      console.error('Error deleting/toggling cliente:', err);
       return {
         success: false,
-        error: err.response?.data?.detail || 'Error al eliminar cliente'
+        error: err.response?.data?.detail || 'Error al cambiar status del cliente'
       };
     }
   };
