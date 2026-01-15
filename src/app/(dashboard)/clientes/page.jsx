@@ -11,6 +11,7 @@ import Table from '@/components/ui/Table';
 import { FaPlus, FaEdit, FaTrash, FaAddressBook } from 'react-icons/fa';
 import Popconfirm from '@/components/ui/Popconfirm';
 import ModalDirecciones from '@/components/ui/ModalDirecciones';
+import { showToast } from '@/utils/toast';
 
 export default function ClientesPage() {
   const router = useRouter();
@@ -63,13 +64,13 @@ export default function ClientesPage() {
         referencia: formData.referencia
       });
 
-      alert('Dirección guardada correctamente');
+      showToast.success('Dirección guardada correctamente');
       handleCloseModal();
 
     } catch (err) {
       console.error('Error al guardar dirección:', err);
       const errorMsg = err.response?.data?.detail || 'Error al guardar la dirección';
-      alert(`Error: ${errorMsg}`);
+      showToast.error(`Error: ${errorMsg}`);
     } finally {
       setLoadingDireccion(false);
     }
@@ -83,8 +84,9 @@ export default function ClientesPage() {
     const result = await deleteCliente(cliente.id_clie);
     if (result.success) {
       window.location.reload();
+      showToast.success('Cliente eliminado exitosamente');
     } else {
-      alert(result.error);
+      showToast.error(result.error);
     }
   };
 
@@ -132,10 +134,10 @@ export default function ClientesPage() {
               className="text-green-500 hover:text-green-700 transition-colors"
               title="Agregar dirección"
             >
-              <FaAddressBook size={18} />
+              <FaAddressBook size={22} />
             </button>
           )}
-          
+
           {/* Botón Editar */}
           {permisos.modificar_venta && (
             <button
@@ -143,7 +145,7 @@ export default function ClientesPage() {
               className="text-blue-600 hover:text-blue-800 transition-colors"
               title="Editar Cliente"
             >
-              <FaEdit size={18} />
+              <FaEdit size={22} />
             </button>
           )}
 
@@ -159,7 +161,7 @@ export default function ClientesPage() {
                 className="text-red-600 hover:text-red-800 transition-colors cursor-pointer"
                 title="Eliminar Cliente"
               >
-                <FaTrash size={18} />
+                <FaTrash size={22} />
               </button>
             </Popconfirm>
           )}

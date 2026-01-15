@@ -46,10 +46,9 @@ export default function EditarClientePage() {
       setDirecciones(cliente.direcciones || []);
 
     } catch (error) {
-        console.error('Error fetching cliente data:', error);
-        alert('Error al cargar los datos del cliente.');
-        // Opcional: redirigir a la lista si no se puede cargar
-        // router.push('/clientes');
+      console.error('Error fetching cliente data:', error);
+      showToast.error('Error al cargar los datos del cliente.');
+
     } finally {
       setLoadingData(false);
     }
@@ -79,7 +78,7 @@ export default function EditarClientePage() {
     e.preventDefault();
 
     if (!formData.nombre || !formData.apellido || !formData.telefono) {
-      alert('Por favor completa todos los campos obligatorios del cliente.');
+      showToast.error('Por favor completa todos los campos obligatorios del cliente.');
       return;
     }
 
@@ -101,11 +100,11 @@ export default function EditarClientePage() {
       };
       await clientesService.update(idCliente, dataClienteToSend);
 
-      alert('Cliente actualizado exitosamente.');
+      showToast.success('Cliente actualizado exitosamente.');
       router.push('/clientes');
     } catch (error) {
-        console.error('Error updating cliente:', error);
-        alert('Error al actualizar el cliente.');
+      console.error('Error updating cliente:', error);
+      showToast.error('Error al actualizar el cliente.');
     } finally {
       setLoading(false);
     }

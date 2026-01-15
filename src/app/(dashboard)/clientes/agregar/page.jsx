@@ -7,10 +7,11 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function AgregarClientePage() {
   const router = useRouter();
-  const { createCliente } = useClientes(); 
+  const { createCliente } = useClientes();
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -54,14 +55,14 @@ export default function AgregarClientePage() {
 
     // Validación de datos del cliente (siempre obligatorios)
     if (!formData.nombre || !formData.apellido || !formData.telefono) {
-      alert('Por favor completa todos los campos obligatorios del cliente.');
+      showToast.error('Por favor completa todos los campos obligatorios del cliente.');
       return;
     }
 
     // Si hay datos en la dirección, validar campos esenciales
     if (direccionTieneDatos()) {
       if (!direccionForm.calle || !direccionForm.colonia) {
-        alert('Si agregas una dirección, los campos Calle y Colonia son obligatorios.');
+        showToast.error('Si agregas una dirección, los campos Calle y Colonia son obligatorios.');
         return;
       }
     }
@@ -80,12 +81,13 @@ export default function AgregarClientePage() {
 
       if (result.success) {
         router.push('/clientes');
+        showToast.success('Cliente creado exitosamente');
       } else {
-        alert(`Error al crear cliente: ${result.error || 'Error desconocido'}`);
+        showToast.error(`Error al crear cliente: ${result.error || 'Error desconocido'}`);
       }
     } catch (error) {
-        console.error('Error inesperado al crear cliente:', error);
-        alert('Error inesperado al crear cliente.');
+      console.error('Error inesperado al crear cliente:', error);
+      showToast.error('Error inesperado al crear cliente.');
     } finally {
       setLoading(false);
     }
@@ -143,7 +145,7 @@ export default function AgregarClientePage() {
           <div>
             <h2 className="text-lg font-semibold text-gray-700 mb-4">Dirección de Entrega (Opcional)</h2>
             <p className="text-sm text-gray-500 mb-4">
-              Puedes agregar una dirección ahora o hacerlo después. 
+              Puedes agregar una dirección ahora o hacerlo después.
               {direccionTieneDatos() && (
                 <span className="text-orange-600 font-medium"> Si llenas algún campo, Calle y Colonia son obligatorios.</span>
               )}
