@@ -17,10 +17,9 @@ export default function EditarGastoPage() {
   const [formData, setFormData] = useState({
     descripcion: '',
     precio: '',
-    sucursal: '', // Este campo ahora almacenará el id_suc
+
   });
 
-  const [sucursales, setSucursales] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -30,28 +29,15 @@ export default function EditarGastoPage() {
 
   const fetchData = async () => {
     try {
-      // Primero cargar las sucursales
-      const sucursalesData = await catalogsService.getSucursales();
-      setSucursales(sucursalesData);
-
-      // Luego cargar el gasto
-      // Ahora params.id debería contener el valor correcto
       const response = await api.get(`/gastos/${params.id}`); // <-- Cambiado a params.id
       const gasto = response.data;
-
-      // Buscar el id_suc basado en el nombre que viene del backend (gasto.sucursal)
-      const sucursalEncontrada = sucursalesData.find(
-        suc => suc.nombre === gasto.sucursal
-      );
 
       setFormData({
         descripcion: gasto.descripcion || '',
         precio: gasto.precio || '',
-        // Guardar el id_suc para que el Select se pre-seleccione correctamente
-        sucursal: sucursalEncontrada ? sucursalEncontrada.id_suc : '',
       });
     } catch (error) {
-      console.error('Error fetching gasto data:', error); // Mensaje de error actualizado
+      console.error('Error fetching gasto data:', error);
       alert('Error al cargar los datos del gasto');
     } finally {
       setLoadingData(false);
@@ -69,7 +55,7 @@ export default function EditarGastoPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.descripcion || !formData.precio || !formData.sucursal) {
+    if (!formData.descripcion || !formData.precio) {
       alert('Por favor completa todos los campos obligatorios');
       return;
     }
@@ -80,8 +66,6 @@ export default function EditarGastoPage() {
       const dataToSend = {
         descripcion: formData.descripcion,
         precio: parseFloat(formData.precio),
-        // Enviar el id_suc seleccionado
-        id_suc: parseInt(formData.sucursal),
       };
 
       await api.put(`/gastos/${params.id}`, dataToSend);
@@ -142,18 +126,6 @@ export default function EditarGastoPage() {
             value={formData.precio}
             onChange={handleChange}
             placeholder="Ej: 1300.00"
-            required
-          />
-
-          <Select
-            label="Sucursal"
-            name="sucursal"
-            value={formData.sucursal}
-            onChange={handleChange}
-            options={sucursales}
-            valueKey="id_suc"
-            labelKey="nombre"
-            placeholder="Selecciona una sucursal"
             required
           />
 
