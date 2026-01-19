@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PRECIOS_ORILLA_QUESO } from '@/config/prices';
 
 const encodeCart = (cart) => {
   if (!cart || !Array.isArray(cart)) return '';
@@ -514,6 +515,90 @@ export const useCart = (initialCartFromUrl = []) => {
     });
   };
 
+  const toggleQueso = (id, tipoId, productoId = null) => {
+    setOrden((prevOrden) => {
+      const nuevaOrden = prevOrden.map((item) => {
+        // Caso específico para pizza_group (donde viven las pizzas ahora)
+        if (item.id === id && item.tipoId === 'pizza_group' && item.productos) {
+           const sizeName = item.tamano; // El grupo define el tamaño
+           // Normalizar nombre de tamaño para buscar en diccionario
+           const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
+             key => key.toLowerCase() === sizeName.toLowerCase()
+           ) || sizeName;
+           const extraPrecio = PRECIOS_ORILLA_QUESO[tamanoKey] || 0;
+
+           if (extraPrecio === 0) return item; // No aplica si no hay precio
+
+           const nuevosProductos = item.productos.map(prod => {
+             if (prod.id === productoId) {
+                const conQuesoNuevo = !prod.conQueso;
+                let nuevoPrecio = parseFloat(prod.precio);
+                
+                // Si activamos queso, sumamos. Si desactivamos, restamos.
+                // Asumimos que prod.precio tiene el precio actual.
+                // Pero chequeamos si ya tiene precioBase para mas seguridad, si no, usamos el actual como base inversa
+                
+                // Estrategia: Calcular precio siempre basado en si tiene queso o no
+                // Si activamos: precio = precio + extra
+                // Si desactivamos: precio = precio - extra
+                
+                if (conQuesoNuevo) {
+                    nuevoPrecio += extraPrecio;
+                } else {
+                    nuevoPrecio -= extraPrecio;
+                }
+
+                return {
+                    ...prod,
+                    conQueso: conQuesoNuevo,
+                    precio: nuevoPrecio
+                };
+             }
+             return prod;
+           });
+
+           return {
+               ...item,
+               productos: nuevosProductos
+           };
+        }
+        
+        // Caso para items sueltos (si existieran pizzas sueltas fuera de grupo, id_rec, etc.)
+        // id_rec / id_barr no pidieron queso, solo pizzas/mariscos
+        // Pero si hubiese un id_pizza suelto (legacy logic):
+        if (item.id === id && (item.tipoId === 'id_pizza' || item.tipoId === 'id_maris')) {
+           const sizeName = item.tamano || 'Grande'; // Fallback
+           const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
+             key => key.toLowerCase() === sizeName.toLowerCase()
+           ) || sizeName;
+           const extraPrecio = PRECIOS_ORILLA_QUESO[tamanoKey] || 0;
+           
+           if (extraPrecio === 0) return item;
+
+           const conQuesoNuevo = !item.conQueso;
+           let nuevoPrecio = parseFloat(item.precioUnitario);
+
+           if (conQuesoNuevo) {
+               nuevoPrecio += extraPrecio;
+           } else {
+               nuevoPrecio -= extraPrecio;
+           }
+           
+           return {
+               ...item,
+               conQueso: conQuesoNuevo,
+               precioUnitario: nuevoPrecio,
+               subtotal: nuevoPrecio * item.cantidad
+           };
+        }
+
+        return item;
+      });
+
+      return recalcularPrecios(nuevaOrden);
+    });
+  };
+
   const limpiarCarrito = () => {
     setOrden([]);
   };
@@ -527,6 +612,7 @@ export const useCart = (initialCartFromUrl = []) => {
     agregarPaquete,
     agregarPizzaCustom,
     actualizarCantidad,
+    toggleQueso,
     eliminarDelCarrito,
     limpiarCarrito,
   };

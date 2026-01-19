@@ -245,6 +245,7 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
                     tamano: parseInt(producto.ingredientes?.tamano || 0), 
                     ingredientes: producto.ingredientes?.ingredientes?.map(id => parseInt(id)) || []
                   },
+                  queso: producto.conQueso ? 1 : 0, // Añadir campo queso
                   status: 1
                };
                itemsIndividuales.push(itemData);
@@ -257,6 +258,7 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
                   cantidad: 1, 
                   precio_unitario: parseFloat(producto.precio), 
                   [tipoIdReal]: parseInt(producto.id),
+                  queso: producto.conQueso ? 1 : 0, // Añadir campo queso
                   status: 1
                };
                itemsIndividuales.push(itemData);

@@ -45,6 +45,7 @@ const POS = () => {
     agregarPaquete,
     agregarPizzaCustom,
     actualizarCantidad,
+    toggleQueso,
     eliminarDelCarrito,
     limpiarCarrito,
   } = useCart(initialCartFromUrl);
@@ -419,7 +420,24 @@ const POS = () => {
   };
 
   const handleSeleccionarVariante = (variante, tipoId) => {
-    agregarAlCarrito(variante, tipoId);
+    // Si la variante trae propiedades extra (como conQueso y precio actualizado), se usarán en agregarAlCarrito
+    // Si la variante original (sin modificar) tenía un precio menor, necesitamos asegurarnos de pasar el precio FINAL calculado en el modal
+
+    // Si viene conQueso true, el precio en 'variante.precio' debería ser el original, 
+    // pero el modal podría haber mandado un objeto nuevo con el precio ya sumado si lo modificamos allí.
+    // Revisando ProductModal: onSeleccionar({ ...variante, conQueso, extraQueso }, tipoId)
+    // El precio NO se modificó en el objeto pasado, solo se calculó para mostrar.
+    // Debemos sumar el extra aquí o en agregarAlCarrito.
+
+    // Mejor enfoque: Crear un objeto producto modificado con el precio final y la bandera
+    let productoAgregado = { ...variante };
+
+    if (variante.conQueso) {
+      productoAgregado.precio = (parseFloat(variante.precio) + parseFloat(variante.extraQueso || 0));
+      productoAgregado.conQueso = true; // Flag para el backend
+    }
+
+    agregarAlCarrito(productoAgregado, tipoId);
     setModalAbierto(false);
 
     // Guardar tamaño solo para pizzas y mariscos
@@ -599,6 +617,7 @@ const POS = () => {
           onMesaChange={setMesa}
           nombreClie={nombreClie}
           onNombreClieChange={setNombreClie}
+          onToggleQueso={toggleQueso}
         />
       </div>
 

@@ -16,7 +16,8 @@ const CartSection = ({
   mesa,
   onMesaChange,
   nombreClie,
-  onNombreClieChange
+  onNombreClieChange,
+  onToggleQueso
 }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const menuRef = useRef(null);
@@ -61,6 +62,7 @@ const CartSection = ({
                     item={item}
                     onUpdateQuantity={onUpdateQuantity}
                     onRemove={onRemove}
+                    onToggleQueso={onToggleQueso}
                   />
                 ))}
               </ul>

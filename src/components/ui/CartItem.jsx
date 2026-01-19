@@ -1,7 +1,7 @@
 // CartItem.js
 import { FaTrash, FaMinus, FaPlus } from "react-icons/fa";
 
-const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
+const CartItem = ({ item, onUpdateQuantity, onRemove, onToggleQueso }) => {
   // Función para determinar la clase de color basada en el status
   const getStatusClass = (status) => {
     switch (status) {
@@ -107,6 +107,21 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
               <div key={producto.id} className={`flex items-center justify-between text-sm p-2 rounded border ${statusClass}`}>
                 <div className="flex-1">
                   <p className="text-gray-700">{producto.nombre}</p>
+                  {/* Checkbox Queso solo para Pizzas/Mariscos en grupo */}
+                  {(item.tipoId === 'pizza_group' || item.tipoId === 'id_maris') && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="checkbox"
+                        id={`queso-${producto.id}`}
+                        checked={producto.conQueso || false}
+                        onChange={(e) => onToggleQueso(item.id, item.tipoId, producto.id)}
+                        className="w-4 h-4 text-yellow-500 rounded focus:ring-yellow-500 cursor-pointer"
+                      />
+                      <label htmlFor={`queso-${producto.id}`} className="text-xs text-gray-500 cursor-pointer select-none">
+                        Orilla Queso {producto.conQueso ? '(Extra aplicado)' : ''}
+                      </label>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -156,6 +171,21 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
         <p className="text-sm text-gray-600">
           ${item.precioUnitario.toFixed(2)} x {item.cantidad}
         </p>
+        {/* Checkbox Queso solo para single items de legacy pizzas/mariscos */}
+        {(item.tipoId === 'id_pizza' || item.tipoId === 'id_maris') && (
+          <div className="flex items-center gap-2 mt-1">
+            <input
+              type="checkbox"
+              id={`queso-single-${item.id}`}
+              checked={item.conQueso || false}
+              onChange={(e) => onToggleQueso(item.id, item.tipoId)}
+              className="w-4 h-4 text-yellow-500 rounded focus:ring-yellow-500 cursor-pointer"
+            />
+            <label htmlFor={`queso-single-${item.id}`} className="text-xs text-gray-500 cursor-pointer select-none">
+              Orilla Queso {item.conQueso ? '(Extra aplicado)' : ''}
+            </label>
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">

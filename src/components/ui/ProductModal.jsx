@@ -34,6 +34,7 @@ const ProductModal = ({ isOpen, onClose, nombreProducto, variantes, onSelecciona
               <p className="text-sm font-medium">{descripcion}</p>
             </div>
           )}
+
           <p className="text-gray-600 mb-4">Selecciona el tamaño:</p>
           <div className="space-y-3">
             {variantes.map((variante) => {
