@@ -61,26 +61,29 @@ export function useClientes() {
 
   // deleteCliente (Toggle status)
   const deleteCliente = async (id) => {
-    try {
-      const response = await clientesService.deleteCliente(id); // Llama al servicio (PATCH)
-      
-      
-      setClientes(clientes.map(c => {
-        if (c.id_clie === id) {
+  try {
+    const response = await clientesService.deleteCliente(id); // Llama al servicio (PATCH)
+    
+    // Actualiza el estado local cambiando el status del cliente
+    setClientes(clientes.map(c => {
+      if (c.id_clie === id) {
+        return {
+          ...c,
+          status: !c.status // Invierte el status (true -> false, false -> true)
+        };
+      }
+      return c;
+    }));
 
-        }
-        return c;
-      }));
-
-      return { success: true };
-    } catch (err) {
-      console.error('Error deleting/toggling cliente:', err);
-      return {
-        success: false,
-        error: err.response?.data?.detail || 'Error al cambiar status del cliente'
-      };
-    }
-  };
+    return { success: true };
+  } catch (err) {
+    console.error('Error deleting/toggling cliente:', err);
+    return {
+      success: false,
+      error: err.response?.data?.detail || 'Error al cambiar status del cliente'
+    };
+  }
+};
 
   return {
     clientes,

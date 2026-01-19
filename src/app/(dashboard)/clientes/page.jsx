@@ -15,7 +15,7 @@ import { showToast } from '@/utils/toast';
 
 export default function ClientesPage() {
   const router = useRouter();
-  const { clientes, loading: loadingClientes, error: errorClientes, deleteCliente } = useClientes();
+  const { clientes, loading: loadingClientes, error: errorClientes, deleteCliente, refetch } = useClientes();
   const [permisos, setPermisos] = useState(null);
 
   // Estados para el modal de direcciones
@@ -50,7 +50,6 @@ export default function ClientesPage() {
     setDireccionActual(null);
   };
 
-  // Función para enviar la dirección al backend usando clientesService
   const handleSubmitDireccion = async (formData) => {
     if (!clienteSeleccionado) return;
 
@@ -85,6 +84,11 @@ export default function ClientesPage() {
     if (result.success) {
       const nuevoEstado = !cliente.status ? 'activado' : 'desactivado';
       showToast.success(`Cliente ${nuevoEstado} exitosamente`);
+
+      // Refrescar los datos desde la API
+      if (refetch) {
+        refetch();
+      }
     } else {
       showToast.error(result.error);
     }
