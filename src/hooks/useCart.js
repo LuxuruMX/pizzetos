@@ -70,11 +70,28 @@ export const useCart = (initialCartFromUrl = []) => {
       if (item.tipoId === 'pizza_group') {
         // Expandir todos los productos a unidades individuales para ordenar por precio
         const unidades = [];
+        let costoTotalQueso = 0; // Acumular el costo del queso por separado
+        
         if (item.productos) {
             item.productos.forEach(prod => {
+                // Obtener el precio base (sin queso)
+                let precioBase = parseFloat(prod.precio || 0);
+                
+                // Si tiene queso, restar el costo del queso del precio para obtener el precio base
+                if (prod.conQueso) {
+                    const sizeName = item.tamano;
+                    const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
+                        key => key.toLowerCase() === sizeName.toLowerCase()
+                    ) || sizeName;
+                    const extraPrecio = PRECIOS_ORILLA_QUESO[tamanoKey] || 0;
+                    precioBase -= extraPrecio;
+                    // Sumar el costo del queso por cada unidad
+                    costoTotalQueso += extraPrecio * prod.cantidad;
+                }
+                
                 for (let i = 0; i < prod.cantidad; i++) {
                     unidades.push({
-                        precio: parseFloat(prod.precio || 0)
+                        precio: precioBase // Usar precio base sin queso para el descuento
                     });
                 }
             });
@@ -103,6 +120,9 @@ export const useCart = (initialCartFromUrl = []) => {
             nuevoSubtotal += unidades[unitIndex].precio * 0.6;
             unitIndex++;
         }
+
+        // Sumar el costo del queso DESPUÉS del descuento 2x1
+        nuevoSubtotal += costoTotalQueso;
 
         return {
             ...item,
