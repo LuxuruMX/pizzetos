@@ -47,7 +47,7 @@ const CartSection = ({
     <div className="w-1/3 bg-white rounded-lg shadow-lg flex flex-col"
       style={{ maxHeight: 'calc(100vh - 8rem)' }}>
       {/* Sección superior: Título y Lista de Artículos (se desplaza) */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto hide-scrollbar">
         <div>
           <h2 className="text-2xl font-bold mb-4 px-6 pt-6 text-black">Productos</h2>
           {orden.length === 0 ? (
