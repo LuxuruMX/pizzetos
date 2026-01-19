@@ -2,17 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { catalogsService } from '@/services/catalogsService';
 import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function EditarGastoPage() {
   const router = useRouter();
-  const params = useParams(); // params.id <- Importante: debe ser 'id' si el archivo es [id]/page.js
+  const params = useParams();
 
   const [formData, setFormData] = useState({
     descripcion: '',
@@ -38,7 +37,7 @@ export default function EditarGastoPage() {
       });
     } catch (error) {
       console.error('Error fetching gasto data:', error);
-      alert('Error al cargar los datos del gasto');
+      showToast.error('Error al cargar los datos del gasto');
     } finally {
       setLoadingData(false);
     }
@@ -56,7 +55,7 @@ export default function EditarGastoPage() {
     e.preventDefault();
 
     if (!formData.descripcion || !formData.precio) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.error('Por favor completa todos los campos obligatorios');
       return;
     }
 
@@ -73,7 +72,7 @@ export default function EditarGastoPage() {
       router.push('/gastos');
     } catch (error) {
       console.error('Error updating gasto:', error);
-      alert('Error al actualizar el gasto');
+      showToast.error('Error al actualizar el gasto');
     } finally {
       setLoading(false);
     }

@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { catalogsService } from '@/services/catalogsService';
 import { getSucursalFromToken } from '@/services/jwt';
 import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function AgregarGastoPage() {
   const router = useRouter();
@@ -47,7 +46,7 @@ export default function AgregarGastoPage() {
     e.preventDefault();
 
     if (!formData.descripcion || !formData.precio) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.error('Por favor completa todos los campos obligatorios');
       return;
     }
 
@@ -76,7 +75,7 @@ export default function AgregarGastoPage() {
       router.push('/gastos'); // Redirige a la lista de gastos
     } catch (error) {
       console.error('Error creating gasto:', error);
-      alert('Error al crear el gasto');
+      showToast.error('Error al crear el gasto');
     } finally {
       setLoading(false);
     }

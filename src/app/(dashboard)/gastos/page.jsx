@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import Popconfirm from '@/components/ui/Popconfirm';
+import { showToast } from '@/utils/toast';
 
 export default function GastosPage() {
   const router = useRouter();
@@ -144,7 +145,7 @@ export default function GastosPage() {
       // El useEffect de arriba se encargará de recalcular
     } catch (error) {
       console.error('Error deleting gasto:', error);
-      alert('Error al eliminar el gasto');
+      showToast.error('Error al eliminar el gasto');
     }
   };
 
