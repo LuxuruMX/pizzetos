@@ -1,5 +1,5 @@
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import { useRef } from 'react';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { useState } from 'react';
 import ProductCard from "@/components/ui/ProductCard"
 
 const ProductsSection = ({
@@ -11,17 +11,40 @@ const ProductsSection = ({
   mostrarPrecio = true,
   deshabilitarCategorias = false
 }) => {
-  const categoriesContainerRef = useRef(null);
+  const [mostrarMasCategorias, setMostrarMasCategorias] = useState(false);
 
-  const scroll = (direction, containerRef) => {
-    const container = containerRef.current;
-    if (container) {
-      const scrollAmount = container.clientWidth * 0.8;
-      container.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
+  // Categorías principales que siempre se muestran
+  const categoriasPrincipales = ['pizzas', 'mariscos', 'rectangular', 'barra'];
+
+  // Categorías secundarias que se muestran en el dropdown
+  const categoriasSecundarias = categorias.filter(cat => !categoriasPrincipales.includes(cat));
+
+  const renderCategoryButton = (categoria) => {
+    const esActiva = categoriaActiva === categoria;
+    const estaDeshabilitada = deshabilitarCategorias && !esActiva;
+
+    return (
+      <button
+        key={categoria}
+        onClick={() => {
+          onCategoriaChange(categoria);
+          // Si selecciona una categoría secundaria, cerrar el dropdown
+          if (categoriasSecundarias.includes(categoria)) {
+            setMostrarMasCategorias(false);
+          }
+        }}
+        disabled={estaDeshabilitada}
+        className={`px-4 py-2 rounded-lg flex-shrink-0 transition-all ${esActiva
+          ? 'bg-orange-400 text-white'
+          : estaDeshabilitada
+            ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+            : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+          }`}
+        title={estaDeshabilitada ? 'Completa las 4 porciones rectangulares primero' : ''}
+      >
+        {categoria.charAt(0).toUpperCase() + categoria.slice(1)}
+      </button>
+    );
   };
 
   return (
@@ -29,7 +52,7 @@ const ProductsSection = ({
       style={{ maxHeight: 'calc(100vh - 8rem)' }}>
       <div className="px-6 pt-6">
 
-        {/* Contenedor para Categorías con Scroll Horizontal y Flechas */}
+        {/* Contenedor para Categorías */}
         <div className="relative mb-4">
           {/* Mensaje de advertencia cuando hay grupo incompleto */}
           {deshabilitarCategorias && (
@@ -40,64 +63,41 @@ const ProductsSection = ({
             </div>
           )}
 
-          <div className="border border-gray-300 rounded-lg p-1 shadow-sm bg-white">
-            <div className="flex items-center">
-              {/* Flecha Izquierda */}
-              <button
-                onClick={() => scroll('left', categoriesContainerRef)}
-                disabled={deshabilitarCategorias}
-                className={`p-2 rounded-full mr-1 flex-shrink-0 z-10 ${deshabilitarCategorias
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-600 hover:bg-gray-200'
-                  }`}
-                aria-label="Desplazar categorías a la izquierda"
-              >
-                <FaChevronLeft className="h-5 w-5" />
-              </button>
+          <div className="border border-gray-300 rounded-lg p-3 shadow-sm bg-white">
+            {/* Categorías Principales */}
+            <div className="flex flex-wrap gap-2 items-center">
+              {categoriasPrincipales.map(categoria => renderCategoryButton(categoria))}
 
-              {/* Contenedor de Categorías */}
-              <div
-                ref={categoriesContainerRef}
-                className="flex-1 overflow-x-auto hide-scrollbar flex justify-start py-1"
-              >
-                <div className="flex space-x-4 min-w-max">
-                  {categorias.map((categoria) => {
-                    const esActiva = categoriaActiva === categoria;
-                    const estaDeshabilitada = deshabilitarCategorias && !esActiva;
+              {/* Botón "Más" para mostrar categorías secundarias */}
+              {categoriasSecundarias.length > 0 && (
+                <button
+                  onClick={() => setMostrarMasCategorias(!mostrarMasCategorias)}
+                  disabled={deshabilitarCategorias}
+                  className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${categoriasSecundarias.includes(categoriaActiva)
+                    ? 'bg-orange-400 text-white'
+                    : deshabilitarCategorias
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                      : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                    }`}
+                >
+                  Extras
+                  {mostrarMasCategorias ? (
+                    <FaChevronUp className="h-4 w-4" />
+                  ) : (
+                    <FaChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+              )}
+            </div>
 
-                    return (
-                      <button
-                        key={categoria}
-                        onClick={() => onCategoriaChange(categoria)}
-                        disabled={estaDeshabilitada}
-                        className={`px-4 py-2 rounded-lg flex-shrink-0 transition-all ${esActiva
-                          ? 'bg-orange-400 text-white'
-                          : estaDeshabilitada
-                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-                            : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-                          }`}
-                        title={estaDeshabilitada ? 'Completa las 4 porciones rectangulares primero' : ''}
-                      >
-                        {categoria.charAt(0).toUpperCase() + categoria.slice(1)}
-                      </button>
-                    );
-                  })}
+            {/* Categorías Secundarias (Collapsible) */}
+            {mostrarMasCategorias && categoriasSecundarias.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="flex flex-wrap gap-2">
+                  {categoriasSecundarias.map(categoria => renderCategoryButton(categoria))}
                 </div>
               </div>
-
-              {/* Flecha Derecha */}
-              <button
-                onClick={() => scroll('right', categoriesContainerRef)}
-                disabled={deshabilitarCategorias}
-                className={`p-2 rounded-full ml-1 flex-shrink-0 z-10 ${deshabilitarCategorias
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-600 hover:bg-gray-200'
-                  }`}
-                aria-label="Desplazar categorías a la derecha"
-              >
-                <FaChevronRight className="h-5 w-5" />
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
