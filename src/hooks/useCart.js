@@ -549,36 +549,59 @@ export const useCart = (initialCartFromUrl = []) => {
 
            if (extraPrecio === 0) return item; // No aplica si no hay precio
 
-           const nuevosProductos = item.productos.map(prod => {
+           const nuevosProductos = [];
+           let cantidadAjustada = item.cantidad;
+
+           item.productos.forEach(prod => {
              if (prod.id === productoId) {
                 const conQuesoNuevo = !prod.conQueso;
-                let nuevoPrecio = parseFloat(prod.precio);
                 
-                // Si activamos queso, sumamos. Si desactivamos, restamos.
-                // Asumimos que prod.precio tiene el precio actual.
-                // Pero chequeamos si ya tiene precioBase para mas seguridad, si no, usamos el actual como base inversa
-                
-                // Estrategia: Calcular precio siempre basado en si tiene queso o no
-                // Si activamos: precio = precio + extra
-                // Si desactivamos: precio = precio - extra
-                
-                if (conQuesoNuevo) {
-                    nuevoPrecio += extraPrecio;
-                } else {
-                    nuevoPrecio -= extraPrecio;
-                }
-
-                return {
+                // Si estamos ACTIVANDO el queso y la cantidad es mayor a 1
+                if (conQuesoNuevo && prod.cantidad > 1) {
+                  // Separar: crear uno sin queso (cantidad - 1) y uno con queso (cantidad 1)
+                  
+                  // Producto sin queso (cantidad original - 1)
+                  nuevosProductos.push({
                     ...prod,
-                    conQueso: conQuesoNuevo,
-                    precio: nuevoPrecio
-                };
+                    cantidad: prod.cantidad - 1,
+                    conQueso: false
+                  });
+                  
+                  // Producto con queso (cantidad 1) - crear nuevo ID único
+                  nuevosProductos.push({
+                    ...prod,
+                    id: `${prod.id}_queso_${Date.now()}`,
+                    cantidad: 1,
+                    conQueso: true,
+                    precio: parseFloat(prod.precio) + extraPrecio
+                  });
+                  
+                  // No cambiamos cantidadAjustada porque el total de pizzas sigue igual
+                } else {
+                  // Si estamos DESACTIVANDO el queso o la cantidad es 1
+                  let nuevoPrecio = parseFloat(prod.precio);
+                  
+                  if (conQuesoNuevo) {
+                      nuevoPrecio += extraPrecio;
+                  } else {
+                      nuevoPrecio -= extraPrecio;
+                  }
+
+                  nuevosProductos.push({
+                      ...prod,
+                      conQueso: conQuesoNuevo,
+                      precio: nuevoPrecio
+                  });
+                }
+             } else {
+               // Producto no afectado
+               nuevosProductos.push(prod);
              }
-             return prod;
            });
 
            return {
                ...item,
+               cantidad: cantidadAjustada,
                productos: nuevosProductos
            };
         }
