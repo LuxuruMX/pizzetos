@@ -88,6 +88,14 @@ const CartSection = ({
               onChange={(e) => onMesaChange(e.target.value)}
               placeholder="Número de mesa"
               className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              onWheel={(e) => e.target.blur()}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-", ".", ","].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              min="1"
+              step="1"
             />
           </div>
         )}
