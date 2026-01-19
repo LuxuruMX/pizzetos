@@ -1,7 +1,7 @@
 import api from '@/services/api';
 import {getSucursalFromToken} from '@/services/jwt';
 
-const CATEGORIAS = ['pizzas', 'hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'rectangular', 'barra', 'mariscos', 'refrescos', 'magno'];
+const CATEGORIAS = ['pizzas', 'mariscos', 'rectangular', 'barra', 'refrescos', 'hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'magno'];
 
 // Estado de la caché
 let cachedData = null;
