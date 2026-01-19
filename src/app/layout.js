@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Pizzetos",
   description: "Generate to pizzetos ERP",
+  icons: {
+    icon: '/pizzetos.ico',
+  },
 };
 
 export default function RootLayout({ children }) {
