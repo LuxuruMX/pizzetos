@@ -1,5 +1,6 @@
 import api from '@/services/api';
 import {getSucursalFromToken} from '@/services/jwt';
+import { PRECIOS_ORILLA_QUESO } from '@/config/prices';
 
 const CATEGORIAS = ['pizzas', 'mariscos', 'rectangular', 'barra', 'refrescos', 'hamburguesas', 'alitas', 'costillas', 'spaguetty', 'papas', 'magno'];
 
@@ -228,6 +229,13 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
 
     // NUEVO: Manejo de pizza_group (Unificado)
     if (item.tipoId === 'pizza_group' && item.productos && Array.isArray(item.productos)) {
+      // Obtener el precio del queso según el tamaño del grupo
+      const sizeName = item.tamano;
+      const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
+        key => key.toLowerCase() === sizeName.toLowerCase()
+      ) || sizeName;
+      const precioQueso = PRECIOS_ORILLA_QUESO[tamanoKey] || 0;
+      
       // Expandir productos del grupo a items individuales para el backend
       return item.productos.flatMap(producto => {
         const itemsIndividuales = [];
@@ -245,7 +253,7 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
                     tamano: parseInt(producto.ingredientes?.tamano || 0), 
                     ingredientes: producto.ingredientes?.ingredientes?.map(id => parseInt(id)) || []
                   },
-                  queso: producto.conQueso ? 1 : 0, // Añadir campo queso
+                  queso: producto.conQueso ? precioQueso : null, // Enviar precio del queso o null
                   status: 1
                };
                itemsIndividuales.push(itemData);
@@ -258,7 +266,7 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
                   cantidad: 1, 
                   precio_unitario: parseFloat(producto.precio), 
                   [tipoIdReal]: parseInt(producto.id),
-                  queso: producto.conQueso ? 1 : 0, // Añadir campo queso
+                  queso: producto.conQueso ? precioQueso : null, // Enviar precio del queso o null
                   status: 1
                };
                itemsIndividuales.push(itemData);
