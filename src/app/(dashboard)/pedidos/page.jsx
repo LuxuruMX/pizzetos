@@ -278,6 +278,11 @@ export default function Pedidos() {
               </p>
               <p className="text-xs text-gray-600">
                 {prod.tipo}
+                {prod.con_queso && (
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-200 text-yellow-800 text-xs font-semibold rounded">
+                    Orilla de Queso
+                  </span>
+                )}
               </p>
               {prod.es_personalizado && prod.detalles_ingredientes && (
                 <div className="mt-1 text-xs bg-white/50 p-1 rounded">
@@ -511,6 +516,11 @@ export default function Pedidos() {
                               {prod.cantidad}x {prod.nombre || 'Producto sin nombre'}
                             </p>
                             <p className="text-sm text-gray-600">{prod.tipo}</p>
+                            {prod.con_queso && (
+                              <span className="inline-block mt-2 px-3 py-1 bg-yellow-200 text-yellow-800 text-sm font-bold rounded-full">
+                                🧀 Con Queso
+                              </span>
+                            )}
                             {prod.es_personalizado && prod.detalles_ingredientes && (
                               <div className="mt-3 bg-orange-50 p-3 rounded-lg border border-orange-100">
                                 <div className="flex justify-between items-center cursor-pointer mb-2"
