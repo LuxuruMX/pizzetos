@@ -87,9 +87,88 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
 
     const fechaImpresion = fecha ? new Date(fecha).toLocaleString('es-MX') : new Date().toLocaleString('es-MX');
 
+    // Función para estimar la altura del contenido
+    const calculateContentHeight = () => {
+        let height = 0;
+
+        // Padding inicial + márgenes de seguridad 
+        height += 20;
+
+        // Header (Titulo, Subtitulo, Fecha, Tipo Servicio)
+        height += 60;
+        if (datosExtra?.mesa) height += 12;
+        if (tipoServicio) height += 12;
+
+        // Sección Cliente
+        if (tipoServicio === 2 || tipoServicio === 3) {
+            height += 35; // Header cliente + nombre
+            if (datosExtra?.direccion_completa || datosExtra?.id_direccion) {
+                // Estimar líneas de dirección (aprox 35 chars por línea para font 8)
+                const dir = datosExtra.direccion_completa || 'Dirección registrada';
+                const lines = Math.ceil(dir.length / 35);
+                height += lines * 10;
+            }
+        }
+
+        // Headers de columnas (Cant, Prod, $$)
+        height += 15;
+
+        // Items
+        orden.forEach(item => {
+            // Espacio entre items
+            height += 4;
+
+            if (item.tipoId === 'pizza_group' && item.productos) {
+                // Header del grupo
+                height += 12;
+                // Items dentro del grupo
+                item.productos.forEach(pizza => {
+                    height += 10; // Línea principal del item
+                    if (pizza.ingredientesNombres && pizza.ingredientesNombres.length > 0) {
+                        const ingText = `Ing: ${pizza.ingredientesNombres.join(', ')}`;
+                        const lines = Math.ceil(ingText.length / 35);
+                        height += lines * 10;
+                    }
+                });
+            } else {
+                // Item normal
+                height += 12; // Línea principal
+
+                // Detalles adicionales
+                if (item.tamano && item.tamano !== 'N/A') height += 10;
+                if (item.conQueso) height += 10;
+                if (item.numeroPaquete && item.detallePaquete) height += 10;
+
+                if (item.ingredientesNombres && item.ingredientesNombres.length > 0) {
+                    const ingText = `Ing: ${item.ingredientesNombres.join(', ')}`;
+                    const lines = Math.ceil(ingText.length / 35);
+                    height += lines * 10;
+                }
+            }
+        });
+
+        // Totales row
+        height += 30;
+
+        // Comentarios
+        if (comentarios) {
+            height += 20; // Header Notas
+            const lines = Math.ceil(comentarios.length / 40);
+            height += lines * 10;
+        }
+
+        // Footer
+        height += 30;
+
+        // Min height para asegurar que no quede demasiado pequeño en tickets vacíos o muy simples
+        return Math.max(height, 200);
+    };
+
+    const dynamicHeight = calculateContentHeight();
+
     return (
         <Document>
-            <Page size={[164, 400]} style={styles.page}>
+            <Page size={[164, dynamicHeight]} style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>Pizzetos</Text>
