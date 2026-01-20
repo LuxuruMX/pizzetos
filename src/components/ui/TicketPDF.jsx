@@ -101,13 +101,13 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
                     {tipoServicio === 3 && <Text style={styles.bold}>PEDIDO ESPECIAL</Text>}
                 </View>
 
-                {/* Cliente */}
-                {(datosExtra?.nombreClie || cliente?.nombre || cliente?.razon_social) && (
+                {/* Cliente - Mostrar para Domicilio y Pedido Especial */}
+                {(tipoServicio === 2 || tipoServicio === 3) && (
                     <View style={styles.section}>
                         <Text style={{ fontWeight: 'bold' }}>Cliente:</Text>
-                        <Text>{datosExtra?.nombreClie || cliente?.nombre || cliente?.razon_social}</Text>
-                        {datosExtra?.id_direccion && (
-                            <Text>Dir: {datosExtra.direccion_completa || 'Dirección registrada'}</Text>
+                        <Text>{datosExtra?.nombreClie || cliente?.nombre || cliente?.razon_social || 'No especificado'}</Text>
+                        {(datosExtra?.direccion_completa || datosExtra?.id_direccion) && (
+                            <Text style={{ fontSize: 8 }}>Dirección: {datosExtra.direccion_completa || 'Dirección registrada'}</Text>
                         )}
                     </View>
                 )}

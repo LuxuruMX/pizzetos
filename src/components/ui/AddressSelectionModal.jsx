@@ -90,7 +90,11 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
     const handleConfirm = () => {
         if (clienteSeleccionado && direccionSeleccionada) {
             if (askForDate && !fechaEntrega) return;
-            onConfirm(clienteSeleccionado, direccionSeleccionada, fechaEntrega);
+
+            // Encontrar el objeto de dirección completo
+            const direccionObj = direcciones.find(d => d.id_dir === direccionSeleccionada);
+
+            onConfirm(clienteSeleccionado, direccionSeleccionada, fechaEntrega, direccionObj);
             onClose();
         }
     };

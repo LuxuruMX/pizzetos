@@ -77,6 +77,7 @@ const POS = () => {
   const [mesa, setMesa] = useState('');
   const [nombreClie, setNombreClie] = useState('');
   const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
+  const [direccionDetalles, setDireccionDetalles] = useState(null);
   const [fechaEntrega, setFechaEntrega] = useState(null);
   const [modalDireccionAbierto, setModalDireccionAbierto] = useState(false);
   const [modalPagoDomicilioAbierto, setModalPagoDomicilioAbierto] = useState(false);
@@ -214,6 +215,7 @@ const POS = () => {
           cliente={lastOrder.cliente}
           tipoServicio={lastOrder.tipoServicio}
           comentarios={lastOrder.comentarios}
+
         />
       ).toBlob();
 
@@ -407,8 +409,13 @@ const POS = () => {
       setLastOrder({
         orden: [...orden],
         total,
-        datosExtra: { ...datosExtra, direccion_completa: cliente.direccion || 'Dirección registrada' }, // Intentar pasar direccion si posible
-        cliente,
+        datosExtra: {
+          ...datosExtra,
+          direccion_completa: direccionDetalles
+            ? `${direccionDetalles.calle} ${direccionDetalles.numero || ''}, ${direccionDetalles.colonia}${direccionDetalles.referencia ? ` (${direccionDetalles.referencia})` : ''}`
+            : (cliente.direccion || 'Dirección registrada')
+        },
+        cliente: { ...cliente, nombre: cliente.label },
         tipoServicio,
         pagos: pagosArray,
         fecha: new Date().toISOString(),
@@ -446,8 +453,13 @@ const POS = () => {
       setLastOrder({
         orden: [...orden],
         total,
-        datosExtra,
-        cliente,
+        datosExtra: {
+          ...datosExtra,
+          direccion_completa: direccionDetalles
+            ? `${direccionDetalles.calle} ${direccionDetalles.numero || ''}, ${direccionDetalles.colonia}`
+            : 'Dirección registrada'
+        },
+        cliente: { ...cliente, nombre: cliente.label },
         tipoServicio,
         pagos: pagosConfirmados,
         fecha: new Date().toISOString(),
@@ -583,9 +595,10 @@ const POS = () => {
     setModalCustomPizza(false);
   };
 
-  const handleConfirmarDireccion = (cliente, idDireccion, fecha = null) => {
+  const handleConfirmarDireccion = (cliente, idDireccion, fecha = null, direccionObj = null) => {
     setClienteSeleccionado(cliente);
     setDireccionSeleccionada(idDireccion);
+    setDireccionDetalles(direccionObj);
     if (fecha) setFechaEntrega(fecha);
     setModalDireccionAbierto(false);
 
