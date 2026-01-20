@@ -87,6 +87,22 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
 
     const fechaImpresion = fecha ? new Date(fecha).toLocaleString('es-MX') : new Date().toLocaleString('es-MX');
 
+    // Helper to determine if an item is a group
+    const isGroup = (item) => {
+        return (item.tipoId === 'pizza_group' ||
+            item.tipoId === 'id_rec' ||
+            item.tipoId === 'id_barr' ||
+            item.tipoId === 'id_magno') && item.productos;
+    };
+
+    // Helper to get group label
+    const getGroupLabel = (item) => {
+        if (item.tipoId === 'id_rec') return 'Rectangular';
+        if (item.tipoId === 'id_barr') return 'Barra';
+        if (item.tipoId === 'id_magno') return 'Gran Magno';
+        return `Pizzas ${item.tamano}`;
+    };
+
     // Función para estimar la altura del contenido
     const calculateContentHeight = () => {
         let height = 0;
@@ -118,7 +134,7 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
             // Espacio entre items
             height += 4;
 
-            if (item.tipoId === 'pizza_group' && item.productos) {
+            if (isGroup(item)) {
                 // Header del grupo
                 height += 12;
                 // Items dentro del grupo
@@ -201,13 +217,13 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
 
                     {orden.map((item, index) => (
                         <View key={index} style={{ marginBottom: 4 }}>
-                            {/* Si es un grupo de pizzas, mostrar agrupado */}
-                            {item.tipoId === 'pizza_group' && item.productos ? (
+                            {/* Si es un grupo (Pizzas, Rectangular, Barra, Magno), mostrar agrupado */}
+                            {isGroup(item) ? (
                                 <>
                                     {/* Encabezado del grupo */}
                                     <View style={styles.row}>
                                         <Text style={styles.col1}>{item.cantidad}</Text>
-                                        <Text style={styles.col2}>Pizzas {item.tamano}</Text>
+                                        <Text style={styles.col2}>{getGroupLabel(item)}</Text>
                                         <Text style={styles.col3}>{formatoMoneda(item.subtotal)}</Text>
                                     </View>
                                     {/* Lista de pizzas indentada */}
