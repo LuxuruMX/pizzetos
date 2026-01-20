@@ -99,7 +99,7 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
     const getGroupLabel = (item) => {
         if (item.tipoId === 'id_rec') return 'Rectangular';
         if (item.tipoId === 'id_barr') return 'Barra';
-        if (item.tipoId === 'id_magno') return 'Gran Magno';
+        if (item.tipoId === 'id_magno') return 'Magno';
         return `Pizzas ${item.tamano}`;
     };
 
