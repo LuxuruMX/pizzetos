@@ -14,7 +14,9 @@ import AddressSelectionModal from '@/components/ui/AddressSelectionModal';
 import DeliveryPaymentModal from '@/components/ui/DeliveryPaymentModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
 import CustomPizzaModal from '@/components/ui/CustomPizzaModal';
-import { MdComment } from "react-icons/md";
+import { MdComment, MdPrint } from "react-icons/md";
+import { pdf } from '@react-pdf/renderer';
+import TicketPDF from '@/components/ui/TicketPDF';
 
 const decodeCartFromUrl = () => {
   if (typeof window !== 'undefined' && window.location.search) {
@@ -75,6 +77,7 @@ const POS = () => {
   const [mesa, setMesa] = useState('');
   const [nombreClie, setNombreClie] = useState('');
   const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
+  const [direccionDetalles, setDireccionDetalles] = useState(null);
   const [fechaEntrega, setFechaEntrega] = useState(null);
   const [modalDireccionAbierto, setModalDireccionAbierto] = useState(false);
   const [modalPagoDomicilioAbierto, setModalPagoDomicilioAbierto] = useState(false);
@@ -91,6 +94,7 @@ const POS = () => {
   const [tamanosPizzas, setTamanosPizzas] = useState([]);
   const [grupoRectangularIncompleto, setGrupoRectangularIncompleto] = useState(false);
   const [grupoBarraMagnoIncompleto, setGrupoBarraMagnoIncompleto] = useState(false);
+  const [lastOrder, setLastOrder] = useState(null); // Estado para el ticket a imprimir
 
   // Estado para auto-selección de tamaño (pizzas y mariscos)
   const [ultimoTamanoSeleccionado, setUltimoTamanoSeleccionado] = useState(null);
@@ -198,6 +202,43 @@ const POS = () => {
   // --- El resto de tus funciones permanecen iguales ---
   // (handleEnviarOrden, handleConfirmarPagos, etc.)
 
+  const handleImprimirTicket = async () => {
+    if (!lastOrder) return;
+
+    try {
+      const blob = await pdf(
+        <TicketPDF
+          orden={lastOrder.orden}
+          total={lastOrder.total}
+          datosExtra={lastOrder.datosExtra}
+          fecha={lastOrder.fecha}
+          cliente={lastOrder.cliente}
+          tipoServicio={lastOrder.tipoServicio}
+          comentarios={lastOrder.comentarios}
+
+        />
+      ).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url);
+
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+    } catch (error) {
+      console.error("Error generando PDF:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (lastOrder) {
+      handleImprimirTicket();
+    }
+  }, [lastOrder]);
+
+
   const handleEnviarOrden = async () => {
     // Validar que los grupos de Pizza Rectangular tengan exactamente 4 items (slices) por grupo base
     const gruposRectangularesIncompletos = orden.some(item => {
@@ -281,6 +322,16 @@ const POS = () => {
 
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
 
+      // Guardar orden para imprimir
+      setLastOrder({
+        orden: [...orden],
+        total,
+        datosExtra,
+        tipoServicio,
+        fecha: new Date().toISOString(),
+        comentarios
+      });
+
       limpiarCarrito();
       setComentarios('');
       setPagos([]);
@@ -316,6 +367,18 @@ const POS = () => {
       console.log('Enviando orden al backend (enviarOrdenConPagos):', JSON.stringify(payload, null, 2));
 
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
+
+      // Guardar orden para imprimir
+      setLastOrder({
+        orden: [...orden],
+        total,
+        datosExtra,
+        tipoServicio,
+        pagos: pagosConfirmados,
+        fecha: new Date().toISOString(),
+        comentarios
+      });
+
       limpiarCarrito();
       setComentarios('');
       setPagos([]);
@@ -341,6 +404,24 @@ const POS = () => {
       console.log('Enviando orden al backend (enviarOrdenDomicilio):', JSON.stringify(payload, null, 2));
 
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosArray);
+
+      // Guardar orden para imprimir
+      setLastOrder({
+        orden: [...orden],
+        total,
+        datosExtra: {
+          ...datosExtra,
+          direccion_completa: direccionDetalles
+            ? `${direccionDetalles.calle} ${direccionDetalles.numero || ''}, ${direccionDetalles.colonia}${direccionDetalles.referencia ? ` (${direccionDetalles.referencia})` : ''}`
+            : (cliente.direccion || 'Dirección registrada')
+        },
+        cliente: { ...cliente, nombre: cliente.label },
+        tipoServicio,
+        pagos: pagosArray,
+        fecha: new Date().toISOString(),
+        comentarios
+      });
+
       limpiarCarrito();
       setComentarios('');
       setPagos([]);
@@ -367,6 +448,24 @@ const POS = () => {
       console.log('Enviando orden al backend (enviarOrdenEspecial):', JSON.stringify(payload, null, 2));
 
       await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
+
+      // Guardar orden para imprimir
+      setLastOrder({
+        orden: [...orden],
+        total,
+        datosExtra: {
+          ...datosExtra,
+          direccion_completa: direccionDetalles
+            ? `${direccionDetalles.calle} ${direccionDetalles.numero || ''}, ${direccionDetalles.colonia}`
+            : 'Dirección registrada'
+        },
+        cliente: { ...cliente, nombre: cliente.label },
+        tipoServicio,
+        pagos: pagosConfirmados,
+        fecha: new Date().toISOString(),
+        comentarios
+      });
+
       limpiarCarrito();
       setComentarios('');
       setPagos([]);
@@ -496,9 +595,10 @@ const POS = () => {
     setModalCustomPizza(false);
   };
 
-  const handleConfirmarDireccion = (cliente, idDireccion, fecha = null) => {
+  const handleConfirmarDireccion = (cliente, idDireccion, fecha = null, direccionObj = null) => {
     setClienteSeleccionado(cliente);
     setDireccionSeleccionada(idDireccion);
+    setDireccionDetalles(direccionObj);
     if (fecha) setFechaEntrega(fecha);
     setModalDireccionAbierto(false);
 
@@ -561,8 +661,17 @@ const POS = () => {
     <div className="max-w-full mx-auto p-4 bg-gray-100 min-h-screen flex flex-col">
       {/* ... Resto del JSX del componente ... */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-        <div className="flex-1">
+        <div className="flex-1 flex items-center gap-4">
           <h1 className="text-3xl font-bold text-black">Punto de Venta</h1>
+          {lastOrder && (
+            <button
+              onClick={handleImprimirTicket}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-full transition-colors"
+              title="Reimprimir último ticket"
+            >
+              <MdPrint size={24} />
+            </button>
+          )}
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
           <button
