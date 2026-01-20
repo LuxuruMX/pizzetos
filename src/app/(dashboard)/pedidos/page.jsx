@@ -373,14 +373,14 @@ export default function Pedidos() {
         )}
 
         {/* Carrusel En Espera */}
-        <div className="bg-red-50 p-4 rounded-lg border border-gray-200 mb-8">
-          <h2 className="text-xl font-bold mb-4 text-gray-700 flex items-center gap-2">
+        <div className="bg-red-50 p-4 rounded-lg border border-gray-200 mb-8 flex">
+          <h2 className="text-xl font-bold text-gray-700 flex items-center gap-2 vertical-title mr-4 flex-shrink-0">
             <div className="w-3 h-3 rounded-full bg-gray-400"></div>
             En Espera ({pedidosEnEspera.length})
           </h2>
 
           {/* Contenedor del carrusel horizontal */}
-          <div className="overflow-x-auto hide-scrollbar pb-2">
+          <div className="overflow-x-auto hide-scrollbar pb-2 flex-grow w-0">
             <div className="flex space-x-4 w-max min-w-full">
               {pedidosEnEspera.length > 0 ? (
                 pedidosEnEspera.map(renderCard)
@@ -392,14 +392,14 @@ export default function Pedidos() {
         </div>
 
         {/* Carrusel Preparando */}
-        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-          <h2 className="text-xl font-bold mb-4 text-yellow-800 flex items-center gap-2">
+        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 flex">
+          <h2 className="text-xl font-bold text-yellow-800 flex items-center gap-2 vertical-title mr-4 flex-shrink-0">
             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
             Preparando ({pedidosPreparando.length})
           </h2>
 
           {/* Contenedor del carrusel horizontal */}
-          <div className="overflow-x-auto hide-scrollbar pb-2">
+          <div className="overflow-x-auto hide-scrollbar pb-2 flex-grow w-0">
             <div className="flex space-x-4 w-max min-w-full">
               {pedidosPreparando.length > 0 ? (
                 pedidosPreparando.map(renderCard)
@@ -634,6 +634,11 @@ export default function Pedidos() {
       }
       .hide-scrollbar::-webkit-scrollbar {
         display: none;  /* Chrome, Safari, Opera*/
+      }
+      .vertical-title {
+        writing-mode: vertical-lr;
+        text-orientation: upright;
+        letter-spacing: 0.1em;
       }
     `}</style>
     </div>
