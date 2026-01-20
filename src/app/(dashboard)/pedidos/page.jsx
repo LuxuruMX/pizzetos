@@ -342,7 +342,7 @@ export default function Pedidos() {
         description={description}
         actions={actions}
         loading={loading}
-        maxHeight={200}
+        maxHeight={150}
       />
     );
   };
@@ -376,7 +376,7 @@ export default function Pedidos() {
         <div className="bg-red-50 p-4 rounded-lg border border-gray-200 mb-8 flex">
           <h2 className="text-xl font-bold text-gray-700 flex items-center gap-2 vertical-title mr-4 flex-shrink-0">
             <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-            En Espera ({pedidosEnEspera.length})
+            En Espera
           </h2>
 
           {/* Contenedor del carrusel horizontal */}
@@ -395,7 +395,7 @@ export default function Pedidos() {
         <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 flex">
           <h2 className="text-xl font-bold text-yellow-800 flex items-center gap-2 vertical-title mr-4 flex-shrink-0">
             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            Preparando ({pedidosPreparando.length})
+            Preparando
           </h2>
 
           {/* Contenedor del carrusel horizontal */}
