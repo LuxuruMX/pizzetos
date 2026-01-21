@@ -559,7 +559,7 @@ const POS = () => {
     agregarPaquete({
       numeroPaquete: 1,
       precio: 295,
-      detallePaquete: nombreRectangular,
+      detallePaquete: detallePaquete,
       idRefresco: 17,
       nombresDetalle: {
         rectangular: nombreRectangular,
