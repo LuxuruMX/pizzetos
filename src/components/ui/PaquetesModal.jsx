@@ -10,10 +10,18 @@ export const ModalPaquete1 = ({ isOpen, onClose, onConfirmar }) => {
 
   const handleConfirmar = () => {
     let detallePaquete = "4,8"; // Default mixta
-    if (seleccion === 'hawaianas') detallePaquete = "4,4";
-    if (seleccion === 'pepperoni') detallePaquete = "8,8";
+    let descripcion = "1 Hawaiana y 1 Pepperoni";
 
-    onConfirmar(detallePaquete);
+    if (seleccion === 'hawaianas') {
+      detallePaquete = "4,4";
+      descripcion = "2 Hawaianas";
+    }
+    if (seleccion === 'pepperoni') {
+      detallePaquete = "8,8";
+      descripcion = "2 Pepperoni";
+    }
+
+    onConfirmar({ detalle: detallePaquete, descripcion });
     setSeleccion('mixta'); // Reset
   };
 
@@ -96,7 +104,16 @@ export const ModalPaquete2 = ({ isOpen, onClose, onConfirmar, pizzas, hamburgues
       alert('Por favor selecciona todos los productos');
       return;
     }
-    onConfirmar(seleccion);
+    const prod = productosDisponibles.find(p =>
+      (seleccion.tipo === 'hamburguesa' ? p.id_hamb : p.id_alis) === seleccion.idProducto
+    );
+    const pizza = pizzas.find(p => p.id_pizza === seleccion.idPizza);
+
+    onConfirmar({
+      ...seleccion,
+      nombreProducto: prod ? prod.nombre : '',
+      nombrePizza: pizza ? pizza.nombre : ''
+    });
     setSeleccion({ tipo: 'hamburguesa', idProducto: null, idPizza: null });
   };
 
@@ -230,7 +247,13 @@ export const ModalPaquete3 = ({ isOpen, onClose, onConfirmar, pizzas }) => {
       alert('Debes seleccionar exactamente 3 pizzas');
       return;
     }
-    onConfirmar(pizzasSeleccionadas);
+    // Mapear IDs a nombres
+    const nombresPizzas = pizzasSeleccionadas.map(id => {
+      const p = pizzas.find(pizza => pizza.id_pizza === id);
+      return p ? p.nombre : '';
+    });
+
+    onConfirmar({ ids: pizzasSeleccionadas, nombres: nombresPizzas });
     setPizzasSeleccionadas([]);
   };
 

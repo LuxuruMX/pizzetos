@@ -267,7 +267,7 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
                                             <View>
                                                 {item.numeroPaquete === 1 && (
                                                     <>
-                                                        <Text style={styles.itemDetail}>2 Pizzas Rectangulares: {item.detallePaquete}</Text>
+                                                        <Text style={styles.itemDetail}>2 Pizzas: {item.nombresDetalle?.rectangular || item.detallePaquete}</Text>
                                                         <Text style={styles.itemDetail}>{item.nombresDetalle.refresco}</Text>
                                                     </>
                                                 )}
