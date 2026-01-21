@@ -547,34 +547,64 @@ const POS = () => {
     }
   };
 
-  const handleConfirmarPaquete1 = (detallePaquete) => {
+  const handleConfirmarPaquete1 = (data) => {
+    // data = { detalle: "4,8", descripcion: "1 Hawaiana y 1 Pepperoni" }
+
+    // Si viene solo string (por compatibilidad o error), manejarlo
+    const detallePaquete = data.detalle || data;
+    const nombreRectangular = data.descripcion || detallePaquete;
+
     agregarPaquete({
       numeroPaquete: 1,
       precio: 295,
-      detallePaquete: detallePaquete, // "4,8", "4,4", o "8,8"
-      idRefresco: 17
+      detallePaquete: detallePaquete,
+      idRefresco: 17,
+      nombresDetalle: {
+        rectangular: nombreRectangular,
+        refresco: 'Jarrito 2L'
+      }
     });
     setModalPaquete1(false);
   };
 
   const handleConfirmarPaquete2 = (seleccion) => {
+    // seleccion incluye: { ..., nombreProducto, nombrePizza }
+    const pizzaNombre = seleccion.nombrePizza || 'Pizza';
+    const complementoNombre = seleccion.nombreProducto || 'Complemento';
+    const refrescoNombre = 'Jarrito 2L';
+
     agregarPaquete({
       numeroPaquete: 2,
       precio: 265,
       idHamb: seleccion.tipo === 'hamburguesa' ? seleccion.idProducto : null,
       idAlis: seleccion.tipo === 'alitas' ? seleccion.idProducto : null,
       idPizza: seleccion.idPizza,
-      idRefresco: 17
+      idRefresco: 17,
+      nombresDetalle: {
+        pizza: pizzaNombre,
+        complemento: complementoNombre,
+        refresco: refrescoNombre
+      }
     });
     setModalPaquete2(false);
   };
 
-  const handleConfirmarPaquete3 = (pizzasSeleccionadas) => {
+  const handleConfirmarPaquete3 = (data) => {
+    // data = { ids: [1,2,3], nombres: ["Hawaiana", "Peperoni", "Mexicana"] }
+    const ids = data.ids || data; // Fallback si es array compatible
+    const nombres = data.nombres || ids;
+
+    const refrescoNombre = 'Jarrito 2L';
+
     agregarPaquete({
       numeroPaquete: 3,
       precio: 395,
-      detallePaquete: pizzasSeleccionadas.join(','),
-      idRefresco: 17
+      detallePaquete: ids.join(','),
+      idRefresco: 17,
+      nombresDetalle: {
+        pizzas: nombres,
+        refresco: refrescoNombre
+      }
     });
     setModalPaquete3(false);
   };

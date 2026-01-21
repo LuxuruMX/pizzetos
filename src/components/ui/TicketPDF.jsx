@@ -153,7 +153,17 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
                 // Detalles adicionales
                 if (item.tamano && item.tamano !== 'N/A') height += 10;
                 if (item.conQueso) height += 10;
-                if (item.numeroPaquete && item.detallePaquete) height += 10;
+                if (item.numeroPaquete && item.nombresDetalle) {
+                    // Estimar altura de detalles del paquete
+                    if (item.numeroPaquete === 1) height += 20; // Slices + Refresco
+                    if (item.numeroPaquete === 2) height += 30; // Complemento + Pizza + Refresco
+                    if (item.numeroPaquete === 3) {
+                        // Pizzas array + Refresco
+                        height += (item.nombresDetalle.pizzas ? item.nombresDetalle.pizzas.length : 0) * 10 + 10;
+                    }
+                } else if (item.numeroPaquete && item.detallePaquete) {
+                    height += 10;
+                }
 
                 if (item.ingredientesNombres && item.ingredientesNombres.length > 0) {
                     const ingText = `Ing: ${item.ingredientesNombres.join(', ')}`;
@@ -253,11 +263,37 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
                                     <View>
                                         {item.tamano && item.tamano !== 'N/A' && <Text style={styles.itemDetail}>Tam: {item.tamano}</Text>}
                                         {item.conQueso && <Text style={styles.itemDetail}>+ Orilla de Queso</Text>}
-                                        {item.numeroPaquete && item.detallePaquete && (
-                                            <Text style={styles.itemDetail}>
-                                                {item.numeroPaquete === 1 && `Slices: ${item.detallePaquete}`}
-                                                {item.numeroPaquete === 3 && `Pizzas: ${item.detallePaquete}`}
-                                            </Text>
+                                        {item.numeroPaquete && item.nombresDetalle ? (
+                                            <View>
+                                                {item.numeroPaquete === 1 && (
+                                                    <>
+                                                        <Text style={styles.itemDetail}>2 Pizzas: {item.nombresDetalle?.rectangular || item.detallePaquete}</Text>
+                                                        <Text style={styles.itemDetail}>{item.nombresDetalle.refresco}</Text>
+                                                    </>
+                                                )}
+                                                {item.numeroPaquete === 2 && (
+                                                    <>
+                                                        <Text style={styles.itemDetail}>{item.nombresDetalle.complemento}</Text>
+                                                        <Text style={styles.itemDetail}>Pizza: {item.nombresDetalle.pizza}</Text>
+                                                        <Text style={styles.itemDetail}>{item.nombresDetalle.refresco}</Text>
+                                                    </>
+                                                )}
+                                                {item.numeroPaquete === 3 && (
+                                                    <>
+                                                        {item.nombresDetalle.pizzas && item.nombresDetalle.pizzas.map((p, i) => (
+                                                            <Text key={i} style={styles.itemDetail}>Pizza {i + 1}: {p}</Text>
+                                                        ))}
+                                                        <Text style={styles.itemDetail}>{item.nombresDetalle.refresco}</Text>
+                                                    </>
+                                                )}
+                                            </View>
+                                        ) : (
+                                            item.numeroPaquete && item.detallePaquete && (
+                                                <Text style={styles.itemDetail}>
+                                                    {item.numeroPaquete === 1 && `Slices: ${item.detallePaquete}`}
+                                                    {item.numeroPaquete === 3 && `Pizzas: ${item.detallePaquete}`}
+                                                </Text>
+                                            )
                                         )}
                                         {item.ingredientesNombres && item.ingredientesNombres.length > 0 && (
                                             <Text style={styles.itemDetail}>Ing: {item.ingredientesNombres.join(', ')}</Text>
