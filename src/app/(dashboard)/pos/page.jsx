@@ -554,8 +554,6 @@ const POS = () => {
     const detallePaquete = data.detalle || data;
     const nombreRectangular = data.descripcion || detallePaquete;
 
-    const refrescoNombre = productos.refrescos.find(r => r.id_producto == 17)?.nombre || 'Refresco';
-
     agregarPaquete({
       numeroPaquete: 1,
       precio: 295,
@@ -563,7 +561,7 @@ const POS = () => {
       idRefresco: 17,
       nombresDetalle: {
         rectangular: nombreRectangular,
-        refresco: refrescoNombre
+        refresco: 'Jarrito 2L'
       }
     });
     setModalPaquete1(false);
@@ -573,7 +571,7 @@ const POS = () => {
     // seleccion incluye: { ..., nombreProducto, nombrePizza }
     const pizzaNombre = seleccion.nombrePizza || 'Pizza';
     const complementoNombre = seleccion.nombreProducto || 'Complemento';
-    const refrescoNombre = productos.refrescos.find(r => r.id_producto == 17)?.nombre || 'Refresco';
+    const refrescoNombre = 'Jarrito 2L';
 
     agregarPaquete({
       numeroPaquete: 2,
@@ -596,10 +594,7 @@ const POS = () => {
     const ids = data.ids || data; // Fallback si es array compatible
     const nombres = data.nombres || ids;
 
-    // Si por alguna razón nombres es igual a IDs (fallback), intentamos buscar
-    // pero idealmente confiamos en el modal.
-
-    const refrescoNombre = productos.refrescos.find(r => r.id_producto == 17)?.nombre || 'Refresco';
+    const refrescoNombre = 'Jarrito 2L';
 
     agregarPaquete({
       numeroPaquete: 3,
