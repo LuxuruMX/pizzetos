@@ -453,7 +453,7 @@ export const useCart = (initialCartFromUrl = []) => {
               precioUnitario: precioOriginal,
               cantidad: 1,
               subtotal: precioOriginal,
-              tamano: 'N/A',
+              tamano: tamano,
               productos: null,
               esPaquete: false
             },
