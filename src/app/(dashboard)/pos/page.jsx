@@ -548,33 +548,76 @@ const POS = () => {
   };
 
   const handleConfirmarPaquete1 = (detallePaquete) => {
+    // Resolver nombres
+    const refrescoNombre = productos.refrescos.find(r => r.id_producto === 17)?.nombre || 'Refresco';
+
     agregarPaquete({
       numeroPaquete: 1,
       precio: 295,
       detallePaquete: detallePaquete, // "4,8", "4,4", o "8,8"
-      idRefresco: 17
+      idRefresco: 17,
+      nombresDetalle: {
+        refresco: refrescoNombre
+      }
     });
     setModalPaquete1(false);
   };
 
   const handleConfirmarPaquete2 = (seleccion) => {
+    // Buscar nombres
+    const pizzaNombre = productos.pizzas.find(p => p.id_producto === seleccion.idPizza)?.nombre || 'Pizza';
+    let complementoNombre = '';
+
+    if (seleccion.tipo === 'hamburguesa') {
+      complementoNombre = productos.hamburguesas.find(h => h.id_producto === seleccion.idProducto)?.nombre || 'Hamburguesa';
+    } else {
+      complementoNombre = productos.alitas.find(a => a.id_producto === seleccion.idProducto)?.nombre || 'Alitas';
+    }
+
+    const refrescoNombre = productos.refrescos.find(r => r.id_producto === 17)?.nombre || 'Refresco';
+
     agregarPaquete({
       numeroPaquete: 2,
       precio: 265,
       idHamb: seleccion.tipo === 'hamburguesa' ? seleccion.idProducto : null,
       idAlis: seleccion.tipo === 'alitas' ? seleccion.idProducto : null,
       idPizza: seleccion.idPizza,
-      idRefresco: 17
+      idRefresco: 17,
+      nombresDetalle: {
+        pizza: pizzaNombre,
+        complemento: complementoNombre,
+        refresco: refrescoNombre
+      }
     });
     setModalPaquete2(false);
   };
 
   const handleConfirmarPaquete3 = (pizzasSeleccionadas) => {
+    // pizzasSeleccionadas es array de nombres o IDs? El modal 3 parece devolver nombres o IDs...
+    // Revisando uso: detallePaquete: pizzasSeleccionadas.join(',')
+    // Si son IDs, debo buscar nombres. Si son nombres, ya está.
+    // Asumiendo que son IDs o nombres, vamos a intentar mapear.
+    // Si observamos ModalPaquete3 logic (external): normalmente devuelve lo que usa para selects.
+    // Pero si el usuario dice "dificil porque en el json solo estan id", asumo son IDs.
+
+    // Tratemos de buscar los nombres si son IDs numéricos. 
+    // Si no encontramos, usamos el valor tal cual.
+    const pizzasNombres = pizzasSeleccionadas.map(pId => {
+      const p = productos.pizzas.find(prod => prod.id_producto == pId || prod.nombre === pId);
+      return p ? p.nombre : pId;
+    });
+
+    const refrescoNombre = productos.refrescos.find(r => r.id_producto === 17)?.nombre || 'Refresco';
+
     agregarPaquete({
       numeroPaquete: 3,
       precio: 395,
       detallePaquete: pizzasSeleccionadas.join(','),
-      idRefresco: 17
+      idRefresco: 17,
+      nombresDetalle: {
+        pizzas: pizzasNombres,
+        refresco: refrescoNombre
+      }
     });
     setModalPaquete3(false);
   };

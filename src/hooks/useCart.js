@@ -165,8 +165,9 @@ export const useCart = (initialCartFromUrl = []) => {
         precioOriginal: paquete.precio,
         precioUnitario: paquete.precio,
         cantidad: 1,
-        subtotal: paquete.precio,
-        tamano: 'N/A',
+        idRefresco: paquete.idRefresco,
+        detallePaquete: paquete.detallePaquete,
+        nombresDetalle: paquete.nombresDetalle,
         datoPaquete: {
           id_paquete: paquete.numeroPaquete,
           id_refresco: paquete.idRefresco,
