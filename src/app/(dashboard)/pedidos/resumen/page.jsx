@@ -6,9 +6,8 @@ import Card from "@/components/ui/Card";
 import Table from "@/components/ui/Table";
 import { IoReload } from "react-icons/io5";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import Popconfirm from "@/components/ui/Popconfirm";
 import api from "@/services/api";
-import { MdOutlinePayments } from "react-icons/md";
+import { MdOutlinePayments, MdPrint } from "react-icons/md";
 import PaymentModal from "@/components/ui/PaymentModal";
 import { pagarVenta } from "@/services/orderService";
 import CancellationModal from "@/components/ui/CancellationModal";
@@ -20,7 +19,7 @@ export default function TodosPedidosPage() {
   const [error, setError] = useState(null);
   const [filtro, setFiltro] = useState("hoy");
   const [statusFiltro, setStatusFiltro] = useState(null);
-  const [idSuc, setIdSuc] = useState(null);
+  const [idSuc] = useState(null);
   const [modalPagosOpen, setModalPagosOpen] = useState(false);
   const [permisos, setPermisos] = useState(null);
 
@@ -238,6 +237,15 @@ export default function TodosPedidosPage() {
                 <MdOutlinePayments size={22} />
               </button>
             )
+          }
+          {
+            <button
+              onClick={() => handlePrint(row)}
+              className="text-gray-600 hover:text-gray-800 transition-colors"
+              title="Imprimir"
+            >
+              <MdPrint size={22} />
+            </button>
           }
         </div >
       ),
