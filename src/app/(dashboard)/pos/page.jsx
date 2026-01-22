@@ -36,9 +36,14 @@ const decodeCartFromUrl = () => {
   return [];
 };
 
+import { POS_CONFIG } from '@/config/posConfig';
+
 const POS = () => {
   const router = useRouter();
   const initialCartFromUrl = decodeCartFromUrl();
+  const containerClass = POS_CONFIG.lockViewport
+    ? "max-w-full mx-auto p-4 bg-gray-100 h-[calc(100vh-4rem)] flex flex-col overflow-hidden"
+    : "max-w-full mx-auto p-4 bg-gray-100 min-h-screen flex flex-col";
 
   // Estados del componente
   const {
@@ -677,7 +682,7 @@ const POS = () => {
 
   // Renderizado normal del componente
   return (
-    <div className="max-w-full mx-auto p-4 bg-gray-100 flex flex-col">
+    <div className={containerClass}>
       {/* ... Resto del JSX del componente ... */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div className="flex-1 flex items-center gap-4">
