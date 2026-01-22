@@ -166,7 +166,8 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
         nombre: prod.nombre,
         cantidad: prod.cantidad,
         precioUnitario: precio,
-        subtotal: precio * prod.cantidad
+        subtotal: precio * prod.cantidad,
+        tamano: prod.tamano || 'N/A'
       });
     }
   });
