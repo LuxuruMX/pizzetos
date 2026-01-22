@@ -17,6 +17,7 @@ import CustomPizzaModal from '@/components/ui/CustomPizzaModal';
 import { MdComment, MdPrint } from "react-icons/md";
 import { pdf } from '@react-pdf/renderer';
 import TicketPDF from '@/components/ui/TicketPDF';
+import PDFViewerModal from '@/components/ui/PDFViewerModal';
 
 const decodeCartFromUrl = () => {
   if (typeof window !== 'undefined' && window.location.search) {
@@ -95,6 +96,8 @@ const POS = () => {
   const [grupoRectangularIncompleto, setGrupoRectangularIncompleto] = useState(false);
   const [grupoBarraMagnoIncompleto, setGrupoBarraMagnoIncompleto] = useState(false);
   const [lastOrder, setLastOrder] = useState(null); // Estado para el ticket a imprimir
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
 
   // Estado para auto-selección de tamaño (pizzas y mariscos)
   const [ultimoTamanoSeleccionado, setUltimoTamanoSeleccionado] = useState(null);
@@ -221,13 +224,8 @@ const POS = () => {
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
-      const printWindow = window.open(url);
-
-      if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.print();
-        };
-      }
+      setPdfUrl(url);
+      setPdfModalOpen(true);
     } catch (error) {
       console.error("Error generando PDF:", error);
     }
@@ -870,6 +868,15 @@ const POS = () => {
         tamanos={tamanosPizzas}
         ingredientes={ingredientes}
         onConfirmar={handleConfirmarCustomPizza}
+      />
+
+      <PDFViewerModal
+        isOpen={pdfModalOpen}
+        pdfUrl={pdfUrl}
+        onClose={() => {
+          setPdfModalOpen(false);
+          setPdfUrl(null);
+        }}
       />
     </div>
   );
