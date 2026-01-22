@@ -25,7 +25,7 @@ const decodeCartFromUrl = () => {
     const encodedCart = urlParams.get('cart');
     try {
       if (encodedCart) {
-        const decodedString = decodeURIComponent(escape(atob(encodedCart)));
+        const decodedString = new TextDecoder().decode(Uint8Array.from(atob(encodedCart), c => c.charCodeAt(0)));
         const parsed = JSON.parse(decodedString);
         return Array.isArray(parsed) ? parsed : [];
       }
