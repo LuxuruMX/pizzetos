@@ -518,16 +518,6 @@ const POS = () => {
   };
 
   const handleSeleccionarVariante = (variante, tipoId) => {
-    // Si la variante trae propiedades extra (como conQueso y precio actualizado), se usarán en agregarAlCarrito
-    // Si la variante original (sin modificar) tenía un precio menor, necesitamos asegurarnos de pasar el precio FINAL calculado en el modal
-
-    // Si viene conQueso true, el precio en 'variante.precio' debería ser el original, 
-    // pero el modal podría haber mandado un objeto nuevo con el precio ya sumado si lo modificamos allí.
-    // Revisando ProductModal: onSeleccionar({ ...variante, conQueso, extraQueso }, tipoId)
-    // El precio NO se modificó en el objeto pasado, solo se calculó para mostrar.
-    // Debemos sumar el extra aquí o en agregarAlCarrito.
-
-    // Mejor enfoque: Crear un objeto producto modificado con el precio final y la bandera
     let productoAgregado = { ...variante };
 
     if (variante.conQueso) {
@@ -687,7 +677,7 @@ const POS = () => {
 
   // Renderizado normal del componente
   return (
-    <div className="max-w-full mx-auto p-4 bg-gray-100 min-h-screen flex flex-col">
+    <div className="max-w-full mx-auto p-4 bg-gray-100 flex flex-col">
       {/* ... Resto del JSX del componente ... */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div className="flex-1 flex items-center gap-4">
@@ -729,7 +719,7 @@ const POS = () => {
         </div>
       </div>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 h-full items-stretch min-h-[500px]">
         <ProductsSection
           categorias={categorias}
           categoriaActiva={categoriaActiva}

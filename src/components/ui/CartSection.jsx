@@ -45,7 +45,7 @@ const CartSection = ({
   const servicioActual = opcionesServicio.find(op => op.id === tipoServicio) || opcionesServicio[2];
 
   return (
-    <div className="w-1/3 bg-white rounded-lg shadow-lg flex flex-col"
+    <div className="w-1/3 bg-white rounded-lg shadow-lg flex flex-col h-full"
       style={{ maxHeight: 'calc(100vh - 8rem)' }}>
       {/* Sección superior: Título y Lista de Artículos (se desplaza) */}
       <div className="flex-1 overflow-y-auto hide-scrollbar">

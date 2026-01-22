@@ -48,7 +48,7 @@ const ProductsSection = ({
   };
 
   return (
-    <div className="w-2/3 ml-6 flex flex-col">
+    <div className="w-2/3 ml-6 flex flex-col h-full">
       <div className="px-6 pt-6">
 
         {/* Contenedor para Categorías */}
