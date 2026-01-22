@@ -72,7 +72,7 @@ const CartSection = ({
       </div>
 
       {/* Sección inferior fija: Total, Botón Comentarios y Botón Enviar */}
-      <div className="border-t pt-4 px-6 pb-6 bg-white">
+      <div className="border-t pt-4 px-4 pb-6 bg-white">
         {orden.length > 0 && (
           <div className="flex justify-between text-black mb-4">
             <strong>Total:</strong>

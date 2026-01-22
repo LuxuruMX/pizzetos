@@ -691,7 +691,6 @@ const POS = () => {
       {/* ... Resto del JSX del componente ... */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div className="flex-1 flex items-center gap-4">
-          <h1 className="text-3xl font-bold text-black">Punto de Venta</h1>
           {lastOrder && (
             <button
               onClick={handleImprimirTicket}

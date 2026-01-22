@@ -31,8 +31,8 @@ export default function DashboardLayout({ children }) {
         </header>
 
         {/* Espacio para el NavBarTop fijo */}
-        <div className="pt-16"> {/* Ajusta el padding según la altura de tu NavBarTop */}
-          <main className="flex-1 overflow-auto p-4 ml-0"> {/* Ajusta el margen izquierdo para el sidebar */}
+        <div className="pt-14"> {/* Ajusta el padding según la altura de tu NavBarTop */}
+          <main className="flex-1 overflow-auto p-1 ml-0"> {/* Ajusta el margen izquierdo para el sidebar */}
             {children}
             <ToastContainer />
           </main>
