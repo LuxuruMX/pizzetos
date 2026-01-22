@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import Card from "@/components/ui/Card";
@@ -9,9 +8,189 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import api from "@/services/api";
 import { MdOutlinePayments, MdPrint } from "react-icons/md";
 import PaymentModal from "@/components/ui/PaymentModal";
-import { pagarVenta } from "@/services/orderService";
+import { pagarVenta, fetchDetalleVenta, fetchProductosPorCategoria } from "@/services/orderService";
+import { catalogsService } from "@/services/catalogsService";
 import CancellationModal from "@/components/ui/CancellationModal";
+import { pdf } from '@react-pdf/renderer';
+import TicketPDF from '@/components/ui/TicketPDF';
 
+// Función auxiliar para reconstruir la orden (adaptada de useCartEdit)
+const reconstructOrderForTicket = (productosBackend, productosCache) => {
+  // Helper para buscar precio en caché si no viene en el backend
+  const findPrice = (nombre, categoria) => {
+    if (!productosCache || !productosCache[categoria]) return 0;
+    const producto = productosCache[categoria].find(p => p.nombre === nombre || nombre.includes(p.nombre));
+    return producto ? parseFloat(producto.precio) : 0;
+  };
+
+  // Helper para obtener precio de paquete
+  const getPaquetePrice = (num) => {
+    return num === 1 ? 295 : num === 2 ? 265 : num === 3 ? 395 : 0;
+  };
+
+  const newItems = [];
+  const pizzasBySize = {}; // Objeto para agrupar pizzas: { 'Mediana': [prod1, prod2], 'Grande': [...] }
+
+  productosBackend.forEach((prod, index) => {
+    // 1. Manejo de PIZZAS (Normales y Personalizadas)
+    if (prod.tipo === 'Pizza' || prod.tipo === 'Pizza Personalizada') {
+      let size = 'Grande'; // Default
+      let cleanName = prod.nombre;
+
+      // Intentar extraer tamaño del nombre o propiedades
+      if (prod.tamano) {
+        size = prod.tamano;
+      } else if (prod.detalles_ingredientes && prod.detalles_ingredientes.tamano) {
+        size = prod.detalles_ingredientes.tamano;
+      } else if (prod.nombre.includes(' - ')) {
+        const parts = prod.nombre.split(' - ');
+        size = parts[parts.length - 1];
+        cleanName = parts.slice(0, parts.length - 1).join(' - ');
+      }
+
+      // Limpiar nombre si es personalizada
+      if (prod.tipo === 'Pizza Personalizada') {
+        cleanName = 'Personalizada';
+        if (prod.detalles_ingredientes && prod.detalles_ingredientes.ingredientes) {
+          // Opcional: Agregar ingredientes al nombre o guardarlos aparte
+        }
+      } else {
+        // Quitar el tamaño del nombre si viene tipo "Hawaiana - Mediana" -> "Hawaiana"
+        cleanName = cleanName.replace(` - ${size}`, '');
+      }
+
+      if (!pizzasBySize[size]) {
+        pizzasBySize[size] = [];
+      }
+
+      // Buscar precio si falta
+      let precio = prod.precio || findPrice(cleanName, 'pizzas');
+      // Si no se encuentra, usar 0 por ahora
+
+      pizzasBySize[size].push({
+        ...prod,
+        nombre: cleanName,
+        tamano: size,
+        ingredientesNombres: prod.tipo === 'Pizza Personalizada' && prod.detalles_ingredientes
+          ? prod.detalles_ingredientes.ingredientes
+          : [],
+        conQueso: prod.con_queso || prod.conQueso,
+        precioUnitario: precio,
+        cantidad: prod.cantidad || 1,
+        // Si el backend no envía subtotal, lo calcularemos en el grupo o estimado aquí
+        subtotal: (precio * (prod.cantidad || 1)) || 0
+      });
+
+    }
+    // 2. Manejo de PAQUETES
+    else if (prod.tipo === 'Paquete') {
+      const numPaquete = prod.nombre.includes('1') ? 1 : prod.nombre.includes('2') ? 2 : 3;
+      const precio = getPaquetePrice(numPaquete);
+
+      let detallePaqueteStr = '';
+      let refresco = '';
+      let complemento = ''; // alitas
+      let pizza = '';
+      let pizzasArr = [];
+
+      if (prod.detalles_ingredientes) {
+        refresco = prod.detalles_ingredientes.refresco;
+
+        if (prod.detalles_ingredientes.pizzas) {
+          pizzasArr = prod.detalles_ingredientes.pizzas; // Array de nombres
+          detallePaqueteStr = pizzasArr.join(', ');
+        }
+
+        if (numPaquete === 2) {
+          pizza = pizzasArr[0] || '';
+          complemento = prod.detalles_ingredientes.alitas || prod.detalles_ingredientes.complemento || '';
+        }
+      }
+
+      newItems.push({
+        id: `pkt_${index}`,
+        tipoId: 'id_paquete',
+        nombre: prod.nombre,
+        cantidad: prod.cantidad,
+        precioUnitario: precio,
+        subtotal: precio * prod.cantidad,
+        esPaquete: true,
+        numeroPaquete: numPaquete,
+        detallePaquete: detallePaqueteStr,
+        nombresDetalle: {
+          rectangular: detallePaqueteStr,
+          pizzas: pizzasArr,
+          pizza: pizza,
+          complemento: complemento,
+          refresco: refresco
+        }
+      });
+    }
+    // 3. Manejo de GRUPOS ESPECIALES (Rectangular, Barra, Magno)
+    else if (['Rectangular', 'Barra', 'Magno'].includes(prod.tipo)) {
+      const tipoId = prod.tipo === 'Rectangular' ? 'id_rec' : prod.tipo === 'Barra' ? 'id_barr' : 'id_magno';
+      const precio = findPrice(prod.tipo, prod.tipo.toLowerCase());
+
+      // Convertir especialidades (array strings) a productos (array objetos)
+      let productosGrupo = [];
+      if (prod.especialidades && Array.isArray(prod.especialidades)) {
+        const counts = {};
+        prod.especialidades.forEach(esp => {
+          counts[esp] = (counts[esp] || 0) + 1;
+        });
+        productosGrupo = Object.keys(counts).map(key => ({
+          nombre: key,
+          cantidad: counts[key]
+        }));
+      }
+
+      newItems.push({
+        id: `grp_${index}`,
+        tipoId: tipoId,
+        nombre: prod.nombre,
+        cantidad: prod.cantidad,
+        subtotal: precio * prod.cantidad,
+        productos: productosGrupo
+      });
+    }
+    // 4. OTROS (Refrescos, complementos sueltos)
+    else {
+      let cat = 'refrescos';
+      if (prod.tipo === 'Refresco') cat = 'refrescos';
+
+      const precio = prod.precio || findPrice(prod.nombre, cat);
+
+      newItems.push({
+        id: `item_${index}`,
+        tipoId: 'item_simple',
+        nombre: prod.nombre,
+        cantidad: prod.cantidad,
+        precioUnitario: precio,
+        subtotal: precio * prod.cantidad
+      });
+    }
+  });
+
+  // Agregar los grupos de pizzas formados
+  Object.keys(pizzasBySize).forEach(size => {
+    const pizzas = pizzasBySize[size];
+    if (pizzas.length > 0) {
+      const totalQty = pizzas.reduce((acc, p) => acc + p.cantidad, 0);
+      const totalSub = pizzas.reduce((acc, p) => acc + p.subtotal, 0);
+
+      newItems.push({
+        tipoId: 'pizza_group',
+        tamano: size,
+        nombre: `Pizzas ${size}`,
+        cantidad: totalQty,
+        subtotal: totalSub,
+        productos: pizzas
+      });
+    }
+  });
+
+  return newItems;
+};
 
 export default function TodosPedidosPage() {
   const [loading, setLoading] = useState(false);
@@ -28,6 +207,60 @@ export default function TodosPedidosPage() {
   const [pedidoACancelar, setPedidoACancelar] = useState(null);
   const [canceling, setCanceling] = useState(false);
   const router = useRouter();
+
+  const handlePrint = async (row) => {
+    try {
+      setLoading(true);
+      // 1. Obtener detalles completos
+      const [detalle, productosData, clientesData] = await Promise.all([
+        fetchDetalleVenta(row.id_venta),
+        fetchProductosPorCategoria(),
+        catalogsService.getNombresClientes()
+      ]);
+
+      // 2. Reconstruir orden
+      const ordenTicket = reconstructOrderForTicket(detalle.productos, productosData);
+
+      // 3. Preparar datos cliente
+      let clienteEncontrado = null;
+      if (detalle.cliente) {
+        clienteEncontrado = clientesData.find(c => c.id_clie === detalle.cliente);
+      }
+
+      // 4. Datos Extra
+      const datosExtra = {
+        mesa: detalle.mesa,
+        nombreClie: detalle.nombreClie,
+        id_direccion: detalle.id_direccion,
+        // Si el backend devuelve la dirección completa como string, usarla:
+        direccion_completa: detalle.direccion_completa
+      };
+
+      // 5. Generar PDF
+      const blob = await pdf(
+        <TicketPDF
+          orden={ordenTicket}
+          total={detalle.total}
+          datosExtra={datosExtra}
+          fecha={detalle.fecha}
+          cliente={clienteEncontrado || { nombre: detalle.nombre_cliente }} // Fallback al nombre en detalle
+          tipoServicio={detalle.tipo_servicio}
+          comentarios={detalle.comentarios}
+        />
+      ).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+
+    } catch (err) {
+      console.error("Error al imprimir ticket:", err);
+      alert("Error al generar el ticket. Consulta la consola para más detalles.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   const fetchTodosPedidos = async () => {
     setLoading(true);
