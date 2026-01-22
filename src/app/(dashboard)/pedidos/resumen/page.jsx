@@ -13,6 +13,7 @@ import { catalogsService } from "@/services/catalogsService";
 import CancellationModal from "@/components/ui/CancellationModal";
 import { pdf } from '@react-pdf/renderer';
 import TicketPDF from '@/components/ui/TicketPDF';
+import PDFViewerModal from '@/components/ui/PDFViewerModal';
 
 // Función auxiliar para reconstruir la orden (adaptada de useCartEdit)
 const reconstructOrderForTicket = (productosBackend, productosCache) => {
@@ -207,6 +208,8 @@ export default function TodosPedidosPage() {
   const [cancellationModalOpen, setCancellationModalOpen] = useState(false);
   const [pedidoACancelar, setPedidoACancelar] = useState(null);
   const [canceling, setCanceling] = useState(false);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
   const router = useRouter();
 
   const handlePrint = async (row) => {
@@ -251,7 +254,8 @@ export default function TodosPedidosPage() {
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
+      setPdfUrl(url);
+      setPdfModalOpen(true);
 
     } catch (err) {
       console.error("Error al imprimir ticket:", err);
@@ -648,6 +652,15 @@ export default function TodosPedidosPage() {
         }}
         onConfirm={confirmCancellation}
         loading={canceling}
+      />
+
+      <PDFViewerModal
+        isOpen={pdfModalOpen}
+        pdfUrl={pdfUrl}
+        onClose={() => {
+          setPdfModalOpen(false);
+          setPdfUrl(null);
+        }}
       />
     </div >
   );
