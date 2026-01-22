@@ -117,7 +117,7 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
 
         // Sección Cliente
         if (tipoServicio === 2 || tipoServicio === 3) {
-            height += 35; // Header cliente + nombre
+            height += 45; // Header cliente + nombre + telefono (added extra space)
             if (datosExtra?.direccion_completa || datosExtra?.id_direccion) {
                 // Estimar líneas de dirección (aprox 35 chars por línea para font 8)
                 const dir = datosExtra.direccion_completa || 'Dirección registrada';
@@ -211,6 +211,7 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
                     <View style={styles.section}>
                         <Text style={{ fontWeight: 'bold' }}>Cliente:</Text>
                         <Text>{datosExtra?.nombreClie || cliente?.nombre || cliente?.razon_social || 'No especificado'}</Text>
+                        {cliente?.telefono && <Text>Tel: {cliente.telefono}</Text>}
                         {(datosExtra?.direccion_completa || datosExtra?.id_direccion) && (
                             <Text style={{ fontSize: 8 }}>Dirección: {datosExtra.direccion_completa || 'Dirección registrada'}</Text>
                         )}
