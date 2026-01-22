@@ -136,6 +136,13 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
                                     isSearchable
                                     className="text-black"
                                     noOptionsMessage={() => "No se encontraron clientes"}
+                                    filterOption={(option, inputValue) => {
+                                        if (!inputValue) return true;
+                                        const label = option.label.toLowerCase();
+                                        const telefono = option.data.telefono ? String(option.data.telefono) : '';
+                                        const search = inputValue.toLowerCase();
+                                        return label.includes(search) || telefono.includes(search);
+                                    }}
                                 />
                             </div>
                             <button

@@ -182,6 +182,7 @@ const POS = () => {
         const opcionesClientes = clientesData.map(cliente => ({
           value: cliente.id_clie,
           label: cliente.nombre || cliente.razon_social || 'Nombre no disponible',
+          telefono: cliente.telefono
         }));
         setClientes(opcionesClientes);
         setIngredientes(ingredientesData || []);
