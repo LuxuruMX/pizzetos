@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta" }) => {
+const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta", autoPrint = false }) => {
     if (!isOpen || !pdfUrl) return null;
 
     const handleClose = () => {
@@ -9,6 +9,38 @@ const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta" }) 
         }
         onClose();
     };
+
+    if (autoPrint) {
+        return (
+            <div style={{ position: 'fixed', top: 0, left: 0, width: 0, height: 0, opacity: 0, overflow: 'hidden' }}>
+                <iframe
+                    src={pdfUrl}
+                    className="w-full h-full border-0"
+                    title="PDF Viewer"
+                    onLoad={(e) => {
+                        try {
+                            const iframe = e.target;
+                            // Wait for the pdf to be fully rendered inside
+                            setTimeout(() => {
+                                iframe.contentWindow.focus();
+
+                                // Clean previous listeners if any
+                                iframe.contentWindow.onafterprint = null;
+
+                                iframe.contentWindow.onafterprint = () => {
+                                    handleClose();
+                                };
+
+                                iframe.contentWindow.print();
+                            }, 500);
+                        } catch (err) {
+                            console.error("Auto-print error:", err);
+                        }
+                    }}
+                />
+            </div>
+        );
+    }
 
     return (
         <div
@@ -35,6 +67,7 @@ const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta" }) 
                         src={pdfUrl}
                         className="w-full h-full border-0"
                         title="PDF Viewer"
+                    // Fallback simple print trigger if somehow autoPrint is false but we want manual action
                     />
                 </div>
             </div>

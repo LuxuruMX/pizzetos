@@ -891,6 +891,7 @@ const POS = () => {
           setPdfModalOpen(false);
           setPdfUrl(null);
         }}
+        autoPrint={true}
       />
     </div>
   );
