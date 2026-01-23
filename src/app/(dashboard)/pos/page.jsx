@@ -640,6 +640,18 @@ const POS = () => {
     enviarOrdenDomicilio(clienteSeleccionado, direccionSeleccionada, pagoData);
   };
 
+  const limpiarDatosServicio = () => {
+    setClienteSeleccionado(null);
+    setDireccionSeleccionada(null);
+    setDireccionDetalles(null);
+    setFechaEntrega(null);
+    setPagos([]);
+    setModalPagosAbierto(false);
+    setModalDireccionAbierto(false);
+    setModalPagoDomicilioAbierto(false);
+    setNombreClie('');
+  };
+
   const procesarProductos = () => {
     const productosCategoria = productos[categoriaActiva] || [];
     if (categoriasConModal.includes(categoriaActiva)) {
@@ -830,7 +842,10 @@ const POS = () => {
 
       <PaymentModal
         isOpen={modalPagosAbierto}
-        onClose={() => setModalPagosAbierto(false)}
+        onClose={() => {
+          setModalPagosAbierto(false);
+          setPagos([]);
+        }}
         total={total}
         onConfirm={handleConfirmarPagos}
         allowPartial={tipoServicio === 3}
@@ -838,7 +853,10 @@ const POS = () => {
 
       <AddressSelectionModal
         isOpen={modalDireccionAbierto}
-        onClose={() => setModalDireccionAbierto(false)}
+        onClose={() => {
+          setModalDireccionAbierto(false);
+          limpiarDatosServicio();
+        }}
         onConfirm={handleConfirmarDireccion}
         clientes={clientes}
         clienteSeleccionado={clienteSeleccionado}
@@ -851,7 +869,10 @@ const POS = () => {
 
       <DeliveryPaymentModal
         isOpen={modalPagoDomicilioAbierto}
-        onClose={() => setModalPagoDomicilioAbierto(false)}
+        onClose={() => {
+          setModalPagoDomicilioAbierto(false);
+          limpiarDatosServicio();
+        }}
         total={total}
         onConfirm={handleConfirmarPagoDomicilio}
       />

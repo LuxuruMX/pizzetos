@@ -95,7 +95,6 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
             const direccionObj = direcciones.find(d => d.id_dir === direccionSeleccionada);
 
             onConfirm(clienteSeleccionado, direccionSeleccionada, fechaEntrega, direccionObj);
-            onClose();
         }
     };
 
