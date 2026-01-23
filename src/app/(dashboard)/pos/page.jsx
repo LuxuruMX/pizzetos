@@ -697,18 +697,7 @@ const POS = () => {
     <div className={containerClass}>
       {/* ... Resto del JSX del componente ... */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-        <div className="flex-1 flex items-center gap-4">
-          {lastOrder && (
-            <button
-              onClick={handleImprimirTicket}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-full transition-colors"
-              title="Reimprimir último ticket"
-            >
-              <MdPrint size={24} />
-            </button>
-          )}
-        </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
+        <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
           <button
             onClick={() => setModalPaquete1(true)}
             className="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg transition-colors shadow"
@@ -733,6 +722,17 @@ const POS = () => {
           >
             Por Ingrediente
           </button>
+        </div>
+        <div className="flex items-center gap-4">
+          {lastOrder && (
+            <button
+              onClick={handleImprimirTicket}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-full transition-colors"
+              title="Reimprimir último ticket"
+            >
+              <MdPrint size={24} />
+            </button>
+          )}
         </div>
       </div>
 
