@@ -102,6 +102,7 @@ const AddClientModal = ({ isOpen, onClose, onClienteCreado }) => {
                 const nuevoCliente = {
                     value: clienteId,
                     label: `${formData.nombre} ${formData.apellido}`,
+                    telefono: formData.telefono
                 };
 
                 console.log('Nuevo cliente para select:', nuevoCliente);
