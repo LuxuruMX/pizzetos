@@ -843,8 +843,7 @@ const POS = () => {
       <PaymentModal
         isOpen={modalPagosAbierto}
         onClose={() => {
-          setModalPagosAbierto(false);
-          setPagos([]);
+          limpiarDatosServicio();
         }}
         total={total}
         onConfirm={handleConfirmarPagos}
