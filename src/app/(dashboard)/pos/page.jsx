@@ -77,7 +77,7 @@ const POS = () => {
   const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  const [tipoServicio, setTipoServicio] = useState(0);
+  const [tipoServicio, setTipoServicio] = useState(2);
   const [pagos, setPagos] = useState([]);
   const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
   const [mesa, setMesa] = useState('');
@@ -343,7 +343,7 @@ const POS = () => {
       setNombreClie('');
       setDireccionSeleccionada(null);
       setFechaEntrega(null);
-      setTipoServicio(0);
+      setTipoServicio(2);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -388,7 +388,7 @@ const POS = () => {
       setPagos([]);
       setMesa('');
       setNombreClie('');
-      setTipoServicio(0);
+      setTipoServicio(2);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -434,7 +434,7 @@ const POS = () => {
       setDireccionSeleccionada(null);
       setFechaEntrega(null);
       setClienteSeleccionado(null);
-      setTipoServicio(0);
+      setTipoServicio(2);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
@@ -478,7 +478,7 @@ const POS = () => {
       setDireccionSeleccionada(null);
       setFechaEntrega(null);
       setClienteSeleccionado(null);
-      setTipoServicio(0);
+      setTipoServicio(2);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       alert(error.message || 'Hubo un error al enviar la orden.');
