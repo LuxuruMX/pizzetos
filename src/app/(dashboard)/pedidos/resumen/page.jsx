@@ -14,12 +14,30 @@ import CancellationModal from "@/components/ui/CancellationModal";
 import { pdf } from '@react-pdf/renderer';
 import TicketPDF from '@/components/ui/TicketPDF';
 import PDFViewerModal from '@/components/ui/PDFViewerModal';
+import { PRECIOS_ORILLA_QUESO } from '@/config/prices';
 
 // Función auxiliar para reconstruir la orden (adaptada de useCartEdit)
 const reconstructOrderForTicket = (productosBackend, productosCache) => {
   // Helper para buscar precio en caché si no viene en el backend
-  const findPrice = (nombre, categoria) => {
+  const findPrice = (nombre, categoria, size = null) => {
     if (!productosCache || !productosCache[categoria]) return 0;
+
+    // Si tenemos tamaño, intentar filtrar por nombre y tamaño
+    if (size) {
+      // Normalizar nombres para comparación flexible
+      const targetName = nombre.toLowerCase();
+      const targetSize = size.toLowerCase();
+
+      const match = productosCache[categoria].find(p => {
+        const pName = p.nombre.toLowerCase();
+        const pSize = (p.tamano || '').toLowerCase();
+        return (pName === targetName || targetName.includes(pName)) && pSize === targetSize;
+      });
+
+      if (match) return parseFloat(match.precio);
+    }
+
+    // Fallback: buscar solo por nombre (primer coincidencia)
     const producto = productosCache[categoria].find(p => p.nombre === nombre || nombre.includes(p.nombre));
     return producto ? parseFloat(producto.precio) : 0;
   };
@@ -65,7 +83,7 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
       }
 
       // Buscar precio si falta
-      let precio = prod.precio || findPrice(cleanName, 'pizzas');
+      let precio = prod.precio || findPrice(cleanName, 'pizzas', size);
       // Si no se encuentra, usar 0 por ahora
 
       pizzasBySize[size].push({
@@ -178,14 +196,68 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
     const pizzas = pizzasBySize[size];
     if (pizzas.length > 0) {
       const totalQty = pizzas.reduce((acc, p) => acc + p.cantidad, 0);
-      const totalSub = pizzas.reduce((acc, p) => acc + p.subtotal, 0);
+
+      // Lógica de cálculo 2x1 (Porteda de useCart.js)
+      const unidades = [];
+      let costoTotalQueso = 0;
+
+      pizzas.forEach(prod => {
+        let precioBase = parseFloat(prod.precioUnitario || 0);
+
+        if (prod.conQueso) {
+          const sizeName = prod.tamano;
+          const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
+            key => key.toLowerCase() === sizeName.toLowerCase()
+          ) || sizeName;
+          const extraPrecio = PRECIOS_ORILLA_QUESO[tamanoKey] || 0;
+
+
+          precioBase -= extraPrecio;
+
+          costoTotalQueso += extraPrecio * prod.cantidad;
+        }
+
+        // Asegurar que no sea negativo (si precioUnitario no incluía queso)
+        if (precioBase < 0) precioBase = parseFloat(prod.precioUnitario || 0);
+
+
+        for (let i = 0; i < prod.cantidad; i++) {
+          unidades.push({
+            precio: precioBase
+          });
+        }
+      });
+
+      unidades.sort((a, b) => b.precio - a.precio);
+
+      const pares = Math.floor(unidades.length / 2);
+      const sobra = unidades.length % 2;
+      let nuevoSubtotal = 0;
+      let unitIndex = 0;
+
+      for (let i = 0; i < pares; i++) {
+        nuevoSubtotal += unidades[unitIndex].precio;
+        unitIndex++;
+        unitIndex++;
+      }
+
+      if (sobra > 0) {
+        nuevoSubtotal += unidades[unitIndex].precio * 0.6;
+        unitIndex++;
+      }
+
+      nuevoSubtotal += costoTotalQueso;
+
+      // Si el cálculo da algo muy loco (ej. 0), fallback al original sumado
+      const totalSubOriginal = pizzas.reduce((acc, p) => acc + p.subtotal, 0);
+      if (nuevoSubtotal <= 0 && totalSubOriginal > 0) nuevoSubtotal = totalSubOriginal;
 
       newItems.push({
         tipoId: 'pizza_group',
         tamano: size,
         nombre: `Pizzas ${size}`,
         cantidad: totalQty,
-        subtotal: totalSub,
+        subtotal: nuevoSubtotal,
         productos: pizzas
       });
     }
