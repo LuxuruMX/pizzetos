@@ -246,21 +246,38 @@ export const useCartEdit = () => {
         }
       }
 
+      // --- Lógica para manejar "id" como objeto/array (Backend nuevo) ---
+      let realId = prod.id;
+      let detallePaqueteObj = null;
+      let detalleRectangularArr = null;
+
+      if (typeof prod.id === 'object' && prod.id !== null) {
+          if (Array.isArray(prod.id)) {
+             // Es Rectangular/Barra con array de IDs
+             detalleRectangularArr = prod.id;
+             realId = `composite_${Date.now()}_${index}`; // Generar un ID temporal seguro
+          } else {
+             // Es Paquete con objeto de detalles
+             detallePaqueteObj = prod.id;
+             realId = detallePaqueteObj.id_paquete || index;
+          }
+      }
+
       // Si es un paquete, establecer nombre y precio fijo (si no vino del backend ya correcto)
       if (esPaquete) {
-        nombre = `Paquete ${prod.id}`;
+        nombre = `Paquete ${realId}`;
         // Si el precio viene del backend (prod.precio), usarlo. Si no, hardcode.
         if (!precio) {
-             precio = prod.id === 1 ? 295 : prod.id === 2 ? 265 : prod.id === 3 ? 395 : 0;
+             precio = realId === 1 ? 295 : realId === 2 ? 265 : realId === 3 ? 395 : 0;
         }
       }
 
       // Crear ID único para el carrito
-      const idCarrito = `original_${prod.tipo}_${prod.id}_${index}_${prod.tamaño || 'std'}`;
+      const idCarrito = `original_${prod.tipo}_${realId}_${index}_${prod.tamaño || 'std'}`;
 
       const itemBase = {
         id: idCarrito,
-        idProducto: prod.id,
+        idProducto: realId,
         tipoId: prod.tipo,
         nombre: nombre,
         tamano: prod.tamaño || prod.tamano || 'N/A',
@@ -276,30 +293,44 @@ export const useCartEdit = () => {
       };
 
       if (esPaquete) {
-        // Parsear detalle_paquete si viene como objeto (nueva estructura)
+        // Parsear detalle_paquete
         let detallePaquete = null;
-        let idRefresco = prod.id_refresco; // Fallback legacy
+        let idRefresco = null; 
         let idPizzas = [];
-        let idHamb = prod.id_hamb;
-        let idAlis = prod.id_alis;
+        let idHamb = null;
+        let idAlis = null;
+        let pId = null;
 
-        if (prod.detalle_paquete && typeof prod.detalle_paquete === 'object') {
-            // Estructura nueva: { id_pizzas: [], id_refresco: 17, id_hamb... }
-            detallePaquete = prod.detalle_paquete.id_pizzas ? prod.detalle_paquete.id_pizzas.join(',') : null;
+        if (detallePaqueteObj) {
+            // Caso Nuevo: id viene como objeto
+            pId = detallePaqueteObj.id_paquete;
+            idPizzas = detallePaqueteObj.id_pizzas || [];
+            detallePaquete = idPizzas.join(',');
+            idRefresco = detallePaqueteObj.id_refresco;
+            idHamb = detallePaqueteObj.id_hamb;
+            idAlis = detallePaqueteObj.id_alis;
+        } else if (prod.detalle_paquete && typeof prod.detalle_paquete === 'object') {
+            // Caso anterior (si backend cambia parcialmente)
+            pId = prod.id;
+            idPizzas = prod.detalle_paquete.id_pizzas || [];
+            detallePaquete = idPizzas.join(',');
             idRefresco = prod.detalle_paquete.id_refresco;
             idHamb = prod.detalle_paquete.id_hamb;
             idAlis = prod.detalle_paquete.id_alis;
-            idPizzas = prod.detalle_paquete.id_pizzas || [];
         } else {
-            // Estructura legacy o string
+            // Caso Legacy
+            pId = prod.id;
             detallePaquete = prod.detalle_paquete;
+            idRefresco = prod.id_refresco;
+            // id_pizza legacy?
+            if (prod.id_pizza) idPizzas = [prod.id_pizza];
         }
 
         itemBase.datoPaquete = {
-          id_paquete: prod.id, // el ID del paquete (1, 2, 3)
-          id_refresco: idRefresco || null,
-          detalle_paquete: detallePaquete, // "4,8"
-          id_pizza: idPizzas.length > 0 ? idPizzas[0] : (prod.id_pizza || null), // Legacy fallback
+          id_paquete: pId, // el ID del paquete (1, 2, 3)
+          id_refresco: idRefresco || 17, // Fallback default ref
+          detalle_paquete: detallePaquete, 
+          id_pizza: idPizzas.length > 0 ? idPizzas[0] : null, 
           id_hamb: idHamb || null,
           id_alis: idAlis || null,
         };
@@ -307,22 +338,22 @@ export const useCartEdit = () => {
       
       // LOGICA RECTANGULAR / BARRA (detalle como array de IDs)
       if (['rectangular', 'id_rec', 'id_barr', 'barra', 'id_magno', 'magno'].includes(prod.tipo)) {
-          // Normalizar tipoId a formato interno si es necesario (id_rec, id_barr, id_magno)
-          // El backend puede mandar "rectangular" o "id_rec"
+          // Normalizar tipoId
           let tipoInterno = 'id_rec';
           if(['barra', 'id_barr'].includes(prod.tipo)) tipoInterno = 'id_barr';
           if(['magno', 'id_magno'].includes(prod.tipo)) tipoInterno = 'id_magno';
           
           itemBase.tipoId = tipoInterno; // Asegurar consistencia
 
-          const detalleArray = prod.detalle_rectangular || prod.detalle_barra || prod.detalle || [];
+          // Usar el array extraído arriba o buscar en otras propiedades legacy
+          const detalleArray = detalleRectangularArr || prod.detalle_rectangular || prod.detalle_barra || prod.detalle || [];
+          
           if (Array.isArray(detalleArray) && detalleArray.length > 0) {
               // Convertir IDs en subproductos
               const subProductos = detalleArray.map((idProd, idx) => {
                   let nombreSub = 'Ingrediente';
                   
-                  // Buscar nombre en caché (pizzas/ingredientes?)
-                  // Asumimos que son IDs de Pizzas normales (como en creación)
+                  // Buscar nombre en caché (pizzas)
                   if (productosCache && productosCache.pizzas) {
                       const p = productosCache.pizzas.find(x => x.id === idProd);
                       if (p) nombreSub = p.nombre;
