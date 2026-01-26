@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { PRECIOS_ORILLA_QUESO } from '@/config/prices';
 
 export const useCartEdit = () => {
   const [orden, setOrden] = useState([]);
   const [productosOriginales, setProductosOriginales] = useState([]);
   const [statusPrincipal, setStatusPrincipal] = useState(1);
+  const [ingredientesCache, setIngredientesCache] = useState([]); // Nuevo estado para cache de ingredientes/nombres
 
   const calcularPrecioYSubtotal = (precioBase, cantidad) => {
     const pares = Math.floor(cantidad / 2);
@@ -33,8 +35,66 @@ export const useCartEdit = () => {
           subtotal: item.precioUnitario * item.cantidad,
         };
       }
+      
+      // Nueva lógica grupo pizza unificado
+      if (item.tipoId === 'pizza_group') {
+        const unidades = [];
+        let costoTotalQueso = 0;
+        
+        if (item.productos) {
+            item.productos.forEach(prod => {
+                // Ignorar cancelados para el cálculo 2x1, PERO...
+                // Si el item está cancelado, no suma a la cuenta.
+                if (prod.status === 0) return;
 
-      // Categorías con descuento 2x1
+                let precioBase = parseFloat(prod.precio || 0);
+                
+                if (prod.conQueso) {
+                    const sizeName = item.tamano;
+                    const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
+                        key => key.toLowerCase() === sizeName.toLowerCase()
+                    ) || sizeName;
+                    const extraPrecio = PRECIOS_ORILLA_QUESO[tamanoKey] || 0;
+                    precioBase -= extraPrecio;
+                    costoTotalQueso += extraPrecio * prod.cantidad;
+                }
+                
+                for (let i = 0; i < prod.cantidad; i++) {
+                    unidades.push({
+                        precio: precioBase
+                    });
+                }
+            });
+        }
+
+        unidades.sort((a, b) => b.precio - a.precio);
+
+        const pares = Math.floor(unidades.length / 2);
+        const sobra = unidades.length % 2;
+        let nuevoSubtotal = 0;
+        let unitIndex = 0;
+        
+        for (let i = 0; i < pares; i++) {
+            nuevoSubtotal += unidades[unitIndex].precio; // Paga
+            unitIndex++;
+            unitIndex++; // Gratis
+        }
+
+        if (sobra > 0) {
+            nuevoSubtotal += unidades[unitIndex].precio * 0.6;
+            unitIndex++;
+        }
+
+        nuevoSubtotal += costoTotalQueso;
+
+        return {
+            ...item,
+            subtotal: nuevoSubtotal,
+            precioUnitario: unidades.length > 0 ? (nuevoSubtotal / unidades.length) : 0
+        };
+      }
+
+      // Categorías con descuento 2x1 (Legacy fallback)
       const categoriasConDescuento = ["id_pizza", "id_maris"];
 
       if (!categoriasConDescuento.includes(item.tipoId)) {
@@ -68,9 +128,8 @@ export const useCartEdit = () => {
   };
 
   // Cargar productos desde el backend y completar con datos de la caché
-  // Cargar productos desde el backend y completar con datos de la caché
-  const cargarProductosOriginales = (productosBackend, productosCache) => {
-    // Mapear tipo del backend al nombre de categoría
+  const cargarProductosOriginales = (productosBackend, productosCache, ingredientesCacheData = []) => {
+    // Definir tipoMap al inicio
     const tipoMap = {
       'id_pizza': 'pizzas',
       'id_hamb': 'hamburguesas',
@@ -83,28 +142,86 @@ export const useCartEdit = () => {
       'id_maris': 'mariscos',
       'id_refresco': 'refrescos',
       'id_paquete': 'paquetes'
+      // custom_pizza no está en caché de productos normal
     };
+
+    setIngredientesCache(ingredientesCacheData);
 
     const productosConvertidos = productosBackend.map((prod, index) => {
       const esPaquete = prod.tipo === 'id_paquete';
+      const esCustomPizza = prod.tipo === 'custom_pizza';
       
       let nombre = `Producto ${prod.id}`;
-      let precio = 0;
+      let precio = parseFloat(prod.precio || prod.precio_unitario || 0);
 
+      // --- LOGICA CUSTOM PIZZA ---
+      if (esCustomPizza) {
+        // Reconstruir nombre basado en ingredientes
+        const ingredientesIds = prod.ingredientes || []; 
+        // Asumiendo prod.ingredientes sea array de IDs. Si viene como objeto {tamano, ingredientes}, ajustar.
+        let idsOnly = [];
+        let tamanoId = 0;
+        
+        if (prod.ingredientes && typeof prod.ingredientes === 'object' && !Array.isArray(prod.ingredientes)) {
+            idsOnly = prod.ingredientes.ingredientes || [];
+            tamanoId = prod.ingredientes.tamano;
+        } else if (Array.isArray(prod.ingredientes)) {
+            idsOnly = prod.ingredientes;
+        }
+
+        const nombresIng = idsOnly.map(id => {
+            const ing = ingredientesCacheData.find(i => i.id_ingrediente === id);
+            return ing ? ing.nombre : '';
+        }).filter(n => n !== '');
+        
+        const nombreIngredientes = nombresIng.length > 0
+          ? nombresIng.slice(0, 3).join(', ') + (nombresIng.length > 3 ? '...' : '')
+          : 'Personalizada';
+          
+        nombre = `Pizza Custom - ${nombreIngredientes}`;
+        
+        // Crear item para carrito
+        const idCarrito = `original_custom_${index}_${Date.now()}`;
+        
+        return {
+          id: idCarrito,
+          idProducto: null, // No tiene ID de producto de catálogo
+          tipoId: 'custom_pizza',
+          nombre: nombre,
+          tamano: prod.tamaño || prod.tamano || 'Grande', // Asumiendo default
+          precioOriginal: precio,
+          precioUnitario: precio,
+          cantidad: prod.cantidad,
+          subtotal: precio * prod.cantidad,
+          status: prod.status,
+          esPaquete: false,
+          esCustom: true,
+          esOriginal: true,
+          esModificado: false,
+          productos: null, // Custom pizzas no se agrupan en lógica legacy, pero sí en pizza_group
+          // Guardar detalle de ingredientes
+          ingredientes: {
+             tamano: tamanoId || 0,
+             ingredientes: idsOnly
+          },
+          ingredientesNombres: nombresIng
+        };
+      }
+
+      // --- LOGICA PRODUCTO NORMAL ---
       // Buscar en la caché de productos
       const categoria = tipoMap[prod.tipo];
       if (categoria && productosCache[categoria]) {
         const categoriaProductos = productosCache[categoria];
-
-        // Determinar el campo ID que usa esta categoría
-        const tipoIdCampo = prod.tipo; // ej: 'id_pizza', 'id_hamb'
+        const tipoIdCampo = prod.tipo; 
 
         // Para pizzas, mariscos y refrescos que tienen tamaño/subcategoría
-        if (['id_pizza', 'id_maris', 'id_refresco'].includes(prod.tipo) && prod.tamaño) {
+        if (['id_pizza', 'id_maris', 'id_refresco'].includes(prod.tipo) && (prod.tamaño || prod.tamano)) {
+          const sizeBuscar = prod.tamaño || prod.tamano;
           // Buscar por ID del producto y tamaño específico
           const variante = categoriaProductos.find(p => 
             p[tipoIdCampo] === prod.id && 
-            (p.subcategoria === prod.tamaño || p.tamaño === prod.tamaño)
+            (p.subcategoria === sizeBuscar || p.tamaño === sizeBuscar || p.tamano === sizeBuscar)
           );
           
           if (variante) {
@@ -114,7 +231,7 @@ export const useCartEdit = () => {
             // Fallback: buscar solo por ID
             const productoBase = categoriaProductos.find(p => p[tipoIdCampo] === prod.id);
             if (productoBase) {
-              nombre = `${productoBase.nombre} ${prod.tamaño}`;
+              nombre = `${productoBase.nombre} ${sizeBuscar}`;
               precio = parseFloat(productoBase.precio);
             }
           }
@@ -129,55 +246,57 @@ export const useCartEdit = () => {
         }
       }
 
-      // Si es un paquete, establecer nombre y precio fijo
+      // Si es un paquete, establecer nombre y precio fijo (si no vino del backend ya correcto)
       if (esPaquete) {
         nombre = `Paquete ${prod.id}`;
-        precio = prod.id === 1 ? 295 : prod.id === 2 ? 265 : prod.id === 3 ? 395 : 0;
+        // Si el precio viene del backend (prod.precio), usarlo. Si no, hardcode.
+        // Pero preferimos mantener el precio que viene del backend si existe.
+        if (!precio) {
+             precio = prod.id === 1 ? 295 : prod.id === 2 ? 265 : prod.id === 3 ? 395 : 0;
+        }
       }
 
       // Crear ID único para el carrito
-      // Usar index para garantizar unicidad si hay múltiples líneas del mismo producto
       const idCarrito = `original_${prod.tipo}_${prod.id}_${index}_${prod.tamaño || 'std'}`;
 
-      // Preparar objeto base
       const itemBase = {
-        // IDs
         id: idCarrito,
-        idProducto: prod.id, // ID real del producto
-        tipoId: prod.tipo, // 'id_pizza', 'id_hamb', etc.
-        
-        // Información del producto
+        idProducto: prod.id,
+        tipoId: prod.tipo,
         nombre: nombre,
-        tamano: prod.tamaño || 'N/A',
-        
-        // Precios (obtenidos de la caché)
+        tamano: prod.tamaño || prod.tamano || 'N/A',
         precioOriginal: precio,
         precioUnitario: precio,
-        
-        // Cantidad y cálculos
         cantidad: prod.cantidad,
         subtotal: precio * prod.cantidad,
-        
-        // Estado
         status: prod.status,
         esPaquete: esPaquete,
         esOriginal: true,
         esModificado: false,
-        
-        // Para items agrupados (pizzas del mismo tamaño)
         productos: null
       };
 
-      // Si es un paquete, agregar datoPaquete con la información del backend
       if (esPaquete) {
         itemBase.datoPaquete = {
-          id_paquete: prod.id,
+          id_paquete: prod.id, // el ID del paquete (1, 2, 3)
           id_refresco: prod.id_refresco || null,
-          detalle_paquete: prod.detalle_paquete || null,
+          detalle_paquete: prod.detalle_paquete || null, // "4,8"
           id_pizza: prod.id_pizza || null,
           id_hamb: prod.id_hamb || null,
           id_alis: prod.id_alis || null,
         };
+      }
+      
+      // Manejar queso si viene del backend
+      if (prod.queso && parseFloat(prod.queso) > 0) {
+         itemBase.conQueso = true;
+         // El precio unitario YA DEBERIA incluir el queso si viene del backend como total por item?
+         // Usualmente el backend manda precio_unitario final. 
+         // Pero para nuestra lógica de recalculo (donde sumamos queso aparte), es mejor tener el precio base y el flag.
+         // Si precio del backend incluye queso, restarlo del base.
+         // Asumiremos que precio = base + queso.
+         // itemBase.precioOriginal = precio - parseFloat(prod.queso); 
+         // PERO OJO: Nuestra lógica de recalcularPrecios en useCart espera precioBase SIN queso.
       }
 
       return itemBase;
@@ -193,18 +312,27 @@ export const useCartEdit = () => {
   // Agrupar pizzas/mariscos del mismo tamaño en un solo item del carrito
   const agruparProductosPorTamano = (productos) => {
     const agrupados = [];
-    const categoriasAgrupables = ["id_pizza", "id_maris"];
+    const categoriasAgrupables = ["id_pizza", "id_maris", "custom_pizza"]; // Añadido custom_pizza
     const yaAgrupados = new Set();
 
     productos.forEach((prod, index) => {
       if (yaAgrupados.has(index)) return;
 
       if (categoriasAgrupables.includes(prod.tipoId)) {
-        // Buscar todos los productos del mismo tipo y tamaño
+        // Buscar todos los productos del mismo tipo y tamaño (incluyendo custom)
+        // Nota: para custom_pizza, prod.tipoId es 'custom_pizza', pero queremos agruparlas con 'id_pizza' (o en un grupo 'pizza_group' genérico)
+        // Vamos a normalizar el tipo de grupo.
+        
+        let targetGroupType = prod.tipoId;
+        if (prod.tipoId === 'id_pizza' || prod.tipoId === 'custom_pizza') {
+            targetGroupType = 'pizza_group';
+        }
+
+        // Buscar items compatibles para este grupo
         const grupo = productos.filter(
           (p, i) =>
             !yaAgrupados.has(i) &&
-            p.tipoId === prod.tipoId &&
+            ((p.tipoId === 'id_pizza' || p.tipoId === 'custom_pizza') ? targetGroupType === 'pizza_group' : p.tipoId === prod.tipoId) &&
             p.tamano === prod.tamano &&
             !p.esPaquete
         );
@@ -216,39 +344,74 @@ export const useCartEdit = () => {
           );
           if (idx !== -1) yaAgrupados.add(idx);
         });
+        
+        // Si es mariscos, el grupo es normal
+        if (prod.tipoId === 'id_maris') {
+             const cantidadTotal = grupo.reduce((sum, p) => sum + p.cantidad, 0);
+             const productosDetalle = grupo.map((p) => ({
+                id: p.id,
+                idProducto: p.idProducto,
+                nombre: p.nombre,
+                cantidad: p.cantidad,
+                status: p.status,
+                esOriginal: p.esOriginal,
+                precio: p.precioOriginal,
+                conQueso: p.conQueso || false
+            }));
 
-        // SIEMPRE crear item agrupado para pizzas y mariscos
-        const cantidadTotal = grupo.reduce((sum, p) => sum + p.cantidad, 0);
-        const productosDetalle = grupo.map((p) => ({
-          id: p.id, // Usar el ID único del item (no el del producto)
-          idProducto: p.idProducto, // Guardar ID del producto para referencia
-          nombre: p.nombre,
-          cantidad: p.cantidad,
-          status: p.status,
-          esOriginal: p.esOriginal
-        }));
+            const statusGrupo = grupo.some(p => p.status !== 0) ? 1 : 0;
 
-        // El status del grupo es 1 si al menos uno de los productos es activo (no 0)
-        const statusGrupo = grupo.some(p => p.status !== 0) ? 1 : 0;
+            agrupados.push({
+                id: `${prod.tipoId}_${prod.tamano}_${Date.now()}_${Math.random()}`,
+                tipoId: prod.tipoId, // id_maris
+                nombre: `Mariscos ${prod.tamano}`,
+                tamano: prod.tamano,
+                precioOriginal: prod.precioOriginal,
+                precioUnitario: 0,
+                cantidad: cantidadTotal,
+                subtotal: 0,
+                status: statusGrupo,
+                esPaquete: false,
+                esOriginal: true,
+                esModificado: false,
+                productos: productosDetalle,
+            });
+        } else {
+             // Es PIZZA GROUP (id_pizza o custom_pizza)
+            const cantidadTotal = grupo.reduce((sum, p) => sum + p.cantidad, 0);
+            const productosDetalle = grupo.map((p) => ({
+                id: p.id,
+                idProducto: p.idProducto, // null si es custom
+                nombre: p.nombre,
+                cantidad: p.cantidad,
+                status: p.status,
+                esOriginal: p.esOriginal,
+                esCustom: p.esCustom,
+                precio: p.precioOriginal,
+                conQueso: p.conQueso || false,
+                ingredientes: p.ingredientes, // para custom
+                tipoId: p.tipoId // guardar tipo original (id_pizza o custom_pizza)
+            }));
 
-        agrupados.push({
-          id: `${prod.tipoId}_${prod.tamano}_${Date.now()}_${Math.random()}`,
-          idProducto: null, // No hay un ID único cuando está agrupado
-          tipoId: prod.tipoId,
-          nombre: `${prod.tipoId === "id_pizza" ? "Pizzas" : "Mariscos"} ${
-            prod.tamano
-          }`,
-          tamano: prod.tamano,
-          precioOriginal: prod.precioOriginal,
-          precioUnitario: prod.precioOriginal * 0.6, // Primera es suelta
-          cantidad: cantidadTotal,
-          subtotal: 0, // Se recalcula
-          status: statusGrupo,
-          esPaquete: false,
-          esOriginal: true,
-          esModificado: false,
-          productos: productosDetalle,
-        });
+            const statusGrupo = grupo.some(p => p.status !== 0) ? 1 : 0;
+
+            agrupados.push({
+                id: `pizza_group_${prod.tamano}_original_${Date.now()}`,
+                tipoId: 'pizza_group', // UNIFICADO
+                nombre: `Pizzas ${prod.tamano}`,
+                tamano: prod.tamano,
+                precioOriginal: 0, 
+                precioUnitario: 0,
+                cantidad: cantidadTotal,
+                subtotal: 0,
+                status: statusGrupo,
+                esPaquete: false,
+                esOriginal: true,
+                esModificado: false,
+                productos: productosDetalle,
+            });
+        }
+
       } else {
         agrupados.push(prod);
       }
@@ -406,6 +569,87 @@ export const useCartEdit = () => {
     });
   };
 
+  const agregarPizzaCustom = (customPizza) => {
+    setOrden((prevOrden) => {
+      const tamano = customPizza.nombreTamano || customPizza.tamano;
+      const ingredientesNombres = customPizza.ingredientesNombres || [];
+      const nombreIngredientes = ingredientesNombres.length > 0 
+        ? ingredientesNombres.slice(0, 3).join(', ') + (ingredientesNombres.length > 3 ? '...' : '')
+        : 'Personalizada';
+      
+      const idProducto = `custom_${Date.now()}`;
+      const nombreProducto = `Pizza Custom - ${nombreIngredientes}`;
+      const precio = customPizza.precio;
+
+      // Buscar grupo existente por tamaño (pizza_group)
+      const existingGroupIndex = prevOrden.findIndex(
+        item => item.tipoId === 'pizza_group' && item.tamano === tamano
+      );
+
+      let nuevaOrden = [...prevOrden];
+
+      if (existingGroupIndex >= 0) {
+          // Agregar al grupo existente
+          const group = nuevaOrden[existingGroupIndex];
+          const nuevosProductos = [
+              ...(group.productos || []),
+              {
+                  id: idProducto,
+                  nombre: nombreProducto,
+                  precio: precio,
+                  cantidad: 1,
+                  status: 1,
+                  tipoId: 'custom_pizza', // Guardar tipoId
+                  esCustom: true,
+                  esNuevo: true,
+                  ingredientes: {
+                    tamano: customPizza.tamano, // ID tamano
+                    ingredientes: customPizza.ingredientes // IDs ingredientes
+                  }
+              }
+          ];
+          
+          nuevaOrden[existingGroupIndex] = {
+              ...group,
+              cantidad: group.cantidad + 1,
+              status: 1, // Reactivar grupo si estaba inactivo
+              productos: nuevosProductos,
+              esModificado: true
+          };
+      } else {
+          // Crear nuevo grupo
+          nuevaOrden.push({
+              id: `pizza_group_${tamano}_${Date.now()}`,
+              tipoId: 'pizza_group',
+              nombre: `Pizzas ${tamano}`,
+              tamano: tamano,
+              esPaquete: false,
+              cantidad: 1,
+              precioUnitario: 0, 
+              subtotal: 0,
+              status: 1,
+              esNuevo: true, 
+              productos: [{
+                  id: idProducto,
+                  nombre: nombreProducto,
+                  precio: precio,
+                  cantidad: 1,
+                  status: 1,
+                  tipoId: 'custom_pizza',
+                  esCustom: true,
+                  esNuevo: true,
+                  ingredientes: {
+                    tamano: customPizza.tamano,
+                    ingredientes: customPizza.ingredientes
+                  }
+              }]
+          });
+      }
+
+      return recalcularPrecios(nuevaOrden);
+    });
+  };
+
   // Agregar paquete
   const agregarPaquete = (paquete) => {
     setOrden((prevOrden) => {
@@ -459,13 +703,21 @@ export const useCartEdit = () => {
 
             const diferencia = nuevaCantidad - productoActual.cantidad;
 
+            // Para grupos especiales, mantener la lógica correcta
+            const gruposEspeciales = ['id_rec', 'id_barr', 'id_magno'];
+            let nuevaCantidadPadre = item.cantidad + diferencia;
+            
+            if (gruposEspeciales.includes(item.tipoId)) {
+                nuevaCantidadPadre = item.cantidad; // No cambia al mover subproductos
+            }
+
             return {
               ...item,
-              cantidad: item.cantidad + diferencia,
+              cantidad: nuevaCantidadPadre,
               productos: item.productos.map((p) =>
                 p.id === productoId ? { ...p, cantidad: nuevaCantidad } : p
               ),
-              esModificado: item.esOriginal,
+              esModificado: item.esOriginal, // Marcar como modificado aunque sea original
             };
           } else {
             // Actualizar cantidad del item completo
@@ -476,6 +728,97 @@ export const useCartEdit = () => {
               status: item.status === 2 ? 2 : 1 // Mantener status 2 si ya lo tiene
             };
           }
+        }
+        return item;
+      });
+
+      return recalcularPrecios(nuevaOrden);
+    });
+  };
+
+  
+  const toggleQueso = (id, tipoId, productoId = null) => {
+    setOrden((prevOrden) => {
+      const nuevaOrden = prevOrden.map((item) => {
+        // Caso específico para pizza_group
+        if (item.id === id && item.tipoId === 'pizza_group' && item.productos) {
+           const sizeName = item.tamano;
+           const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
+             key => key.toLowerCase() === sizeName.toLowerCase()
+           ) || sizeName;
+           const extraPrecio = PRECIOS_ORILLA_QUESO[tamanoKey] || 0;
+
+           if (extraPrecio === 0) return item; 
+
+           const nuevosProductos = [];
+           let cantidadAjustada = item.cantidad;
+
+           item.productos.forEach(prod => {
+             if (prod.id === productoId) {
+                // Verificar si se puede editar (status != 2)
+                if (prod.status === 2) {
+                    nuevosProductos.push(prod);
+                    return;
+                }
+
+                const conQuesoNuevo = !prod.conQueso;
+                
+                // Opción 1: Si es producto unico (cantidad 1), togglear
+                if (prod.cantidad === 1) {
+                    let nuevoPrecio = parseFloat(prod.precio);
+                    if (conQuesoNuevo) {
+                        nuevoPrecio += extraPrecio;
+                    } else {
+                        nuevoPrecio -= extraPrecio;
+                    }
+
+                     nuevosProductos.push({
+                      ...prod,
+                      conQueso: conQuesoNuevo,
+                      precio: nuevoPrecio,
+                      esModificado: true 
+                    });
+                } else {
+                     // Opción 2: Si hay multiples, separar
+                     nuevosProductos.push({
+                        ...prod,
+                        cantidad: prod.cantidad - 1,
+                     });
+                     
+                     // Crear nuevo
+                     let precioUnitario = parseFloat(prod.precio);
+                     // Ajustar baseprice: el precio de prod ya incluye o no queso actual
+                     // Si prod.conQueso es false, precio es base.
+                     // Si prod.conQueso es true, precio es base + extra.
+                     
+                     // Queremos el nuevo item con conQuesoNuevo.
+                     // Si ahora es conQueso, base + extra.
+                     // Si ahora sin queso, base.
+                     
+                     let precioBase = prod.conQueso ? (precioUnitario - extraPrecio) : precioUnitario;
+                     let nuevoPrecioFinal = conQuesoNuevo ? (precioBase + extraPrecio) : precioBase;
+
+                     nuevosProductos.push({
+                        ...prod,
+                        id: `${prod.id}_queso_${Date.now()}`,
+                        cantidad: 1,
+                        conQueso: conQuesoNuevo,
+                        precio: nuevoPrecioFinal,
+                        esModificado: true,
+                        esNuevo: true
+                     });
+                }
+             } else {
+               nuevosProductos.push(prod);
+             }
+           });
+
+           return {
+               ...item,
+               cantidad: cantidadAjustada, // No cambia total items
+               productos: nuevosProductos,
+               esModificado: true
+           };
         }
         return item;
       });
@@ -618,12 +961,40 @@ export const useCartEdit = () => {
       } else if (item.productos && item.productos.length > 0) {
         // Items agrupados (pizzas/mariscos del mismo tamaño)
         item.productos.forEach((prod) => {
-          items.push({
-            cantidad: prod.cantidad,
-            precio_unitario: item.precioUnitario || 0,
-            [item.tipoId]: prod.idProducto || prod.id, // Usar idProducto si existe, sino id
-            status: prod.status !== undefined ? prod.status : (item.status ?? 1),
-          });
+          
+          if (item.tipoId === 'pizza_group') {
+              // Manejo nuevo pizza_group
+              if (prod.tipoId === 'custom_pizza' || prod.esCustom) {
+                  items.push({
+                      cantidad: prod.cantidad,
+                      precio_unitario: parseFloat(prod.precio),
+                      ingredientes: {
+                          tamano: prod.ingredientes.tamano,
+                          ingredientes: prod.ingredientes.ingredientes
+                      },
+                      tipo: 'custom_pizza',
+                      status: prod.status !== undefined ? prod.status : (item.status ?? 1),
+                      conQueso: prod.conQueso
+                  });
+              } else {
+                  // Pizza normal o marisco dentro de grupo
+                  items.push({
+                    cantidad: prod.cantidad,
+                    precio_unitario: parseFloat(prod.precio),
+                    [prod.tipoId || 'id_pizza']: prod.idProducto || prod.id,
+                    status: prod.status !== undefined ? prod.status : (item.status ?? 1),
+                    conQueso: prod.conQueso
+                  });
+              }
+          } else {
+              // Legacy
+              items.push({
+                cantidad: prod.cantidad,
+                precio_unitario: item.precioUnitario || 0,
+                [item.tipoId]: prod.idProducto || prod.id, // Usar idProducto si existe, sino id
+                status: prod.status !== undefined ? prod.status : (item.status ?? 1),
+              });
+          }
         });
       } else {
         // Items individuales
@@ -686,6 +1057,8 @@ export const useCartEdit = () => {
     eliminarDelCarrito,
     cargarProductosOriginales,
     getPayloadActualizacion,
+    agregarPizzaCustom,
+    toggleQueso,
     statusPrincipal,
     setStatusPrincipal,
   };

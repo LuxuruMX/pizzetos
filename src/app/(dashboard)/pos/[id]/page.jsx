@@ -20,8 +20,14 @@ import {
   ModalPaquete2,
   ModalPaquete3,
 } from "@/components/ui/PaquetesModal";
-import { MdComment, MdArrowBack } from "react-icons/md";
 import Link from "next/link";
+import CustomPizzaModal from "@/components/ui/CustomPizzaModal";
+import PDFViewerModal from "@/components/ui/PDFViewerModal";
+import TicketPDF from "@/components/ui/TicketPDF";
+import { pdf } from '@react-pdf/renderer';
+import { MdComment, MdArrowBack, MdPrint } from "react-icons/md";
+import { fetchIngredientes, fetchTamanosPizzas } from '@/services/pricesService';
+import { getProductTypeId } from '@/utils/productUtils';
 
 const POSEdit = () => {
   const params = useParams();
@@ -45,6 +51,26 @@ const POSEdit = () => {
     pizzas: [],
   });
 
+  // Estados para modales de paquetes y custom pizza
+  const [modalPaquete1, setModalPaquete1] = useState(false);
+  const [modalPaquete2, setModalPaquete2] = useState(false); // Fix overlap issues by putting this here if needed, but wait, state is further down.
+  const [modalPaquete3, setModalPaquete3] = useState(false);
+  const [modalCustomPizza, setModalCustomPizza] = useState(false);
+
+  // Estados para datos de custom pizza y validaciones
+  const [ingredientes, setIngredientes] = useState([]);
+  const [tamanosPizzas, setTamanosPizzas] = useState([]);
+  const [grupoRectangularIncompleto, setGrupoRectangularIncompleto] = useState(false);
+  const [grupoBarraMagnoIncompleto, setGrupoBarraMagnoIncompleto] = useState(false);
+
+  // Estado para auto-selección de tamaño (pizzas y mariscos)
+  const [ultimoTamanoSeleccionado, setUltimoTamanoSeleccionado] = useState(null);
+  const [usarTamanoAutomatico, setUsarTamanoAutomatico] = useState(false);
+
+  // Estado para impresión
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+
   const {
     orden,
     total,
@@ -56,6 +82,8 @@ const POSEdit = () => {
     cargarProductosOriginales,
     statusPrincipal,
     setStatusPrincipal,
+    toggleQueso,
+    agregarPizzaCustom
   } = useCartEdit();
 
   const [categorias] = useState(CATEGORIAS);
@@ -83,20 +111,21 @@ const POSEdit = () => {
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [variantesProducto, setVariantesProducto] = useState([]);
 
-  // Estados para modales de paquetes
-  const [modalPaquete1, setModalPaquete1] = useState(false);
-  const [modalPaquete2, setModalPaquete2] = useState(false);
-  const [modalPaquete3, setModalPaquete3] = useState(false);
+
+
+
 
   // Cargar datos iniciales
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
-        const [detalleData, productosData, clientesData] = await Promise.all([
+        const [detalleData, productosData, clientesData, ingredientesData, tamanosData] = await Promise.all([
           fetchDetalleVenta(idVenta),
           fetchProductosPorCategoria(),
           catalogsService.getNombresClientes(),
+          fetchIngredientes(),
+          fetchTamanosPizzas()
         ]);
 
         console.log("Detalle de venta recibido:", detalleData);
@@ -105,6 +134,10 @@ const POSEdit = () => {
         setProductos(productosData);
         setComentarios(detalleData.comentarios || "");
         setStatusPrincipal(detalleData.status);
+
+        // Guardar ingredientes y tamaños
+        setIngredientes(ingredientesData || []);
+        setTamanosPizzas(tamanosData || []);
 
         // Cargar tipo de servicio y datos relacionados
         if (detalleData.tipo_servicio !== undefined) {
@@ -119,17 +152,17 @@ const POSEdit = () => {
 
         // Cargar productos originales
         if (detalleData.productos && Array.isArray(detalleData.productos)) {
-          cargarProductosOriginales(detalleData.productos, productosData);
+          // Pasamos ingredientesData para que pueda mapear nombres de custom pizzas
+          cargarProductosOriginales(detalleData.productos, productosData, ingredientesData || []);
         } else {
           console.warn("No se encontraron productos en el detalle de venta");
-          cargarProductosOriginales([], productosData);
+          cargarProductosOriginales([], productosData, ingredientesData || []);
         }
 
         // Configurar clientes para domicilio
         const opcionesClientes = clientesData.map((cliente) => ({
           value: cliente.id_clie,
-          label:
-            cliente.nombre || cliente.razon_social || "Nombre no disponible",
+          label: cliente.nombre || cliente.razon_social || "Nombre no disponible",
         }));
         setClientes(opcionesClientes);
 
@@ -158,7 +191,72 @@ const POSEdit = () => {
     }
   }, [idVenta]);
 
+  // Efecto para verificar grupos incompletos (Portado de POS Creation)
+  useEffect(() => {
+    const hayRectangulares = orden.some(item => item.tipoId === 'id_rec');
+    // Calcular total de porciones/slices reales
+    // En POS Edit, item.cantidad puede ser la cantidad de grupos si ya está agrupado,
+    // o cantidad de items. Dependiendo de cómo lo maneje useCartEdit.
+    // useCartEdit maneja grupos.
+    const cantidadTotalRectangulares = orden.reduce((acc, item) => {
+      if (item.tipoId === 'id_rec') {
+        if (item.productos && Array.isArray(item.productos)) {
+          // Si tiene subproductos, contar sus cantidades
+          // OJO: En useCartEdit, item.cantidad es la cantidad de GRUPOS si está bien formado.
+          // Pero necesitamos verificar slices individuales.
+          const slicesEnGrupo = item.productos.reduce((s, p) => p.status !== 0 ? s + p.cantidad : s, 0);
+          return acc + slicesEnGrupo;
+        }
+        return acc + (item.status !== 0 ? item.cantidad : 0);
+      }
+      return acc;
+    }, 0);
+
+    // Si hay rectangulares y no son multiplos de 4
+    if (hayRectangulares && cantidadTotalRectangulares % 4 !== 0) {
+      setGrupoRectangularIncompleto(true);
+    } else {
+      setGrupoRectangularIncompleto(false);
+    }
+  }, [orden]);
+
+  useEffect(() => {
+    const tiposRevisar = ['id_barr', 'id_magno'];
+    let hayIncompleto = false;
+
+    for (const tipo of tiposRevisar) {
+      const hayProducto = orden.some(item => item.tipoId === tipo);
+
+      const cantidadTotal = orden.reduce((acc, item) => {
+        if (item.tipoId === tipo) {
+          if (item.productos && Array.isArray(item.productos)) {
+            const slicesEnGrupo = item.productos.reduce((s, p) => p.status !== 0 ? s + p.cantidad : s, 0);
+            return acc + slicesEnGrupo;
+          }
+          return acc + (item.status !== 0 ? item.cantidad : 0);
+        }
+        return acc;
+      }, 0);
+
+      if (hayProducto && cantidadTotal % 2 !== 0) {
+        hayIncompleto = true;
+        break;
+      }
+    }
+    setGrupoBarraMagnoIncompleto(hayIncompleto);
+  }, [orden]);
+
   const handleActualizarPedido = async () => {
+    // Validar grupos incompletos
+    if (grupoRectangularIncompleto) {
+      alert('Debes completar 4 porciones para cada pizza Rectangular.');
+      return;
+    }
+    if (grupoBarraMagnoIncompleto) {
+      alert('Debes completar 2 porciones para cada pizza Barra o Magno.');
+      return;
+    }
+
     // Validación por tipo de servicio
     if (tipoServicio === 2) { // Domicilio
       if (!clienteSeleccionado || !direccionSeleccionada) {
@@ -255,6 +353,7 @@ const POSEdit = () => {
 
   // Categorías que requieren modal
   const categoriasConModal = ["pizzas", "refrescos", "mariscos"];
+  const categoriasConAutoTamano = ['pizzas', 'mariscos']; // Para auto-selección
 
   const handleProductoClick = (producto, tipoId) => {
     if (categoriasConModal.includes(categoriaActiva)) {
@@ -262,6 +361,21 @@ const POSEdit = () => {
       const variantes = productosCategoria.filter(
         (p) => p.nombre === producto.nombre
       );
+
+      // Lógica de Auto-Tamaño
+      if (categoriasConAutoTamano.includes(categoriaActiva) && ultimoTamanoSeleccionado && usarTamanoAutomatico) {
+        const varianteConTamano = variantes.find(v => {
+          const tamano = v.subcategoria || v.tamano || v.tamaño;
+          return tamano === ultimoTamanoSeleccionado.tamano;
+        });
+
+        if (varianteConTamano) {
+          const tipoIdVariante = getProductTypeId(varianteConTamano);
+          agregarAlCarrito(varianteConTamano, tipoIdVariante);
+          setUsarTamanoAutomatico(false);
+          return;
+        }
+      }
 
       setProductoSeleccionado(producto.nombre);
       setVariantesProducto(variantes);
@@ -274,6 +388,13 @@ const POSEdit = () => {
   const handleSeleccionarVariante = (variante, tipoId) => {
     agregarAlCarrito(variante, tipoId);
     setModalAbierto(false);
+
+    // Guardar tamaño solo para pizzas y mariscos
+    if (categoriasConAutoTamano.includes(categoriaActiva)) {
+      const tamano = variante.subcategoria || variante.tamano || variante.tamaño;
+      setUltimoTamanoSeleccionado({ tamano, tipoId });
+      setUsarTamanoAutomatico(true);
+    }
   };
 
   // Handlers para los paquetes
@@ -307,6 +428,64 @@ const POSEdit = () => {
       idRefresco: 17,
     });
     setModalPaquete3(false);
+  };
+
+  const handleConfirmarCustomPizza = (customPizzaData) => {
+    const ingredientesNombres = customPizzaData.ingredientes
+      .map(idIng => {
+        const ing = ingredientes.find(i => i.id_ingrediente === idIng);
+        return ing ? ing.nombre : '';
+      })
+      .filter(nombre => nombre !== '');
+
+    agregarPizzaCustom({
+      ...customPizzaData,
+      ingredientesNombres
+    });
+    setModalCustomPizza(false);
+  };
+
+  const handleImprimirTicket = async () => {
+    if (!detalleVenta) return;
+
+    // Construir objeto orden temporal para impresión
+    const ordenImpresion = {
+      orden: orden,
+      total: total,
+      datosExtra: {
+        nombreClie: nombreClie,
+        mesa: mesa,
+        id_cliente: clienteSeleccionado?.value,
+        id_direccion: direccionSeleccionada,
+        fecha_entrega: detalleVenta.fecha_entrega
+      },
+      cliente: clienteSeleccionado ? { ...clienteSeleccionado, nombre: clienteSeleccionado.label } : null,
+      tipoServicio: tipoServicio,
+      comentarios: comentarios,
+      folio: idVenta,
+      fecha: new Date().toISOString()
+    };
+
+    try {
+      const blob = await pdf(
+        <TicketPDF
+          orden={ordenImpresion.orden}
+          total={ordenImpresion.total}
+          datosExtra={ordenImpresion.datosExtra}
+          fecha={ordenImpresion.fecha}
+          cliente={ordenImpresion.cliente}
+          tipoServicio={ordenImpresion.tipoServicio}
+          comentarios={ordenImpresion.comentarios}
+          folio={ordenImpresion.folio}
+        />
+      ).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+      setPdfModalOpen(true);
+    } catch (error) {
+      console.error("Error generando PDF:", error);
+    }
   };
 
   const procesarProductos = () => {
@@ -388,6 +567,19 @@ const POSEdit = () => {
           >
             Paquete 3
           </button>
+          <button
+            onClick={() => setModalCustomPizza(true)}
+            className="bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors shadow"
+          >
+            Por Ingrediente
+          </button>
+          <button
+            onClick={handleImprimirTicket}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-full transition-colors ml-2"
+            title="Reimprimir ticket"
+          >
+            <MdPrint size={24} />
+          </button>
         </div>
       </div>
 
@@ -399,6 +591,7 @@ const POSEdit = () => {
           productos={procesarProductos()}
           onProductoClick={handleProductoClick}
           mostrarPrecio={!categoriasConModal.includes(categoriaActiva)}
+          deshabilitarCategorias={grupoRectangularIncompleto || grupoBarraMagnoIncompleto}
         />
 
         <CartSection
@@ -417,6 +610,7 @@ const POSEdit = () => {
           onNombreClieChange={setNombreClie}
           esEdicion={true}
           textoBoton="Actualizar Pedido"
+          onToggleQueso={toggleQueso}
         />
       </div>
 
@@ -496,6 +690,24 @@ const POSEdit = () => {
         onClose={() => setModalPaquete3(false)}
         onConfirmar={handleConfirmarPaquete3}
         pizzas={productos.pizzas}
+      />
+
+      {/* Modal Custom Pizza */}
+      {modalCustomPizza && (
+        <CustomPizzaModal
+          isOpen={modalCustomPizza}
+          onClose={() => setModalCustomPizza(false)}
+          onConfirm={handleConfirmarCustomPizza}
+          ingredientes={ingredientes}
+          tamanos={tamanosPizzas}
+        />
+      )}
+
+      {/* PDF Viewer Modal */}
+      <PDFViewerModal
+        isOpen={pdfModalOpen}
+        onClose={() => setPdfModalOpen(false)}
+        pdfUrl={pdfUrl}
       />
 
       {/* Modal de Pagos */}
