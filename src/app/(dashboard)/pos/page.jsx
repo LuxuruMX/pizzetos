@@ -396,6 +396,18 @@ const POS = () => {
     }
   };
 
+  const formatAddressString = (d) => {
+    if (!d) return '';
+    const parts = [];
+    if (d.calle) parts.push(d.calle);
+    if (d.numero) parts.push(`#${d.numero}`);
+    if (d.colonia) parts.push(`Col: ${d.colonia}`);
+    if (d.referencia) parts.push(`Ref: ${d.referencia}`);
+    if (d.manzana) parts.push(`Mz: ${d.manzana}`);
+    if (d.lote) parts.push(`Lt: ${d.lote}`);
+    return parts.join(', ');
+  };
+
   const enviarOrdenDomicilio = async (cliente, idDireccion, pagoData) => {
     try {
       const datosExtra = {
@@ -417,7 +429,7 @@ const POS = () => {
         datosExtra: {
           ...datosExtra,
           direccion_completa: direccionDetalles
-            ? `${direccionDetalles.calle} ${direccionDetalles.numero || ''}, ${direccionDetalles.colonia}${direccionDetalles.referencia ? ` (${direccionDetalles.referencia})` : ''}`
+            ? formatAddressString(direccionDetalles)
             : (cliente.direccion || 'Dirección registrada')
         },
         cliente: { ...cliente, nombre: cliente.label },
@@ -461,7 +473,7 @@ const POS = () => {
         datosExtra: {
           ...datosExtra,
           direccion_completa: direccionDetalles
-            ? `${direccionDetalles.calle} ${direccionDetalles.numero || ''}, ${direccionDetalles.colonia}`
+            ? formatAddressString(direccionDetalles)
             : 'Dirección registrada'
         },
         cliente: { ...cliente, nombre: cliente.label },
