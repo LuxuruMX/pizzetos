@@ -250,7 +250,6 @@ export const useCartEdit = () => {
       if (esPaquete) {
         nombre = `Paquete ${prod.id}`;
         // Si el precio viene del backend (prod.precio), usarlo. Si no, hardcode.
-        // Pero preferimos mantener el precio que viene del backend si existe.
         if (!precio) {
              precio = prod.id === 1 ? 295 : prod.id === 2 ? 265 : prod.id === 3 ? 395 : 0;
         }
@@ -277,26 +276,77 @@ export const useCartEdit = () => {
       };
 
       if (esPaquete) {
+        // Parsear detalle_paquete si viene como objeto (nueva estructura)
+        let detallePaquete = null;
+        let idRefresco = prod.id_refresco; // Fallback legacy
+        let idPizzas = [];
+        let idHamb = prod.id_hamb;
+        let idAlis = prod.id_alis;
+
+        if (prod.detalle_paquete && typeof prod.detalle_paquete === 'object') {
+            // Estructura nueva: { id_pizzas: [], id_refresco: 17, id_hamb... }
+            detallePaquete = prod.detalle_paquete.id_pizzas ? prod.detalle_paquete.id_pizzas.join(',') : null;
+            idRefresco = prod.detalle_paquete.id_refresco;
+            idHamb = prod.detalle_paquete.id_hamb;
+            idAlis = prod.detalle_paquete.id_alis;
+            idPizzas = prod.detalle_paquete.id_pizzas || [];
+        } else {
+            // Estructura legacy o string
+            detallePaquete = prod.detalle_paquete;
+        }
+
         itemBase.datoPaquete = {
           id_paquete: prod.id, // el ID del paquete (1, 2, 3)
-          id_refresco: prod.id_refresco || null,
-          detalle_paquete: prod.detalle_paquete || null, // "4,8"
-          id_pizza: prod.id_pizza || null,
-          id_hamb: prod.id_hamb || null,
-          id_alis: prod.id_alis || null,
+          id_refresco: idRefresco || null,
+          detalle_paquete: detallePaquete, // "4,8"
+          id_pizza: idPizzas.length > 0 ? idPizzas[0] : (prod.id_pizza || null), // Legacy fallback
+          id_hamb: idHamb || null,
+          id_alis: idAlis || null,
         };
+      }
+      
+      // LOGICA RECTANGULAR / BARRA (detalle como array de IDs)
+      if (['rectangular', 'id_rec', 'id_barr', 'barra', 'id_magno', 'magno'].includes(prod.tipo)) {
+          // Normalizar tipoId a formato interno si es necesario (id_rec, id_barr, id_magno)
+          // El backend puede mandar "rectangular" o "id_rec"
+          let tipoInterno = 'id_rec';
+          if(['barra', 'id_barr'].includes(prod.tipo)) tipoInterno = 'id_barr';
+          if(['magno', 'id_magno'].includes(prod.tipo)) tipoInterno = 'id_magno';
+          
+          itemBase.tipoId = tipoInterno; // Asegurar consistencia
+
+          const detalleArray = prod.detalle_rectangular || prod.detalle_barra || prod.detalle || [];
+          if (Array.isArray(detalleArray) && detalleArray.length > 0) {
+              // Convertir IDs en subproductos
+              const subProductos = detalleArray.map((idProd, idx) => {
+                  let nombreSub = 'Ingrediente';
+                  
+                  // Buscar nombre en caché (pizzas/ingredientes?)
+                  // Asumimos que son IDs de Pizzas normales (como en creación)
+                  if (productosCache && productosCache.pizzas) {
+                      const p = productosCache.pizzas.find(x => x.id === idProd);
+                      if (p) nombreSub = p.nombre;
+                  }
+                  
+                  return {
+                      id: `${tipoInterno}_${idProd}_${Date.now()}_${idx}`, 
+                      idProducto: idProd,
+                      nombre: nombreSub,
+                      cantidad: 1, 
+                      status: 1, 
+                      esOriginal: true,
+                      esNuevo: false,
+                      precio: 0 // Precio incluido en el padre
+                  };
+              });
+              
+              itemBase.productos = subProductos;
+          }
       }
       
       // Manejar queso si viene del backend
       if (prod.queso && parseFloat(prod.queso) > 0) {
          itemBase.conQueso = true;
-         // El precio unitario YA DEBERIA incluir el queso si viene del backend como total por item?
-         // Usualmente el backend manda precio_unitario final. 
-         // Pero para nuestra lógica de recalculo (donde sumamos queso aparte), es mejor tener el precio base y el flag.
-         // Si precio del backend incluye queso, restarlo del base.
-         // Asumiremos que precio = base + queso.
-         // itemBase.precioOriginal = precio - parseFloat(prod.queso); 
-         // PERO OJO: Nuestra lógica de recalcularPrecios en useCart espera precioBase SIN queso.
       }
 
       return itemBase;

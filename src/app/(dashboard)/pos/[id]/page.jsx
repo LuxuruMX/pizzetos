@@ -12,15 +12,12 @@ import {
 import { useCartEdit } from "@/hooks/useCartEdit";
 import CartSection from "@/components/ui/CartSection";
 import ProductsSection from "@/components/ui/ProductsSection";
-import ProductModal from "@/components/ui/ProductModal";
-import PaymentModal from "@/components/ui/PaymentModal";
-import AddressSelectionModal from "@/components/ui/AddressSelectionModal";
+import Link from "next/link";
 import {
   ModalPaquete1,
   ModalPaquete2,
   ModalPaquete3,
 } from "@/components/ui/PaquetesModal";
-import Link from "next/link";
 import CustomPizzaModal from "@/components/ui/CustomPizzaModal";
 import PDFViewerModal from "@/components/ui/PDFViewerModal";
 import TicketPDF from "@/components/ui/TicketPDF";
@@ -28,6 +25,8 @@ import { pdf } from '@react-pdf/renderer';
 import { MdComment, MdArrowBack, MdPrint } from "react-icons/md";
 import { fetchIngredientes, fetchTamanosPizzas } from '@/services/pricesService';
 import { getProductTypeId } from '@/utils/productUtils';
+
+
 
 const POSEdit = () => {
   const params = useParams();
@@ -89,22 +88,14 @@ const POSEdit = () => {
   const [categorias] = useState(CATEGORIAS);
   const [categoriaActiva, setCategoriaActiva] = useState("pizzas");
 
-  // Estados para tipo de servicio y pagos
+  // Estados para tipo de servicio (interno para lógica de productos)
   const [tipoServicio, setTipoServicio] = useState(0);
-  const [pagos, setPagos] = useState([]);
-  const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
-  const [mesa, setMesa] = useState('');
-  const [nombreClie, setNombreClie] = useState('');
-
-  // Estados para dirección de domicilio
-  const [clientes, setClientes] = useState([]);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
-  const [modalDireccionAbierto, setModalDireccionAbierto] = useState(false);
 
   // Estados para comentarios
   const [comentarios, setComentarios] = useState("");
   const [modalComentarios, setModalComentarios] = useState(false);
+
+
 
   // Estados para el modal de productos
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -120,10 +111,9 @@ const POSEdit = () => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
-        const [detalleData, productosData, clientesData, ingredientesData, tamanosData] = await Promise.all([
+        const [detalleData, productosData, ingredientesData, tamanosData] = await Promise.all([
           fetchDetalleVenta(idVenta),
           fetchProductosPorCategoria(),
-          catalogsService.getNombresClientes(),
           fetchIngredientes(),
           fetchTamanosPizzas()
         ]);
@@ -139,17 +129,6 @@ const POSEdit = () => {
         setIngredientes(ingredientesData || []);
         setTamanosPizzas(tamanosData || []);
 
-        // Cargar tipo de servicio y datos relacionados
-        if (detalleData.tipo_servicio !== undefined) {
-          setTipoServicio(detalleData.tipo_servicio);
-        }
-        if (detalleData.mesa) {
-          setMesa(detalleData.mesa.toString());
-        }
-        if (detalleData.nombreClie) {
-          setNombreClie(detalleData.nombreClie);
-        }
-
         // Cargar productos originales
         if (detalleData.productos && Array.isArray(detalleData.productos)) {
           // Pasamos ingredientesData para que pueda mapear nombres de custom pizzas
@@ -159,25 +138,7 @@ const POSEdit = () => {
           cargarProductosOriginales([], productosData, ingredientesData || []);
         }
 
-        // Configurar clientes para domicilio
-        const opcionesClientes = clientesData.map((cliente) => ({
-          value: cliente.id_clie,
-          label: cliente.nombre || cliente.razon_social || "Nombre no disponible",
-        }));
-        setClientes(opcionesClientes);
 
-        // Si es domicilio, cargar cliente
-        if (detalleData.tipo_servicio === 2 && detalleData.cliente) {
-          const clienteEncontrado = opcionesClientes.find(
-            (c) => c.value === detalleData.cliente
-          );
-          if (clienteEncontrado) {
-            setClienteSeleccionado(clienteEncontrado);
-          }
-          if (detalleData.id_direccion) {
-            setDireccionSeleccionada(detalleData.id_direccion);
-          }
-        }
       } catch (error) {
         console.error("Error al cargar datos:", error);
         alert("Error al cargar el detalle del pedido");
@@ -257,23 +218,7 @@ const POSEdit = () => {
       return;
     }
 
-    // Validación por tipo de servicio
-    if (tipoServicio === 2) { // Domicilio
-      if (!clienteSeleccionado || !direccionSeleccionada) {
-        setModalDireccionAbierto(true);
-        return;
-      }
-    } else if (tipoServicio === 1) { // Para Llevar
-      if (pagos.length === 0) {
-        setModalPagosAbierto(true);
-        return;
-      }
-    } else if (tipoServicio === 0) { // Comer Aquí
-      if (!mesa || mesa.trim() === '') {
-        alert('Por favor, ingresa el número de mesa.');
-        return;
-      }
-    }
+    // Ya no validamos servicio/pagos/cliente, asumimos que viene del backend y es readonly aquí.
 
     try {
       const items = getPayloadActualizacion();
@@ -281,48 +226,37 @@ const POSEdit = () => {
       // Si el status principal es 2 (Listo), cambiarlo a 1 (En preparación)
       const nuevoStatusPrincipal = statusPrincipal === 2 ? 1 : statusPrincipal;
 
-      // Preparar datos adicionales según tipo de servicio
+      // Mantener datos originales del servicio (readonly)
       const payload = {
         id_suc: detalleVenta.id_suc || 1,
         total: total,
         comentarios: comentarios.trim() || null,
         status: nuevoStatusPrincipal,
-        tipo_servicio: tipoServicio,
+        tipo_servicio: detalleVenta.tipo_servicio, // Usar original
         items: items
       };
 
-      // Agregar campos según tipo de servicio
-      if (tipoServicio === 0) { // Comedor
-        payload.mesa = parseInt(mesa);
-        if (nombreClie.trim()) {
-          payload.nombreClie = nombreClie;
-        }
-      } else if (tipoServicio === 1) { // Para Llevar
-        payload.pagos = pagos.map(p => ({
-          id_metpago: parseInt(p.id_metpago),
-          monto: parseFloat(p.monto)
-        }));
-        if (nombreClie.trim()) {
-          payload.nombreClie = nombreClie;
-        }
-      } else if (tipoServicio === 2) { // Domicilio
-        payload.id_cliente = clienteSeleccionado.value;
-        payload.id_direccion = direccionSeleccionada;
-      }
+      // Pasar passthrough de datos originales si es necesario
+      if (detalleVenta.mesa) payload.mesa = detalleVenta.mesa;
+      if (detalleVenta.nombreClie) payload.nombreClie = detalleVenta.nombreClie;
+      if (detalleVenta.cliente) payload.id_cliente = detalleVenta.cliente;
+      if (detalleVenta.id_direccion) payload.id_direccion = detalleVenta.id_direccion;
+
+      // Nota: Si el backend requiere "pagos" para "Llevar", tendremos que enviarlos de vuelta.
+      // Asumiremos que el backend no borra pagos si no se mandan en update, o que fetchDetalleVenta trae pagos y aquí los reenvíamos.
+      // Si fetchDetalleVenta NO trae array de pagos, esto podría ser un problema si el backend espera recibirlos siempre.
+      // Por ahora enviaremos "pagos: []" o lo que tengamos, pero como quitamos el estado `pagos`,
+      // enviaremos vacío o null. Dependerá de la lógica del backend "actualizarPedidoCocina".
+      // Si actualiza solo status/items, perfecto.
 
       // Mostrar en consola lo que se envía al backend
       console.log("═══════════════════════════════════════════════════════");
-      console.log("📤 ENVIANDO ACTUALIZACIÓN AL BACKEND - POS EDIT");
+      console.log("📤 ENVIANDO ACTUALIZACIÓN AL BACKEND - POS EDIT (PRODUCT ONLY)");
       console.log("═══════════════════════════════════════════════════════");
       console.log("🆔 ID Venta:", idVenta);
-      console.log("📦 Tipo de Servicio:", tipoServicio === 0 ? "Comedor" : tipoServicio === 1 ? "Para Llevar" : "Domicilio");
+      console.log("📦 Tipo de Servicio (Original):", detalleVenta.tipo_servicio);
       console.log("💰 Total:", total);
       console.log("📋 Items enviados:", items.length);
-      console.log("\n🔍 ITEMS DETALLADOS:");
-      items.forEach((item, index) => {
-        console.log(`  Item ${index + 1}:`, JSON.stringify(item, null, 2));
-      });
-      console.log("\n📄 PAYLOAD COMPLETO:");
       console.log(JSON.stringify(payload, null, 2));
       console.log("═══════════════════════════════════════════════════════\n");
 
@@ -602,12 +536,7 @@ const POSEdit = () => {
           onEnviarOrden={handleActualizarPedido}
           comentarios={comentarios}
           onAbrirComentarios={() => setModalComentarios(true)}
-          tipoServicio={tipoServicio}
-          onTipoServicioChange={setTipoServicio}
-          mesa={mesa}
-          onMesaChange={setMesa}
-          nombreClie={nombreClie}
-          onNombreClieChange={setNombreClie}
+          hideServiceSelection={true}
           esEdicion={true}
           textoBoton="Actualizar Pedido"
           onToggleQueso={toggleQueso}
@@ -710,26 +639,6 @@ const POSEdit = () => {
         pdfUrl={pdfUrl}
       />
 
-      {/* Modal de Pagos */}
-      <PaymentModal
-        isOpen={modalPagosAbierto}
-        onClose={() => setModalPagosAbierto(false)}
-        total={total}
-        onConfirm={handleConfirmarPagos}
-      />
-
-      {/* Modal de Dirección */}
-      <AddressSelectionModal
-        isOpen={modalDireccionAbierto}
-        onClose={() => setModalDireccionAbierto(false)}
-        onConfirm={handleConfirmarDireccion}
-        clientes={clientes}
-        clienteSeleccionado={clienteSeleccionado}
-        onClienteChange={setClienteSeleccionado}
-        onClienteCreado={(nuevoCliente) => {
-          setClientes(prev => [...prev, nuevoCliente]);
-        }}
-      />
     </div>
   );
 };
