@@ -465,7 +465,7 @@ export const useCartEdit = () => {
         // Vamos a normalizar el tipo de grupo.
         
         let targetGroupType = prod.tipoId;
-        if (prod.tipoId === 'id_pizza' || prod.tipoId === 'custom_pizza') {
+        if (prod.tipoId === 'id_pizza' || prod.tipoId === 'custom_pizza' || prod.tipoId === 'id_maris') {
             targetGroupType = 'pizza_group';
         }
 
@@ -473,7 +473,7 @@ export const useCartEdit = () => {
         const grupo = productos.filter(
           (p, i) =>
             !yaAgrupados.has(i) &&
-            ((p.tipoId === 'id_pizza' || p.tipoId === 'custom_pizza') ? targetGroupType === 'pizza_group' : p.tipoId === prod.tipoId) &&
+            ((p.tipoId === 'id_pizza' || p.tipoId === 'custom_pizza' || p.tipoId === 'id_maris') ? targetGroupType === 'pizza_group' : p.tipoId === prod.tipoId) &&
             p.tamano === prod.tamano &&
             !p.esPaquete
         );
@@ -486,39 +486,7 @@ export const useCartEdit = () => {
           if (idx !== -1) yaAgrupados.add(idx);
         });
         
-        // Si es mariscos, el grupo es normal
-        if (prod.tipoId === 'id_maris') {
-             const cantidadTotal = grupo.reduce((sum, p) => sum + p.cantidad, 0);
-             const productosDetalle = grupo.map((p) => ({
-                id: p.id,
-                idProducto: p.idProducto,
-                nombre: p.nombre,
-                cantidad: p.cantidad,
-                status: p.status,
-                esOriginal: p.esOriginal,
-                precio: p.precioOriginal,
-                conQueso: p.conQueso || false
-            }));
-
-            const statusGrupo = grupo.some(p => p.status !== 0) ? 1 : 0;
-
-            agrupados.push({
-                id: `${prod.tipoId}_${prod.tamano}_${Date.now()}_${Math.random()}`,
-                tipoId: prod.tipoId, // id_maris
-                nombre: `Mariscos ${prod.tamano}`,
-                tamano: prod.tamano,
-                precioOriginal: prod.precioOriginal,
-                precioUnitario: 0,
-                cantidad: cantidadTotal,
-                subtotal: 0,
-                status: statusGrupo,
-                esPaquete: false,
-                esOriginal: true,
-                esModificado: false,
-                productos: productosDetalle,
-            });
-        } else {
-             // Es PIZZA GROUP (id_pizza o custom_pizza)
+            // Es PIZZA GROUP (id_pizza, id_maris, custom_pizza)
             const cantidadTotal = grupo.reduce((sum, p) => sum + p.cantidad, 0);
             const productosDetalle = grupo.map((p) => ({
                 id: p.id,
@@ -531,7 +499,7 @@ export const useCartEdit = () => {
                 precio: p.precioOriginal,
                 conQueso: p.conQueso || false,
                 ingredientes: p.ingredientes, // para custom
-                tipoId: p.tipoId // guardar tipo original (id_pizza o custom_pizza)
+                tipoId: p.tipoId // guardar tipo original
             }));
 
             const statusGrupo = grupo.some(p => p.status !== 0) ? 1 : 0;
@@ -551,7 +519,6 @@ export const useCartEdit = () => {
                 esModificado: false,
                 productos: productosDetalle,
             });
-        }
 
       } else {
         agrupados.push(prod);
@@ -578,7 +545,7 @@ export const useCartEdit = () => {
 
         // Determinar tipo de grupo objetivo
         let targetGroupType = tipoId;
-        if (tipoId === 'id_pizza') {
+        if (tipoId === 'id_pizza' || tipoId === 'id_maris') {
             targetGroupType = 'pizza_group';
         }
 
