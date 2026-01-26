@@ -130,6 +130,7 @@ export const useCartEdit = () => {
   // Cargar productos desde el backend y completar con datos de la caché
   const cargarProductosOriginales = (productosBackend, productosCache, ingredientesCacheData = []) => {
     // Definir tipoMap al inicio
+    // Definir tipoMap al inicio
     const tipoMap = {
       'id_pizza': 'pizzas',
       'id_hamb': 'hamburguesas',
@@ -143,6 +144,20 @@ export const useCartEdit = () => {
       'id_refresco': 'refrescos',
       'id_paquete': 'paquetes'
       // custom_pizza no está en caché de productos normal
+    };
+
+    const catToIdField = {
+      'pizzas': 'id_pizza',
+      'hamburguesas': 'id_hamb',
+      'alitas': 'id_alis',
+      'costillas': 'id_cos',
+      'spaguetty': 'id_spag',
+      'papas': 'id_papa',
+      'rectangular': 'id_rec',
+      'barra': 'id_barr',
+      'mariscos': 'id_maris',
+      'refrescos': 'id_refresco',
+      'magno': 'id_magno'
     };
 
     setIngredientesCache(ingredientesCacheData);
@@ -256,11 +271,22 @@ export const useCartEdit = () => {
              // Es Rectangular/Barra con array de IDs
              detalleRectangularArr = prod.id;
              realId = `composite_${Date.now()}_${index}`; // Generar un ID temporal seguro
+             
+             // Asignar nombre correcto basado en tipo
+             if(['rectangular', 'id_rec'].includes(prod.tipo)) nombre = 'Pizza Rectangular';
+             else if(['barra', 'id_barr'].includes(prod.tipo)) nombre = 'Pizza Barra';
+             else if(['magno', 'id_magno'].includes(prod.tipo)) nombre = 'Pizza Magno';
+             else nombre = 'Pizza Compuesta';
           } else {
              // Es Paquete con objeto de detalles
              detallePaqueteObj = prod.id;
              realId = detallePaqueteObj.id_paquete || index;
           }
+      } else {
+          // Si no es objeto, intentar nombres standard
+          if(['rectangular', 'id_rec'].includes(prod.tipo)) nombre = 'Pizza Rectangular';
+          else if(['barra', 'id_barr'].includes(prod.tipo)) nombre = 'Pizza Barra';
+          else if(['magno', 'id_magno'].includes(prod.tipo)) nombre = 'Pizza Magno';
       }
 
       // Si es un paquete, establecer nombre y precio fijo (si no vino del backend ya correcto)
@@ -351,12 +377,33 @@ export const useCartEdit = () => {
           if (Array.isArray(detalleArray) && detalleArray.length > 0) {
               // Convertir IDs en subproductos
               const subProductos = detalleArray.map((idProd, idx) => {
-                  let nombreSub = 'Ingrediente';
+                  let nombreSub = `Ingrediente (${idProd})`;
+                  const idProdInt = parseInt(idProd);
                   
-                  // Buscar nombre en caché (pizzas)
-                  if (productosCache && productosCache.pizzas) {
-                      const p = productosCache.pizzas.find(x => x.id === idProd);
-                      if (p) nombreSub = p.nombre;
+                  // Buscar nombre en TODAS las categorías de la caché
+                  if (productosCache) {
+                      let encontrado = null;
+                      
+                      // Iterar sobre todas las categorías (pizzas, rectangular, etc.)
+                      const categorias = Object.keys(productosCache);
+                      for (const cat of categorias) {
+                          if (Array.isArray(productosCache[cat])) {
+                              const idField = catToIdField[cat] || 'id';
+                              const p = productosCache[cat].find(x => x[idField] == idProdInt);
+                              if (p) {
+                                  encontrado = p;
+                                  break; // Dejar de buscar si lo encontramos
+                              }
+                          }
+                      }
+
+                      if (encontrado) {
+                          nombreSub = encontrado.nombre;
+                      } else {
+                          console.warn(`Sub-producto ID ${idProdInt} no encontrado en ninguna categoría (buscando por campos específicos).`);
+                      }
+                  } else {
+                     console.warn("No existe productosCache", productosCache);
                   }
                   
                   return {

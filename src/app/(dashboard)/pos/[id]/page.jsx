@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { catalogsService } from "@/services/catalogsService";
 import {
   fetchProductosPorCategoria,
   fetchDetalleVenta,
