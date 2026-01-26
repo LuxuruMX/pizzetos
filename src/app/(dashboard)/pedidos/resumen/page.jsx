@@ -349,6 +349,9 @@ export default function TodosPedidosPage() {
         clienteEncontrado = clientesData.find(c => c.id_clie === detalle.cliente);
       }
 
+      // Calcular total basado en los items reconstruidos para consistencia
+      const calculatedTotal = ordenTicket.reduce((acc, item) => acc + item.subtotal, 0);
+
       // 4. Datos Extra
       const datosExtra = {
         mesa: detalle.mesa,
@@ -362,7 +365,7 @@ export default function TodosPedidosPage() {
       const blob = await pdf(
         <TicketPDF
           orden={ordenTicket}
-          total={detalle.total || detalle.total_venta}
+          total={calculatedTotal}
           datosExtra={datosExtra}
           fecha={detalle.fecha}
           cliente={clienteEncontrado || { nombre: detalle.nombre_cliente }} // Fallback al nombre en detalle
