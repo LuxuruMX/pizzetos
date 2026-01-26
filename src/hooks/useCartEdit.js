@@ -226,9 +226,13 @@ export const useCartEdit = () => {
       // --- LOGICA PRODUCTO NORMAL ---
       // Buscar en la caché de productos
       const categoria = tipoMap[prod.tipo];
+      let cachedTamano = null;
+
       if (categoria && productosCache[categoria]) {
         const categoriaProductos = productosCache[categoria];
         const tipoIdCampo = prod.tipo; 
+        
+        let producto = null;
 
         // Para pizzas, mariscos y refrescos que tienen tamaño/subcategoría
         if (['id_pizza', 'id_maris', 'id_refresco'].includes(prod.tipo) && (prod.tamaño || prod.tamano)) {
@@ -240,24 +244,30 @@ export const useCartEdit = () => {
           );
           
           if (variante) {
+            producto = variante;
             nombre = variante.nombre;
             precio = parseFloat(variante.precio);
           } else {
             // Fallback: buscar solo por ID
             const productoBase = categoriaProductos.find(p => p[tipoIdCampo] === prod.id);
             if (productoBase) {
+              producto = productoBase;
               nombre = `${productoBase.nombre} ${sizeBuscar}`;
               precio = parseFloat(productoBase.precio);
             }
           }
         } else {
-          // Para productos sin variantes de tamaño
-          const producto = categoriaProductos.find(p => p[tipoIdCampo] === prod.id);
+          // Para productos sin variantes de tamaño o sin tamaño especificado en payload
+          producto = categoriaProductos.find(p => p[tipoIdCampo] === prod.id);
           
           if (producto) {
             nombre = producto.nombre;
             precio = parseFloat(producto.precio);
           }
+        }
+
+        if (producto) {
+            cachedTamano = producto.subcategoria || producto.tamano || producto.tamaño;
         }
       }
 
@@ -299,14 +309,17 @@ export const useCartEdit = () => {
       }
 
       // Crear ID único para el carrito
-      const idCarrito = `original_${prod.tipo}_${realId}_${index}_${prod.tamaño || 'std'}`;
+      // Usar cachedTamano como fallback si prod.tamaño no existe
+      const tamanoFinal = prod.tamaño || prod.tamano || cachedTamano || 'N/A';
+      
+      const idCarrito = `original_${prod.tipo}_${realId}_${index}_${tamanoFinal}`;
 
       const itemBase = {
         id: idCarrito,
         idProducto: realId,
         tipoId: prod.tipo,
         nombre: nombre,
-        tamano: prod.tamaño || prod.tamano || 'N/A',
+        tamano: tamanoFinal,
         precioOriginal: precio,
         precioUnitario: precio,
         cantidad: prod.cantidad,
