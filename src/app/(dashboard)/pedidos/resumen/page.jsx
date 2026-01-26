@@ -51,8 +51,9 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
   const pizzasBySize = {}; // Objeto para agrupar pizzas: { 'Mediana': [prod1, prod2], 'Grande': [...] }
 
   productosBackend.forEach((prod, index) => {
-    // 1. Manejo de PIZZAS (Normales y Personalizadas)
-    if (prod.tipo === 'Pizza' || prod.tipo === 'Pizza Personalizada') {
+    // 1. Manejo de PIZZAS y MARISCOS (Normales y Personalizadas)
+    // Se unifican para que compartan la lógica de promociones (2x1) por tamaño
+    if (prod.tipo === 'Pizza' || prod.tipo === 'Pizza Personalizada' || prod.tipo === 'Mariscos') {
       let size = 'Grande'; // Default
       let cleanName = prod.nombre;
 
