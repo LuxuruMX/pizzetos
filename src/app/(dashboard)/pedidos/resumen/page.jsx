@@ -412,6 +412,7 @@ export default function TodosPedidosPage() {
           cliente={clienteObj} // Pasamos el objeto resuelto
           tipoServicio={detalle.tipo_servicio}
           comentarios={detalle.comentarios}
+          folio={detalle.id_venta}
         />
       ).toBlob();
 
