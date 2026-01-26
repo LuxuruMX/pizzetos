@@ -260,7 +260,8 @@ export const useCart = (initialCartFromUrl = []) => {
   const agregarAlCarrito = (producto, tipoId) => {
     const id = producto[tipoId];
     const precioOriginal = parseFloat(producto.precio);
-    const tamano = producto.subcategoria || producto.tamano || producto.tamaño || 'N/A';
+    const tamanoRaw = producto.subcategoria || producto.tamano || producto.tamaño || 'N/A';
+    const tamano = typeof tamanoRaw === 'string' ? tamanoRaw.trim() : tamanoRaw;
     const nombre = producto.nombre;
 
     setOrden((prevOrden) => {
@@ -370,7 +371,9 @@ export const useCart = (initialCartFromUrl = []) => {
       if (categoriasConDescuento.includes(tipoId)) {
         // Lógica UNIFICADA para Pizzas y Mariscos
         const existingGroupIndex = prevOrden.findIndex(
-            item => item.tipoId === 'pizza_group' && item.tamano === tamano
+            item => item.tipoId === 'pizza_group' && 
+            (typeof item.tamano === 'string' ? item.tamano.trim().toLowerCase() : item.tamano) === 
+            (typeof tamano === 'string' ? tamano.trim().toLowerCase() : tamano)
         );
 
         let nuevaOrden = [...prevOrden];

@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     },
 });
 
-const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, comentarios }) => {
+const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, comentarios, folio }) => {
     const formatoMoneda = (cantidad) => {
         return new Intl.NumberFormat('es-MX', {
             style: 'currency',
@@ -112,6 +112,7 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
 
         // Header (Titulo, Subtitulo, Fecha, Tipo Servicio)
         height += 60;
+        if (folio) height += 12; // Altura para folio
         if (datosExtra?.mesa) height += 12;
         if (tipoServicio) height += 12;
 
@@ -199,6 +200,7 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
                 <View style={styles.header}>
                     <Text style={styles.title}>Pizzetos</Text>
                     <Text style={styles.subtitle}>Ticket de Venta</Text>
+                    {folio && <Text style={[styles.subtitle, { fontWeight: 'bold' }]}>FOLIO: {folio}</Text>}
                     <Text style={styles.subtitle}>{fechaImpresion}</Text>
                     {datosExtra?.mesa && <Text style={styles.bold}>MESA: {datosExtra.mesa}</Text>}
                     {tipoServicio === 1 && <Text style={styles.bold}>PARA LLEVAR</Text>}

@@ -18,6 +18,7 @@ import { MdComment, MdPrint } from "react-icons/md";
 import { pdf } from '@react-pdf/renderer';
 import TicketPDF from '@/components/ui/TicketPDF';
 import PDFViewerModal from '@/components/ui/PDFViewerModal';
+import { getProductTypeId } from '@/utils/productUtils';
 
 const decodeCartFromUrl = () => {
   if (typeof window !== 'undefined' && window.location.search) {
@@ -224,7 +225,7 @@ const POS = () => {
           cliente={lastOrder.cliente}
           tipoServicio={lastOrder.tipoServicio}
           comentarios={lastOrder.comentarios}
-
+          folio={lastOrder.folio}
         />
       ).toBlob();
 
@@ -324,7 +325,7 @@ const POS = () => {
       const payload = { orden, datosExtra, comentarios, tipoServicio, pagos };
       console.log('Enviando orden al backend (handleEnviarOrden):', JSON.stringify(payload, null, 2));
 
-      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
+      const response = await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
 
       // Guardar orden para imprimir
       setLastOrder({
@@ -333,7 +334,8 @@ const POS = () => {
         datosExtra,
         tipoServicio,
         fecha: new Date().toISOString(),
-        comentarios
+        comentarios,
+        folio: response.id_venta
       });
 
       limpiarCarrito();
@@ -370,7 +372,7 @@ const POS = () => {
       const payload = { orden, datosExtra, comentarios, tipoServicio, pagosConfirmados };
       console.log('Enviando orden al backend (enviarOrdenConPagos):', JSON.stringify(payload, null, 2));
 
-      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
+      const response = await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
 
       // Guardar orden para imprimir
       setLastOrder({
@@ -380,7 +382,8 @@ const POS = () => {
         tipoServicio,
         pagos: pagosConfirmados,
         fecha: new Date().toISOString(),
-        comentarios
+        comentarios,
+        folio: response.id_venta
       });
 
       limpiarCarrito();
@@ -395,6 +398,18 @@ const POS = () => {
     }
   };
 
+  const formatAddressString = (d) => {
+    if (!d) return '';
+    const parts = [];
+    if (d.calle) parts.push(d.calle);
+    if (d.numero) parts.push(`#${d.numero}`);
+    if (d.colonia) parts.push(`Col: ${d.colonia}`);
+    if (d.referencia) parts.push(`Ref: ${d.referencia}`);
+    if (d.manzana) parts.push(`Mz: ${d.manzana}`);
+    if (d.lote) parts.push(`Lt: ${d.lote}`);
+    return parts.join(', ');
+  };
+
   const enviarOrdenDomicilio = async (cliente, idDireccion, pagoData) => {
     try {
       const datosExtra = {
@@ -407,7 +422,7 @@ const POS = () => {
       const payload = { orden, datosExtra, comentarios, tipoServicio, pagosArray };
       console.log('Enviando orden al backend (enviarOrdenDomicilio):', JSON.stringify(payload, null, 2));
 
-      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosArray);
+      const response = await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosArray);
 
       // Guardar orden para imprimir
       setLastOrder({
@@ -416,14 +431,15 @@ const POS = () => {
         datosExtra: {
           ...datosExtra,
           direccion_completa: direccionDetalles
-            ? `${direccionDetalles.calle} ${direccionDetalles.numero || ''}, ${direccionDetalles.colonia}${direccionDetalles.referencia ? ` (${direccionDetalles.referencia})` : ''}`
+            ? formatAddressString(direccionDetalles)
             : (cliente.direccion || 'Dirección registrada')
         },
         cliente: { ...cliente, nombre: cliente.label },
         tipoServicio,
         pagos: pagosArray,
         fecha: new Date().toISOString(),
-        comentarios
+        comentarios,
+        folio: response.id_venta
       });
 
       limpiarCarrito();
@@ -451,7 +467,7 @@ const POS = () => {
       const payload = { orden, datosExtra, comentarios, tipoServicio, pagosConfirmados };
       console.log('Enviando orden al backend (enviarOrdenEspecial):', JSON.stringify(payload, null, 2));
 
-      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
+      const response = await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
 
       // Guardar orden para imprimir
       setLastOrder({
@@ -460,14 +476,15 @@ const POS = () => {
         datosExtra: {
           ...datosExtra,
           direccion_completa: direccionDetalles
-            ? `${direccionDetalles.calle} ${direccionDetalles.numero || ''}, ${direccionDetalles.colonia}`
+            ? formatAddressString(direccionDetalles)
             : 'Dirección registrada'
         },
         cliente: { ...cliente, nombre: cliente.label },
         tipoServicio,
         pagos: pagosConfirmados,
         fecha: new Date().toISOString(),
-        comentarios
+        comentarios,
+        folio: response.id_venta
       });
 
       limpiarCarrito();
@@ -506,7 +523,7 @@ const POS = () => {
         });
 
         if (varianteConTamano) {
-          const tipoIdVariante = Object.keys(varianteConTamano).find(key => key.startsWith('id_'));
+          const tipoIdVariante = getProductTypeId(varianteConTamano);
           agregarAlCarrito(varianteConTamano, tipoIdVariante);
           setUsarTamanoAutomatico(false); // Próxima vez mostrará modal
           return;

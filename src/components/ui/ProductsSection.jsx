@@ -1,6 +1,7 @@
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { useState } from 'react';
 import ProductCard from "@/components/ui/ProductCard"
+import { getProductTypeId } from '@/utils/productUtils';
 
 const ProductsSection = ({
   categorias,
@@ -109,7 +110,7 @@ const ProductsSection = ({
           ) : (
             productos.map((producto) => {
               if (!producto) return null;
-              const tipoId = Object.keys(producto).find((key) => key.startsWith('id_'));
+              const tipoId = getProductTypeId(producto);
               if (!tipoId) return null;
 
               return (

@@ -344,21 +344,62 @@ export default function TodosPedidosPage() {
       const ordenTicket = reconstructOrderForTicket(detalle.productos, productosData);
 
       // 3. Preparar datos cliente
-      let clienteEncontrado = null;
+      // Prioridad: 
+      // 1. Cliente encontrado previamente en `clientesData` (si detalle.cliente es ID)
+      // 2. detalle.cliente si es un string (nombre directo)
+      // 3. detalle.nombre_cliente o detalle.nombreClie
+
+      let clienteObj = { nombre: 'No especificado', telefono: detalle.telefono || '' };
+
       if (detalle.cliente) {
-        clienteEncontrado = clientesData.find(c => c.id_clie === detalle.cliente);
+        // Intentar ver si es un ID y buscarlo
+        const encontrado = clientesData.find(c => c.id_clie === detalle.cliente);
+        if (encontrado) {
+          clienteObj = encontrado;
+          // Si el detalle traía teléfono más fresco, usarlo, si no el del catálogo
+          if (detalle.telefono) clienteObj.telefono = detalle.telefono;
+        } else if (typeof detalle.cliente === 'string') {
+          // Si no se encontró por ID, y es string, es el nombre directo
+          clienteObj.nombre = detalle.cliente;
+        }
+      }
+
+      // Fallbacks adicionales
+      if (clienteObj.nombre === 'No especificado') {
+        if (detalle.nombreClie) clienteObj.nombre = detalle.nombreClie;
+        else if (detalle.nombre_cliente) clienteObj.nombre = detalle.nombre_cliente;
       }
 
       // Calcular total basado en los items reconstruidos para consistencia
       const calculatedTotal = ordenTicket.reduce((acc, item) => acc + item.subtotal, 0);
 
       // 4. Datos Extra
+      let direccionCompleta = detalle.direccion_completa || '';
+
+      // Si el backend devuelve un objeto 'direccion', lo formateamos
+      if (detalle.direccion && typeof detalle.direccion === 'object') {
+        const d = detalle.direccion;
+        const parts = [];
+        if (d.calle) parts.push(d.calle);
+        if (d.numero) parts.push(`#${d.numero}`);
+        if (d.cruzamientos) parts.push(`Cruz: ${d.cruzamientos}`);
+        if (d.colonia) parts.push(`Col: ${d.colonia}`);
+        if (d.referencia) parts.push(`Ref: ${d.referencia}`);
+        // Agregar manzana y lote si existen
+        if (d.manzana) parts.push(`Mz: ${d.manzana}`);
+        if (d.lote) parts.push(`Lt: ${d.lote}`);
+
+        if (parts.length > 0) {
+          direccionCompleta = parts.join(', ');
+        }
+      }
+
       const datosExtra = {
         mesa: detalle.mesa,
-        nombreClie: detalle.nombreClie,
+        nombreClie: clienteObj.nombre, // Pasamos el nombre ya resuelto aquí tambien
         id_direccion: detalle.id_direccion,
-        // Si el backend devuelve la dirección completa como string, usarla:
-        direccion_completa: detalle.direccion_completa
+        direccion_completa: direccionCompleta,
+        telefono: clienteObj.telefono
       };
 
       // 5. Generar PDF
@@ -368,9 +409,10 @@ export default function TodosPedidosPage() {
           total={calculatedTotal}
           datosExtra={datosExtra}
           fecha={detalle.fecha}
-          cliente={clienteEncontrado || { nombre: detalle.nombre_cliente }} // Fallback al nombre en detalle
+          cliente={clienteObj} // Pasamos el objeto resuelto
           tipoServicio={detalle.tipo_servicio}
           comentarios={detalle.comentarios}
+          folio={detalle.id_venta}
         />
       ).toBlob();
 
