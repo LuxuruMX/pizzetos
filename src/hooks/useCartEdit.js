@@ -573,97 +573,130 @@ export const useCartEdit = () => {
       const categoriasConDescuento = ["id_pizza", "id_maris"];
 
       if (categoriasConDescuento.includes(tipoId)) {
-        // Buscar grupo del mismo tamaño
-        const itemMismoTamano = prevOrden.find(
-          (item) =>
-            item.tipoId === tipoId && item.tamano === tamano && !item.esPaquete
-        );
+        // Normalizar tamaño
+        const normalizedTamano = typeof tamano === 'string' ? tamano.trim().toLowerCase() : tamano;
 
-        let nuevaOrden;
-
-        if (itemMismoTamano) {
-          // Agregar al grupo existente
-          nuevaOrden = prevOrden.map((item) => {
-            if (
-              item.tipoId === tipoId &&
-              item.tamano === tamano &&
-              !item.esPaquete
-            ) {
-              const productoExistente = item.productos?.find(
-                (p) => p.idProducto === id && (p.status === 1 || p.esNuevo)
-              );
-
-              if (productoExistente) {
-                // Incrementar cantidad del producto existente (solo si es editable)
-                return {
-                  ...item,
-                  cantidad: item.cantidad + 1,
-                  status: 1, // Reactivar grupo si estaba cancelado
-                  productos: item.productos.map((p) =>
-                    p.id === productoExistente.id ? { ...p, cantidad: p.cantidad + 1, status: 1 } : p
-                  ),
-                  esModificado: item.esOriginal,
-                };
-              } else {
-                // Agregar nuevo producto al grupo (nueva línea)
-                const nuevoIdSubItem = `${tipoId}_${id}_${Date.now()}`;
-                return {
-                  ...item,
-                  cantidad: item.cantidad + 1,
-                  status: 1, // Reactivar grupo
-                  productos: [
-                    ...(item.productos || []),
-                    { 
-                      id: nuevoIdSubItem, 
-                      idProducto: id, 
-                      nombre, 
-                      cantidad: 1, 
-                      status: 1, 
-                      esOriginal: false,
-                      esNuevo: true 
-                    },
-                  ],
-                  esModificado: item.esOriginal,
-                };
-              }
-            }
-            return item;
-          });
-        } else {
-          // Crear nuevo grupo
-          nuevaOrden = [
-            ...prevOrden,
-            {
-              id: `${tipoId}_${tamano}_${Date.now()}`,
-              idProducto: id,
-              tipoId: tipoId,
-              nombre: `${
-                tipoId === "id_pizza" ? "Pizza" : "Marisco"
-              } ${tamano}`,
-              tamano,
-              precioOriginal,
-              precioUnitario: precioOriginal * 0.6,
-              cantidad: 1,
-              subtotal: precioOriginal * 0.6,
-              status: 1,
-              esPaquete: false,
-              esOriginal: false,
-              esNuevo: true,
-              esOriginal: false,
-              esNuevo: true,
-              productos: [{ 
-                id: `${tipoId}_${id}_${Date.now()}_sub`, 
-                idProducto: id, 
-                nombre, 
-                cantidad: 1, 
-                status: 1, 
-                esOriginal: false,
-                esNuevo: true 
-              }],
-            },
-          ];
+        // Determinar tipo de grupo objetivo
+        let targetGroupType = tipoId;
+        if (tipoId === 'id_pizza') {
+            targetGroupType = 'pizza_group';
         }
 
+        // Buscar grupo compatible
+        const existingGroupIndex = prevOrden.findIndex(
+          (item) =>
+            item.tipoId === targetGroupType &&
+            (typeof item.tamano === 'string' ? item.tamano.trim().toLowerCase() : item.tamano) === normalizedTamano && 
+            !item.esPaquete
+        );
+
+        let nuevaOrden = [...prevOrden];
+
+        if (existingGroupIndex >= 0) {
+          // Agregar al grupo existente
+          const group = nuevaOrden[existingGroupIndex];
+          const itemProductos = group.productos || [];
+
+          // Buscar si el producto ya existe en el grupo (por ID)
+          // Nota: Si es para edición, agregamos nuevas líneas para no mezclar status 1/2
+          const existingProdIndex = itemProductos.findIndex(
+            (p) => p.idProducto === id && (p.status === 1 || p.esNuevo)
+          );
+
+          let nuevosProductos = [...itemProductos];
+
+          if (existingProdIndex >= 0) {
+              // Ya existe, incrementar
+              nuevosProductos[existingProdIndex] = {
+                  ...nuevosProductos[existingProdIndex],
+                  cantidad: nuevosProductos[existingProdIndex].cantidad + 1,
+                  status: 1 // Reactivar si estaba borrado
+              };
+          } else {
+              // Nuevo producto en el grupo
+              // Crear ID único para el sub-item
+              const nuevoIdSubItem = `${tipoId}_${id}_${Date.now()}`;
+              nuevosProductos.push({
+                  id: nuevoIdSubItem, 
+                  idProducto: id, 
+                  nombre: nombre, 
+                  cantidad: 1, 
+                  status: 1, 
+                  esOriginal: false,
+                  esNuevo: true,
+                  precio: precioOriginal,
+                  tipoId: tipoId
+              });
+          }
+
+          nuevaOrden[existingGroupIndex] = {
+              ...group,
+              cantidad: group.cantidad + 1,
+              status: 1,
+              productos: nuevosProductos,
+              esModificado: true // Marcar grupo como tocado
+          };
+
+        } else {
+          // Crear nuevo grupo
+          // Si es pizza, usar estructura pizza_group
+          if (targetGroupType === 'pizza_group') {
+              nuevaOrden.push({
+                id: `pizza_group_${tamano}_${Date.now()}`,
+                tipoId: 'pizza_group',
+                nombre: `Pizzas ${tamano}`,
+                tamano: tamano,
+                precioOriginal: 0,
+                precioUnitario: 0,
+                cantidad: 1,
+                subtotal: 0,
+                status: 1,
+                esPaquete: false,
+                esOriginal: false,
+                esNuevo: true,
+                productos: [{ 
+                    id: `${tipoId}_${id}_${Date.now()}_sub`, 
+                    idProducto: id, 
+                    nombre, 
+                    precio: precioOriginal,
+                    cantidad: 1, 
+                    status: 1, 
+                    esOriginal: false,
+                    esNuevo: true,
+                    tipoId: tipoId
+                }],
+              });
+          } else {
+              // Fallback para Mariscos u otros (si id_maris no se unifica)
+             nuevaOrden.push({
+                id: `${tipoId}_${id}_${Date.now()}`,
+                idProducto: id,
+                tipoId: tipoId,
+                nombre: `${tipoId === "id_maris" ? "Marisco" : "Producto"} ${tamano}`,
+                tamano: tamano,
+                precioOriginal: precioOriginal,
+                precioUnitario: precioOriginal, // Será recalculado
+                cantidad: 1,
+                subtotal: precioOriginal,
+                status: 1,
+                esPaquete: false,
+                esOriginal: false,
+                esNuevo: true,
+                productos: [{
+                    id: `${tipoId}_${id}_${Date.now()}_sub`, 
+                    idProducto: id, 
+                    nombre, 
+                    precio: precioOriginal,
+                    cantidad: 1, 
+                    status: 1, 
+                    esOriginal: false, 
+                    esNuevo: true,
+                    tipoId: tipoId 
+                }],
+              });
+          }
+        }
+        
         return recalcularPrecios(nuevaOrden);
       } else {
         const itemExistente = prevOrden.find(

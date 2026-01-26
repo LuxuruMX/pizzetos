@@ -24,6 +24,7 @@ import { pdf } from '@react-pdf/renderer';
 import { MdComment, MdArrowBack, MdPrint } from "react-icons/md";
 import { fetchIngredientes, fetchTamanosPizzas } from '@/services/pricesService';
 import { getProductTypeId } from '@/utils/productUtils';
+import ProductModal from "@/components/ui/ProductModal";
 
 
 
