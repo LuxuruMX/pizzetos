@@ -225,7 +225,7 @@ const POS = () => {
           cliente={lastOrder.cliente}
           tipoServicio={lastOrder.tipoServicio}
           comentarios={lastOrder.comentarios}
-
+          folio={lastOrder.folio}
         />
       ).toBlob();
 
@@ -325,7 +325,7 @@ const POS = () => {
       const payload = { orden, datosExtra, comentarios, tipoServicio, pagos };
       console.log('Enviando orden al backend (handleEnviarOrden):', JSON.stringify(payload, null, 2));
 
-      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
+      const response = await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagos);
 
       // Guardar orden para imprimir
       setLastOrder({
@@ -334,7 +334,8 @@ const POS = () => {
         datosExtra,
         tipoServicio,
         fecha: new Date().toISOString(),
-        comentarios
+        comentarios,
+        folio: response.id_venta
       });
 
       limpiarCarrito();
@@ -371,7 +372,7 @@ const POS = () => {
       const payload = { orden, datosExtra, comentarios, tipoServicio, pagosConfirmados };
       console.log('Enviando orden al backend (enviarOrdenConPagos):', JSON.stringify(payload, null, 2));
 
-      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
+      const response = await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
 
       // Guardar orden para imprimir
       setLastOrder({
@@ -381,7 +382,8 @@ const POS = () => {
         tipoServicio,
         pagos: pagosConfirmados,
         fecha: new Date().toISOString(),
-        comentarios
+        comentarios,
+        folio: response.id_venta
       });
 
       limpiarCarrito();
@@ -420,7 +422,7 @@ const POS = () => {
       const payload = { orden, datosExtra, comentarios, tipoServicio, pagosArray };
       console.log('Enviando orden al backend (enviarOrdenDomicilio):', JSON.stringify(payload, null, 2));
 
-      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosArray);
+      const response = await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosArray);
 
       // Guardar orden para imprimir
       setLastOrder({
@@ -436,7 +438,8 @@ const POS = () => {
         tipoServicio,
         pagos: pagosArray,
         fecha: new Date().toISOString(),
-        comentarios
+        comentarios,
+        folio: response.id_venta
       });
 
       limpiarCarrito();
@@ -464,7 +467,7 @@ const POS = () => {
       const payload = { orden, datosExtra, comentarios, tipoServicio, pagosConfirmados };
       console.log('Enviando orden al backend (enviarOrdenEspecial):', JSON.stringify(payload, null, 2));
 
-      await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
+      const response = await enviarOrdenAPI(orden, datosExtra, comentarios, tipoServicio, pagosConfirmados);
 
       // Guardar orden para imprimir
       setLastOrder({
@@ -480,7 +483,8 @@ const POS = () => {
         tipoServicio,
         pagos: pagosConfirmados,
         fecha: new Date().toISOString(),
-        comentarios
+        comentarios,
+        folio: response.id_venta
       });
 
       limpiarCarrito();
