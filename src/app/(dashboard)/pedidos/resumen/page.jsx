@@ -322,6 +322,10 @@ export default function TodosPedidosPage() {
   const [modalPagosOpen, setModalPagosOpen] = useState(false);
   const [permisos, setPermisos] = useState(null);
 
+  // Cached Catalogs
+  const [productosCache, setProductosCache] = useState(null);
+  const [clientesCache, setClientesCache] = useState(null);
+
   const [pedidoAPagar, setPedidoAPagar] = useState(null);
   const [cancellationModalOpen, setCancellationModalOpen] = useState(false);
   const [pedidoACancelar, setPedidoACancelar] = useState(null);
@@ -330,22 +334,58 @@ export default function TodosPedidosPage() {
   const [pdfUrl, setPdfUrl] = useState(null);
   const router = useRouter();
 
+  // Cargar catálogos iniciales
+  useEffect(() => {
+    const loadCatalogs = async () => {
+      try {
+        const [p, c] = await Promise.all([
+          fetchProductosPorCategoria(),
+          catalogsService.getNombresClientes()
+        ]);
+        setProductosCache(p);
+        setClientesCache(c);
+      } catch (e) {
+        console.error("Error loading ticket catalogs", e);
+      }
+    };
+    loadCatalogs();
+  }, []);
+
   const handlePrint = async (row) => {
     try {
       setLoading(true);
+
+      // Usar caché o fallback
+      let prods = productosCache;
+      let clis = clientesCache;
+
+      if (!prods || !clis) {
+        try {
+          const [p, c] = await Promise.all([
+            fetchProductosPorCategoria(),
+            catalogsService.getNombresClientes()
+          ]);
+          prods = p;
+          clis = c;
+          setProductosCache(p);
+          setClientesCache(c);
+        } catch (e) {
+          console.error("Error fetching catalogs fallback", e);
+          // Intentar continuar con lo que haya
+          prods = prods || {};
+          clis = clis || [];
+        }
+      }
+
       // 1. Obtener detalles completos
-      const [detalle, productosData, clientesData] = await Promise.all([
-        fetchDetalleVenta(row.id_venta),
-        fetchProductosPorCategoria(),
-        catalogsService.getNombresClientes()
-      ]);
+      const detalle = await fetchDetalleVenta(row.id_venta);
 
       // 2. Reconstruir orden
-      const ordenTicket = reconstructOrderForTicket(detalle.productos, productosData);
+      const ordenTicket = reconstructOrderForTicket(detalle.productos, prods);
 
       // 3. Preparar datos cliente
       // Prioridad: 
-      // 1. Cliente encontrado previamente en `clientesData` (si detalle.cliente es ID)
+      // 1. Cliente encontrado previamente en `clis` (si detalle.cliente es ID)
       // 2. detalle.cliente si es un string (nombre directo)
       // 3. detalle.nombre_cliente o detalle.nombreClie
 
@@ -353,7 +393,7 @@ export default function TodosPedidosPage() {
 
       if (detalle.cliente) {
         // Intentar ver si es un ID y buscarlo
-        const encontrado = clientesData.find(c => c.id_clie === detalle.cliente);
+        const encontrado = clis.find(c => c.id_clie === detalle.cliente);
         if (encontrado) {
           clienteObj = encontrado;
           // Si el detalle traía teléfono más fresco, usarlo, si no el del catálogo
