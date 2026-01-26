@@ -460,9 +460,6 @@ export const useCartEdit = () => {
       if (yaAgrupados.has(index)) return;
 
       if (categoriasAgrupables.includes(prod.tipoId)) {
-        // Buscar todos los productos del mismo tipo y tamaño (incluyendo custom)
-        // Nota: para custom_pizza, prod.tipoId es 'custom_pizza', pero queremos agruparlas con 'id_pizza' (o en un grupo 'pizza_group' genérico)
-        // Vamos a normalizar el tipo de grupo.
         
         let targetGroupType = prod.tipoId;
         if (prod.tipoId === 'id_pizza' || prod.tipoId === 'custom_pizza' || prod.tipoId === 'id_maris') {
@@ -530,7 +527,16 @@ export const useCartEdit = () => {
 
   // Agregar producto al carrito
   const agregarAlCarrito = (producto, tipoId) => {
-    const id = producto[tipoId];
+    // Intentar obtener ID usando el tipoId provisto
+    let id = producto[tipoId];
+    
+    // Si no encuentra ID (ej. forzamos 'id_maris' pero el objeto trae 'id_pizza'), buscar en producto
+    if (id === undefined || id === null) {
+        id = producto.id || producto.id_pizza || producto.id_maris || producto.id_hamb || producto.id_alis || 
+             producto.id_cos || producto.id_spag || producto.id_papa || producto.id_rec || 
+             producto.id_barr || producto.id_refresco || producto.id_paquete;
+    }
+    
     const precioOriginal = parseFloat(producto.precio);
     const tamano =
       producto.subcategoria || producto.tamano || producto.tamaño || "N/A";
@@ -564,10 +570,16 @@ export const useCartEdit = () => {
           const group = nuevaOrden[existingGroupIndex];
           const itemProductos = group.productos || [];
 
-          // Buscar si el producto ya existe en el grupo (por ID)
-          // Nota: Si es para edición, agregamos nuevas líneas para no mezclar status 1/2
           const existingProdIndex = itemProductos.findIndex(
-            (p) => p.idProducto === id && (p.status === 1 || p.esNuevo)
+            (p) => {
+                const matchId = p.idProducto == id; // Loose equality for safety
+                const matchTipo = p.tipoId === tipoId;
+                const statusOk = (p.status === 1 || p.esNuevo);
+                
+                // console.log(`  Comparando con P: ID=${p.idProducto} Tipo=${p.tipoId} -> MatchId:${matchId} MatchTipo:${matchTipo}`);
+                
+                return matchId && matchTipo && statusOk;
+            }
           );
 
           let nuevosProductos = [...itemProductos];
