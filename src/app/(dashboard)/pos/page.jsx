@@ -18,6 +18,7 @@ import { MdComment, MdPrint } from "react-icons/md";
 import { pdf } from '@react-pdf/renderer';
 import TicketPDF from '@/components/ui/TicketPDF';
 import PDFViewerModal from '@/components/ui/PDFViewerModal';
+import { getProductTypeId } from '@/utils/productUtils';
 
 const decodeCartFromUrl = () => {
   if (typeof window !== 'undefined' && window.location.search) {
@@ -506,7 +507,7 @@ const POS = () => {
         });
 
         if (varianteConTamano) {
-          const tipoIdVariante = Object.keys(varianteConTamano).find(key => key.startsWith('id_'));
+          const tipoIdVariante = getProductTypeId(varianteConTamano);
           agregarAlCarrito(varianteConTamano, tipoIdVariante);
           setUsarTamanoAutomatico(false); // Próxima vez mostrará modal
           return;

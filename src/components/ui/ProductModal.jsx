@@ -1,4 +1,5 @@
 import { IoClose } from 'react-icons/io5';
+import { getProductTypeId } from '@/utils/productUtils';
 
 const ProductModal = ({ isOpen, onClose, nombreProducto, variantes, onSeleccionar, descripcion }) => {
   if (!isOpen) return null;
@@ -10,7 +11,7 @@ const ProductModal = ({ isOpen, onClose, nombreProducto, variantes, onSelecciona
 
   // Función para obtener el tipoId
   const obtenerTipoId = (variante) => {
-    return Object.keys(variante).find((key) => key.startsWith('id_'));
+    return getProductTypeId(variante);
   };
 
   return (
