@@ -223,43 +223,42 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
     if (pizzas.length > 0) {
       const totalQty = pizzas.reduce((acc, p) => acc + p.cantidad, 0);
 
-      // Lógica de cálculo 2x1 (Porteda de useCart.js)
       const unidades = [];
       let costoTotalQueso = 0;
 
       pizzas.forEach(prod => {
-        // 1. Obtener PRECIO BASE
-        // Prioridad:
-        // A) prod.precio_base: Nuevo campo ideal que vendría del backend (DB).
-        // B) prod.precioUnitario: El precio al que se vendió. 
+        // 1. Obtener precio inicial (de DB o Unitario)
+        let rawPrice = 0;
+        if (prod.precio_base !== undefined && prod.precio_base !== null) {
+          rawPrice = parseFloat(prod.precio_base);
+        } else {
+          rawPrice = parseFloat(prod.precioUnitario || prod.precio || 0);
+        }
 
-        let precioBase = 0;
+        let precioBase = rawPrice;
         let precioExtra = 0;
 
-        if (prod.precio_base !== undefined && prod.precio_base !== null) {
-          // A) El backend ya nos da el precio lista histórico limpio
-          precioBase = parseFloat(prod.precio_base);
-        } else {
-          // B) Usamos el precio guardado en la venta
-          precioBase = parseFloat(prod.precioUnitario || prod.precio || 0);
+        // 2. Separar costo de Queso / Extras
+        if (prod.conQueso) {
+          const sizeName = prod.tamano;
+          const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
+            key => key.toLowerCase() === sizeName.toLowerCase()
+          ) || sizeName;
 
-          // Intentar separar el costo del queso si no viene separado
-          if (prod.conQueso) {
-            const sizeName = prod.tamano;
-            const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
-              key => key.toLowerCase() === sizeName.toLowerCase()
-            ) || sizeName;
+          // Usar precio_extra de DB si existe, si no, fallback a config
+          const extraPrecio = prod.precio_extra !== undefined
+            ? parseFloat(prod.precio_extra)
+            : (PRECIOS_ORILLA_QUESO[tamanoKey] || 0);
 
-            // Si el backend mandara 'precio_extra', lo usariamos aquí.
-            const extraPrecio = prod.precio_extra !== undefined ? parseFloat(prod.precio_extra) : (PRECIOS_ORILLA_QUESO[tamanoKey] || 0);
+          precioExtra = extraPrecio;
 
-            precioExtra = extraPrecio;
+          // Restar el extra si el precio parece incluirlo
+          // (Heurística: si al restar queda > 0 o si usamos precio_base que venia "sucio")
+          // Para seguridad, asumiremos que si trae queso, el rawPrice lo incluye.
+          // Excepto si el rawPrice es muy bajo (menor al extra), lo cual indicaria error.
 
-            // Solo restamos si parece que el precio base incluye el queso
-            // (Si precioBase > extraPrecio, asumimos que sí)
-            if (precioBase > precioExtra) {
-              precioBase -= precioExtra;
-            }
+          if (rawPrice >= precioExtra) {
+            precioBase = rawPrice - precioExtra;
           }
         }
 
