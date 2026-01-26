@@ -1,5 +1,10 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+import { POS_CONFIG } from '@/config/posConfig';
+
+// Determine width based on config
+const PRINTER_SIZE = POS_CONFIG.PRINTER_SIZE || '58mm';
+const PAGE_WIDTH = PRINTER_SIZE === '80mm' ? 227 : 164; // 80mm ~ 227pt, 58mm ~ 164pt
 
 // Registrar fuente estándar si es necesario, o usar Helvetica por defecto
 // Font.register({ family: 'Roboto', src: '...' });
@@ -9,7 +14,8 @@ const styles = StyleSheet.create({
         fontFamily: 'Helvetica',
         fontSize: 9,
         padding: 5,
-        width: 164, // ~58mm
+        padding: 5,
+        width: PAGE_WIDTH,
     },
     header: {
         marginBottom: 5,
@@ -195,7 +201,7 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
 
     return (
         <Document>
-            <Page size={[164, dynamicHeight]} style={styles.page}>
+            <Page size={[PAGE_WIDTH, dynamicHeight]} style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>Pizzetos</Text>
