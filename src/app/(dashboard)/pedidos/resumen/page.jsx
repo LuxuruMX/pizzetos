@@ -104,7 +104,16 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
     // 2. Manejo de PAQUETES
     else if (prod.tipo === 'Paquete') {
       const numPaquete = prod.nombre.includes('1') ? 1 : prod.nombre.includes('2') ? 2 : 3;
-      const precio = getPaquetePrice(numPaquete);
+
+      // Prioridad: precio_base de DB > precioUnitario de DB > Hardcoded
+      let precio = 0;
+      if (prod.precio_base !== undefined && prod.precio_base !== null) {
+        precio = parseFloat(prod.precio_base);
+      } else if (prod.precioUnitario !== undefined && prod.precioUnitario !== null) {
+        precio = parseFloat(prod.precioUnitario);
+      } else {
+        precio = getPaquetePrice(numPaquete);
+      }
 
       let detallePaqueteStr = '';
       let refresco = '';
@@ -148,7 +157,16 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
     // 3. Manejo de GRUPOS ESPECIALES (Rectangular, Barra, Magno)
     else if (['Rectangular', 'Barra', 'Magno'].includes(prod.tipo)) {
       const tipoId = prod.tipo === 'Rectangular' ? 'id_rec' : prod.tipo === 'Barra' ? 'id_barr' : 'id_magno';
-      const precio = findPrice(prod.tipo, prod.tipo.toLowerCase());
+
+      // Prioridad: precio_base de DB > precioUnitario de DB > Cache
+      let precio = 0;
+      if (prod.precio_base !== undefined && prod.precio_base !== null) {
+        precio = parseFloat(prod.precio_base);
+      } else if (prod.precioUnitario !== undefined && prod.precioUnitario !== null) {
+        precio = parseFloat(prod.precioUnitario);
+      } else {
+        precio = findPrice(prod.tipo, prod.tipo.toLowerCase());
+      }
 
       // Convertir especialidades (array strings) a productos (array objetos)
       let productosGrupo = [];
@@ -177,7 +195,14 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
       let cat = 'refrescos';
       if (prod.tipo === 'Refresco') cat = 'refrescos';
 
-      const precio = prod.precio || findPrice(prod.nombre, cat);
+      let precio = 0;
+      if (prod.precio_base !== undefined && prod.precio_base !== null) {
+        precio = parseFloat(prod.precio_base);
+      } else if (prod.precioUnitario !== undefined && prod.precioUnitario !== null) {
+        precio = parseFloat(prod.precioUnitario);
+      } else {
+        precio = prod.precio || findPrice(prod.nombre, cat);
+      }
 
       newItems.push({
         id: `item_${index}`,
@@ -202,24 +227,45 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
       let costoTotalQueso = 0;
 
       pizzas.forEach(prod => {
-        let precioBase = parseFloat(prod.precioUnitario || 0);
+        // 1. Obtener PRECIO BASE
+        // Prioridad:
+        // A) prod.precio_base: Nuevo campo ideal que vendría del backend (DB).
+        // B) prod.precioUnitario: El precio al que se vendió. 
 
-        if (prod.conQueso) {
-          const sizeName = prod.tamano;
-          const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
-            key => key.toLowerCase() === sizeName.toLowerCase()
-          ) || sizeName;
-          const extraPrecio = PRECIOS_ORILLA_QUESO[tamanoKey] || 0;
+        let precioBase = 0;
+        let precioExtra = 0;
 
+        if (prod.precio_base !== undefined && prod.precio_base !== null) {
+          // A) El backend ya nos da el precio lista histórico limpio
+          precioBase = parseFloat(prod.precio_base);
+        } else {
+          // B) Usamos el precio guardado en la venta
+          precioBase = parseFloat(prod.precioUnitario || prod.precio || 0);
 
-          precioBase -= extraPrecio;
+          // Intentar separar el costo del queso si no viene separado
+          if (prod.conQueso) {
+            const sizeName = prod.tamano;
+            const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
+              key => key.toLowerCase() === sizeName.toLowerCase()
+            ) || sizeName;
 
-          costoTotalQueso += extraPrecio * prod.cantidad;
+            // Si el backend mandara 'precio_extra', lo usariamos aquí.
+            const extraPrecio = prod.precio_extra !== undefined ? parseFloat(prod.precio_extra) : (PRECIOS_ORILLA_QUESO[tamanoKey] || 0);
+
+            precioExtra = extraPrecio;
+
+            // Solo restamos si parece que el precio base incluye el queso
+            // (Si precioBase > extraPrecio, asumimos que sí)
+            if (precioBase > precioExtra) {
+              precioBase -= precioExtra;
+            }
+          }
         }
 
-        // Asegurar que no sea negativo (si precioUnitario no incluía queso)
-        if (precioBase < 0) precioBase = parseFloat(prod.precioUnitario || 0);
+        // Protección contra negativos
+        if (precioBase < 0) precioBase = 0;
 
+        costoTotalQueso += precioExtra * prod.cantidad;
 
         for (let i = 0; i < prod.cantidad; i++) {
           unidades.push({
@@ -316,7 +362,7 @@ export default function TodosPedidosPage() {
       const blob = await pdf(
         <TicketPDF
           orden={ordenTicket}
-          total={detalle.total}
+          total={detalle.total || detalle.total_venta}
           datosExtra={datosExtra}
           fecha={detalle.fecha}
           cliente={clienteEncontrado || { nombre: detalle.nombre_cliente }} // Fallback al nombre en detalle
