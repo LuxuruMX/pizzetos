@@ -149,12 +149,14 @@ export const useCartEdit = () => {
       // --- LOGICA CUSTOM PIZZA ---
       if (esCustomPizza) {
         // Reconstruir nombre basado en ingredientes
-        const ingredientesIds = prod.ingredientes || []; 
-        // Asumiendo prod.ingredientes sea array de IDs. Si viene como objeto {tamano, ingredientes}, ajustar.
         let idsOnly = [];
         let tamanoId = 0;
         
-        if (prod.ingredientes && typeof prod.ingredientes === 'object' && !Array.isArray(prod.ingredientes)) {
+        // Prioridad: prod.id (si es objeto) > prod.ingredientes (si es objeto) > prod.ingredientes (array)
+        if (prod.id && typeof prod.id === 'object' && !Array.isArray(prod.id)) {
+             idsOnly = prod.id.ingredientes || [];
+             tamanoId = prod.id.tamano;
+        } else if (prod.ingredientes && typeof prod.ingredientes === 'object' && !Array.isArray(prod.ingredientes)) {
             idsOnly = prod.ingredientes.ingredientes || [];
             tamanoId = prod.ingredientes.tamano;
         } else if (Array.isArray(prod.ingredientes)) {
@@ -1165,10 +1167,8 @@ export const useCartEdit = () => {
                           tamano: prod.ingredientes.tamano,
                           ingredientes: Array.isArray(prod.ingredientes.ingredientes) ? prod.ingredientes.ingredientes : []
                       },
-                      tipo: 'custom_pizza', // Backend puede requerir esto o deducirlo de 'ingredientes'
                       status: prod.status !== undefined ? prod.status : (item.status ?? 1),
-                      queso: prod.conQueso ? 1 : 0, // Enviar como flag 1/0 o boolean según backend. User payload example shows 'queso: 0' top level.
-                      // Algunos backends usan 'conQueso', otros 'queso'. En creation payload user puso 'queso: 0'.
+                      queso: prod.conQueso ? 1 : 0, 
                   });
               } else {
                   // Pizza Normal o Mariscos
