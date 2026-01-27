@@ -293,10 +293,6 @@ export const useCartEdit = () => {
              const productosCategoria = productosCache[categoriaSlices] || [];
              
              const productosDetalle = detalleRectangularArr.map(sliceId => {
-                 // Buscar slice por ID en el catalogo CORRECTO (ej: rectangular)
-                 // Nota: sliceId puede ser numérico. Los productos en cache suelen tener la key de tipo (id_rec, id_barr...)
-                 // Las rectangulares usan 'id_rec' como key en el catalogo.
-                 // PERO OJO: Si la categoria es 'rectangular', los items tienen 'id_rec'.
                  
                  const sliceProducto = productosCategoria.find(p => 
                     p.id === sliceId || p[prod.tipo] === sliceId || p.id_rec === sliceId || p.id_barr === sliceId || p.id_magno === sliceId
@@ -585,6 +581,173 @@ export const useCartEdit = () => {
     const nombre = producto.nombre;
 
     setOrden((prevOrden) => {
+      // Lógica específica para agrupar id_rec en grupos de 4 (Portado de useCart.js + Lógica Edit)
+      if (tipoId === 'id_rec') {
+        // Buscar un grupo existente que tenga menos de 4 items (slices ACTIVOS)
+        const grupoExistente = prevOrden.find(
+          (item) => item.tipoId === tipoId && !item.esPaquete && 
+          (item.productos.reduce((acc, p) => acc + (p.status !== 0 ? p.cantidad : 0), 0) < 4)
+        );
+
+        let nuevaOrden;
+
+        if (grupoExistente) {
+           nuevaOrden = prevOrden.map((item) => {
+             if (item.id === grupoExistente.id) {
+               // Buscar si el producto ya existe en el grupo (por ID Producto)
+               const productoExistenteIndex = item.productos.findIndex(p => p.idProducto == id && p.status !== 0);
+               
+               let nuevosProductos = [...item.productos];
+               
+               if (productoExistenteIndex >= 0) {
+                   // Ya existe, incrementar
+                   nuevosProductos[productoExistenteIndex] = {
+                       ...nuevosProductos[productoExistenteIndex],
+                       cantidad: nuevosProductos[productoExistenteIndex].cantidad + 1
+                   };
+               } else {
+                   // Nuevo producto en el grupo
+                   const nuevoIdSubItem = `${tipoId}_${id}_${Date.now()}_sub`;
+                   nuevosProductos.push({
+                       id: nuevoIdSubItem,
+                       idProducto: id,
+                       nombre, 
+                       cantidad: 1, 
+                       status: 1, 
+                       esOriginal: false,
+                       esNuevo: true,
+                       precio: precioOriginal,
+                       tipoId: tipoId
+                   });
+               }
+               
+               return {
+                 ...item,
+                 status: 1, // Asegurar que el grupo esté activo
+                 esModificado: true,
+                 productos: nuevosProductos
+               };
+             }
+             return item;
+           });
+        } else {
+           // Crear nuevo grupo
+           const nuevoIdSubItem = `${tipoId}_${id}_${Date.now()}_sub`;
+           nuevaOrden = [
+             ...prevOrden,
+             {
+               id: `${tipoId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+               tipoId,
+               nombre: `Rectangular`, // Nombre genérico del grupo
+               precioOriginal,
+               precioUnitario: precioOriginal,
+               cantidad: 1, // 1 Grupo
+               subtotal: precioOriginal,
+               status: 1,
+               esPaquete: false,
+               esOriginal: false,
+               esNuevo: true,
+               productos: [{ 
+                   id: nuevoIdSubItem, 
+                   idProducto: id, 
+                   nombre, 
+                   cantidad: 1, 
+                   status: 1, 
+                   esOriginal: false, 
+                   esNuevo: true,
+                   precio: precioOriginal,
+                   tipoId: tipoId
+               }]
+             }
+           ];
+        }
+        return recalcularPrecios(nuevaOrden);
+      }
+
+      // Lógica específica para agrupar id_barr e id_magno en grupos de 2
+      if (tipoId === 'id_barr' || tipoId === 'id_magno') {
+        const limite = 2;
+        // Buscar un grupo existente que tenga menos de 2 items
+        const grupoExistente = prevOrden.find(
+          (item) => item.tipoId === tipoId && !item.esPaquete && 
+          (item.productos.reduce((acc, p) => acc + (p.status !== 0 ? p.cantidad : 0), 0) < limite)
+        );
+
+        let nuevaOrden;
+
+        if (grupoExistente) {
+           nuevaOrden = prevOrden.map((item) => {
+             if (item.id === grupoExistente.id) {
+               // Buscar si el producto ya existe en el grupo
+               const productoExistenteIndex = item.productos.findIndex(p => p.idProducto == id && p.status !== 0);
+               
+               let nuevosProductos = [...item.productos];
+               
+               if (productoExistenteIndex >= 0) {
+                   nuevosProductos[productoExistenteIndex] = {
+                       ...nuevosProductos[productoExistenteIndex],
+                       cantidad: nuevosProductos[productoExistenteIndex].cantidad + 1
+                   };
+               } else {
+                   const nuevoIdSubItem = `${tipoId}_${id}_${Date.now()}_sub`;
+                   nuevosProductos.push({
+                       id: nuevoIdSubItem,
+                       idProducto: id,
+                       nombre, 
+                       cantidad: 1, 
+                       status: 1, 
+                       esOriginal: false,
+                       esNuevo: true,
+                       precio: precioOriginal,
+                       tipoId: tipoId
+                   });
+               }
+               
+               return {
+                 ...item,
+                 status: 1,
+                 esModificado: true,
+                 productos: nuevosProductos
+               };
+             }
+             return item;
+           });
+        } else {
+           // Crear nuevo grupo
+           const nuevoIdSubItem = `${tipoId}_${id}_${Date.now()}_sub`;
+           const nombreGrupo = tipoId === 'id_barr' ? 'Barra' : 'Magno';
+           
+           nuevaOrden = [
+             ...prevOrden,
+             {
+               id: `${tipoId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+               tipoId,
+               nombre: nombreGrupo,
+               precioOriginal,
+               precioUnitario: precioOriginal,
+               cantidad: 1, // 1 Grupo
+               subtotal: precioOriginal,
+               status: 1,
+               esPaquete: false,
+               esOriginal: false,
+               esNuevo: true,
+               productos: [{ 
+                   id: nuevoIdSubItem, 
+                   idProducto: id, 
+                   nombre, 
+                   cantidad: 1, 
+                   status: 1, 
+                   esOriginal: false, 
+                   esNuevo: true,
+                   precio: precioOriginal,
+                   tipoId: tipoId
+               }]
+             }
+           ];
+        }
+        return recalcularPrecios(nuevaOrden);
+      }
+
       const categoriasConDescuento = ["id_pizza", "id_maris"];
 
       if (categoriasConDescuento.includes(tipoId)) {
@@ -1212,21 +1375,6 @@ export const useCartEdit = () => {
         }
         return item.idProducto === prodOrig.idProducto;
       });
-
-      // Si no existe en la orden actual, agregarlo como cancelado
-      // PERO cuidado: si se separó en múltiples líneas (una status 2, una status 1), 
-      // la lógica de "existeEnOrden" podría ser engañosa si no cuidamos los IDs únicos.
-      // Sin embargo, aquí estamos verificando si el PRODUCTO (catálogo) sigue presente.
-      // Si el usuario eliminó TODAS las instancias de ese producto, entonces sí se manda status 0.
-      // Si queda al menos una instancia (ej: la status 2), entonces no se manda este bloque de eliminación global.
-      // La eliminación individual (bajar cantidad o quitar un sub-item) ya se maneja en el loop de `orden` 
-      // si es que mantenemos los items con status 0 en `orden`.
-      // REVISIÓN: `eliminarDelCarrito` mantiene los items originales con status 0 en `orden`.
-      // Por lo tanto, `productosOriginales` solo es necesario si por alguna razón se eliminó físicamente del array `orden`.
-      // En la lógica actual, los items originales NO se eliminan de `orden`, solo cambian de status.
-      // Los items NUEVOS sí se eliminan físicamente.
-      // Así que este bloque de `productosOriginales` es redundante si garantizamos que los originales nunca salen de `orden`.
-      // Pero por seguridad, lo dejaremos, asegurando que use el formato correcto.
 
       if (!existeEnOrden) {
         items.push({
