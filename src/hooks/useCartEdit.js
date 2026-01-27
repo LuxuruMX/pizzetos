@@ -190,13 +190,13 @@ export const useCartEdit = () => {
           esCustom: true,
           esOriginal: true,
           esModificado: false,
-          productos: null, // Custom pizzas no se agrupan en lógica legacy, pero sí en pizza_group
-          // Guardar detalle de ingredientes
+          productos: null,
           ingredientes: {
              tamano: tamanoId || 0,
              ingredientes: idsOnly
           },
-          ingredientesNombres: nombresIng
+          ingredientesNombres: nombresIng,
+          conQueso: prod.queso && parseFloat(prod.queso) > 0 ? true : false
         };
       }
 
