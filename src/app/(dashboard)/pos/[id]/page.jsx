@@ -435,6 +435,21 @@ const POSEdit = () => {
       return Object.values(nombresUnicos);
     }
 
+    // Multiplicar por 4 el precio de las rectangulares para mostrar
+    if (categoriaActiva === 'rectangular') {
+      return productosCategoria.map(producto => ({
+        ...producto,
+        precio: parseFloat(producto.precio) * 4
+      }));
+    }
+
+    if (categoriaActiva === 'barra' || categoriaActiva === 'magno') {
+      return productosCategoria.map(producto => ({
+        ...producto,
+        precio: parseFloat(producto.precio) * 2
+      }));
+    }
+
     return productosCategoria;
   };
 
