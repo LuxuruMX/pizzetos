@@ -138,12 +138,11 @@ export const useCartEdit = () => {
       'id_cos': 'costillas',
       'id_spag': 'spaguetty',
       'id_papa': 'papas',
-      'id_rect': 'rectangular',
+      'id_rec': 'rectangular',
       'id_barr': 'barra',
       'id_maris': 'mariscos',
       'id_refresco': 'refrescos',
       'id_paquete': 'paquetes'
-      // custom_pizza no está en caché de productos normal
     };
 
     const catToIdField = {
@@ -287,6 +286,49 @@ export const useCartEdit = () => {
              else if(['barra', 'id_barr'].includes(prod.tipo)) nombre = 'Pizza Barra';
              else if(['magno', 'id_magno'].includes(prod.tipo)) nombre = 'Pizza Magno';
              else nombre = 'Pizza Compuesta';
+             
+             // Construir sub-productos (slices)
+             // Esto requiere buscar los nombres de los slices en su catalogo correspondiente
+             const categoriaSlices = tipoMap[prod.tipo] || 'rectangular'; // Default a rectangular si falla
+             const productosCategoria = productosCache[categoriaSlices] || [];
+             
+             const productosDetalle = detalleRectangularArr.map(sliceId => {
+                 // Buscar slice por ID en el catalogo CORRECTO (ej: rectangular)
+                 // Nota: sliceId puede ser numérico. Los productos en cache suelen tener la key de tipo (id_rec, id_barr...)
+                 // Las rectangulares usan 'id_rec' como key en el catalogo.
+                 // PERO OJO: Si la categoria es 'rectangular', los items tienen 'id_rec'.
+                 
+                 const sliceProducto = productosCategoria.find(p => 
+                    p.id === sliceId || p[prod.tipo] === sliceId || p.id_rec === sliceId || p.id_barr === sliceId || p.id_magno === sliceId
+                 );
+                 
+                 return {
+                     id: sliceId,
+                     idProducto: sliceId,
+                     nombre: sliceProducto ? sliceProducto.nombre : `Slice ${sliceId}`,
+                     cantidad: 1, // Cada ID cuenta como 1 slice
+                     precio: 0, // El precio va al grupo
+                     status: prod.status, // Heredar status del padre
+                     tipoId: prod.tipo // id_rec, id_barr...
+                 };
+             });
+             
+             return {
+                 id: realId,
+                 tipoId: prod.tipo, // id_rec
+                 nombre: nombre,
+                 tamano: 'Único',
+                 precioOriginal: precio,
+                 precioUnitario: precio,
+                 cantidad: prod.cantidad, // Cantidad de GRUPOS
+                 subtotal: precio * prod.cantidad,
+                 status: prod.status,
+                 esPaquete: false,
+                 esOriginal: true,
+                 esModificado: false,
+                 productos: productosDetalle
+             };
+
           } else {
              // Es Paquete con objeto de detalles
              detallePaqueteObj = prod.id;
