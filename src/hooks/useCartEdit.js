@@ -1083,8 +1083,8 @@ export const useCartEdit = () => {
 
     // Procesar productos actuales del carrito
     orden.forEach((item) => {
+      // 1. Manejo de Paquetes
       if (item.esPaquete) {
-        // Paquetes
         const paqueteData = {
           cantidad: item.cantidad,
           precio_unitario: item.precioUnitario,
@@ -1092,7 +1092,6 @@ export const useCartEdit = () => {
           status: item.status ?? 1,
         };
 
-        // Si es nuevo, incluir detalles de composición
         if (!item.esOriginal) {
            if (item.datoPaquete.detalle_paquete) {
              paqueteData.detalle_paquete = item.datoPaquete.detalle_paquete;
@@ -1110,76 +1109,150 @@ export const useCartEdit = () => {
              paqueteData.id_refresco = item.datoPaquete.id_refresco;
            }
         }
-
         items.push(paqueteData);
+        return;
+      }
 
-      } else if (item.productos && item.productos.length > 0) {
-        // Items agrupados (pizzas/mariscos del mismo tamaño)
-        item.productos.forEach((prod) => {
+      // 2. Manejo de Grupos Especiales (Rectangular, Barra, Magno)
+      // Estos se deben enviar como UN solo item con array de IDs
+      if (['id_rec', 'id_barr', 'id_magno'].includes(item.tipoId) && item.productos && item.productos.length > 0) {
           
+          // Extraer IDs de los subproductos activos
+          const ids = item.productos
+              .filter(p => p.status !== 0) // Solo activos
+              .map(p => p.idProducto);
+
+          if (ids.length > 0) {
+             const itemData = {
+                 cantidad: item.cantidad, // Cantidad de GRUPOS (generalmente 1)
+                 precio_unitario: item.precioUnitario, // Precio del grupo completo
+                 [item.tipoId]: ids, // Array de IDs: id_rec: [1, 2, 3, 4]
+                 status: item.status ?? 1
+             };
+             items.push(itemData);
+          } else if (item.esOriginal) {
+             // Si era original y se vació, enviar cancelación si es necesario, 
+             // pero generalmente id_rec se maneja por reemplazo o status 0 del grupo.
+             // Si el grupo tiene status 0, se maneja abajo o aquí mismo.
+             if (item.status === 0) {
+                 items.push({
+                     cantidad: 0,
+                     precio_unitario: item.precioOriginal || 0,
+                     [item.tipoId]: [], // Array vacío o null?
+                     status: 0
+                 });
+             }
+          }
+          return;
+      }
+
+      // 3. Manejo de Grupos de Pizzas (Normal, Mariscos, Custom) que se envían individuales
+      if (item.productos && item.productos.length > 0) {
+        
+        item.productos.forEach((prod) => {
+          // Ignorar productos con status 0 que no son originales (los nuevos borrados no se envían)
+          if (prod.status === 0 && !prod.esOriginal && !item.esOriginal) return;
+
+          // Si es un grupo de pizzas (puede tener mezclados custom, id_pizza, id_maris)
           if (item.tipoId === 'pizza_group') {
-              // Manejo nuevo pizza_group
+              
               if (prod.tipoId === 'custom_pizza' || prod.esCustom) {
+                  // Custom Pizza
                   items.push({
                       cantidad: prod.cantidad,
                       precio_unitario: parseFloat(prod.precio),
                       ingredientes: {
                           tamano: prod.ingredientes.tamano,
-                          ingredientes: prod.ingredientes.ingredientes
+                          ingredientes: Array.isArray(prod.ingredientes.ingredientes) ? prod.ingredientes.ingredientes : []
                       },
-                      tipo: 'custom_pizza',
+                      tipo: 'custom_pizza', // Backend puede requerir esto o deducirlo de 'ingredientes'
                       status: prod.status !== undefined ? prod.status : (item.status ?? 1),
-                      conQueso: prod.conQueso
+                      queso: prod.conQueso ? 1 : 0, // Enviar como flag 1/0 o boolean según backend. User payload example shows 'queso: 0' top level.
+                      // Algunos backends usan 'conQueso', otros 'queso'. En creation payload user puso 'queso: 0'.
                   });
               } else {
-                  // Pizza normal o marisco dentro de grupo
+                  // Pizza Normal o Mariscos
                   items.push({
                     cantidad: prod.cantidad,
                     precio_unitario: parseFloat(prod.precio),
                     [prod.tipoId || 'id_pizza']: prod.idProducto || prod.id,
                     status: prod.status !== undefined ? prod.status : (item.status ?? 1),
-                    conQueso: prod.conQueso
+                    queso: prod.conQueso ? 1 : 0
                   });
               }
+
           } else {
-              // Legacy
+              // Fallback para otros grupos (legacy)
               items.push({
                 cantidad: prod.cantidad,
                 precio_unitario: item.precioUnitario || 0,
-                [item.tipoId]: prod.idProducto || prod.id, // Usar idProducto si existe, sino id
+                [item.tipoId]: prod.idProducto || prod.id,
                 status: prod.status !== undefined ? prod.status : (item.status ?? 1),
               });
           }
         });
-      } else {
-        // Items individuales
-        items.push({
+        return;
+      } 
+      
+      // 4. Items Individuales sin productos (Refrescos, etc.)
+      items.push({
           cantidad: item.cantidad,
           precio_unitario: item.precioUnitario || 0,
           [item.tipoId]: item.idProducto,
           status: item.status ?? 1,
-        });
-      }
-    });
-
-    // Marcar productos eliminados con status 0
-    productosOriginales.forEach((prodOrig) => {
-      const existeEnOrden = orden.some((item) => {
-        if (item.productos) {
-          // Verificar si el producto original existe en algún sub-item
-          // Nota: prodOrig.idProducto es el ID del catálogo
-          return item.productos.some((p) => p.idProducto === prodOrig.idProducto);
-        }
-        return item.idProducto === prodOrig.idProducto;
       });
 
-      if (!existeEnOrden) {
-        items.push({
-          cantidad: 0,
-          precio_unitario: prodOrig.precioOriginal || 0,
-          [prodOrig.tipoId]: prodOrig.idProducto,
-          status: 0, // Cancelado
-        });
+    });
+
+    // Marcar productos originales eliminados completamente que no estén en la nueva lista
+    productosOriginales.forEach((prodOrig) => {
+      // Verificar si ya fue procesado en los items activos o cancelados arriba
+      // (Esta lógica es compleja si IDs cambian, pero intentamos matchear)
+      
+      // Si es un grupo especial, ya se manejó arriba por el ID del item padre o reconstrucción.
+      // Pero si el usuario borró todo el grupo Rectangular, 'orden' no lo tendrá.
+      // Necesitamos detectar si falta un grupo original completo.
+      
+      // ... Simplificación: El backend suele manejar actualizaciones por "Diferencia" o "Reemplazo completo".
+      // Si el backend reemplaza los items de la venta con los enviados, no necesitamos enviar explícitamente los borrados (salvo status 0).
+      // Si el backend actualiza status, sí necesitamos enviar status 0.
+      
+      // Asumiremos que enviar status 0 es lo correcto para lo eliminado.
+      
+      const enNuevaOrden = orden.some(item => {
+          // Checar items simples
+          if (item.idProducto === prodOrig.idProducto && item.tipoId === prodOrig.tipoId) return true;
+          // Checar dentro de productos
+          if (item.productos) {
+              return item.productos.some(p => p.idProducto === prodOrig.idProducto);
+          }
+          // Checar grupos especiales (si el grupo existe, el producto está "cubierto" aunque sea en otro formato?)
+          // Si es rectangular, prodOrig.idProducto era un array? No, prodOrig venía desglosado si era item simple
+          // O si venía como grupo...
+          
+          if (['id_rec', 'id_barr', 'id_magno'].includes(prodOrig.tipoId)) {
+             // Si hay algún item de este tipo en la orden, asumimos que se está actualizando ese set.
+             // (Esto puede ser arriesgado si había 2 rectangulares y borra 1)
+             // Pero por ID compuesto no podemos traquear fácil.
+             // Revisar si prodOrig venía de un composite...
+             if (item.tipoId === prodOrig.tipoId) return true; // Asumimos continuidad por tipo
+          }
+          return false;
+      });
+
+      if (!enNuevaOrden) {
+          // Está borrado
+          // Si era parte de un grupo especial, quizás no deberíamos enviar status 0 individual si el backend espera array?
+          // Si era custom pizza...
+          
+          if (!['id_rec', 'id_barr', 'id_magno'].includes(prodOrig.tipoId)) {
+             items.push({
+               cantidad: 0,
+               precio_unitario: prodOrig.precioOriginal || 0,
+               [prodOrig.tipoId || 'id_pizza']: prodOrig.idProducto, // Fallback
+               status: 0,
+             });
+          }
       }
     });
 

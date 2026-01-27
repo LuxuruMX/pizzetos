@@ -260,10 +260,10 @@ const POSEdit = () => {
       console.log(JSON.stringify(payload, null, 2));
       console.log("═══════════════════════════════════════════════════════\n");
 
-      await actualizarPedidoCocina(idVenta, payload);
+      // await actualizarPedidoCocina(idVenta, payload);
 
-      alert("Pedido actualizado exitosamente");
-      router.push("/pos");
+      alert("Pedido actualizado exitosamente (SIMULACION - Payload en consola)");
+      // router.push("/pos");
     } catch (error) {
       console.error("Error al actualizar pedido:", error);
       alert(error.message || "Hubo un error al actualizar el pedido.");
