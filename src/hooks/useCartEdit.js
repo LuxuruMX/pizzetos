@@ -1156,8 +1156,15 @@ export const useCartEdit = () => {
           if (prod.status === 0 && !prod.esOriginal && !item.esOriginal) return;
 
           // Si es un grupo de pizzas (puede tener mezclados custom, id_pizza, id_maris)
+
           if (item.tipoId === 'pizza_group') {
-              
+              // Calcular precio del queso para este tamaño
+              const sizeName = item.tamano;
+              const tamanoKey = Object.keys(PRECIOS_ORILLA_QUESO).find(
+                  key => key.toLowerCase() === sizeName.toLowerCase()
+              ) || sizeName;
+              const cheesePrice = PRECIOS_ORILLA_QUESO[tamanoKey] || 0;
+
               if (prod.tipoId === 'custom_pizza' || prod.esCustom) {
                   // Custom Pizza
                   items.push({
@@ -1168,7 +1175,7 @@ export const useCartEdit = () => {
                           ingredientes: Array.isArray(prod.ingredientes.ingredientes) ? prod.ingredientes.ingredientes : []
                       },
                       status: prod.status !== undefined ? prod.status : (item.status ?? 1),
-                      queso: prod.conQueso ? 1 : 0, 
+                      queso: prod.conQueso ? cheesePrice : null, 
                   });
               } else {
                   // Pizza Normal o Mariscos
@@ -1177,7 +1184,7 @@ export const useCartEdit = () => {
                     precio_unitario: parseFloat(prod.precio),
                     [prod.tipoId || 'id_pizza']: prod.idProducto || prod.id,
                     status: prod.status !== undefined ? prod.status : (item.status ?? 1),
-                    queso: prod.conQueso ? 1 : 0
+                    queso: prod.conQueso ? cheesePrice : null
                   });
               }
 
