@@ -1107,10 +1107,17 @@ export const useCartEdit = () => {
         const paqueteObj = {
             id_paquete: item.datoPaquete.id_paquete,
             id_pizzas: idPizzas,
-            id_hamb: item.datoPaquete.id_hamb || 0,
-            id_alis: item.datoPaquete.id_alis || 0,
+            // id_hamb y id_alis se agregan solo si existen
             id_refresco: idRefresco
         };
+
+        if (item.datoPaquete.id_hamb) {
+            paqueteObj.id_hamb = item.datoPaquete.id_hamb;
+        }
+        
+        if (item.datoPaquete.id_alis) {
+            paqueteObj.id_alis = item.datoPaquete.id_alis;
+        }
 
         const paqueteData = {
           cantidad: item.cantidad,
