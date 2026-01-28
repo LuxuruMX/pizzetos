@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     },
 });
 
-const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, comentarios, folio }) => {
+const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, comentarios, folio, showChanges = false }) => {
     const formatoMoneda = (cantidad) => {
         return new Intl.NumberFormat('es-MX', {
             style: 'currency',
@@ -107,6 +107,21 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
         if (item.tipoId === 'id_barr') return 'Barra';
         if (item.tipoId === 'id_magno') return 'Magno';
         return `Pizzas ${item.tamano}`;
+    };
+
+    // Helper for change indicators
+    const getChangeIndicator = (item) => {
+        if (!showChanges) return '';
+        if (item.status === 0) return '(-) ';
+        if (item.esNuevo) return '(+) ';
+        if (item.esModificado) return '(M) ';
+        return '';
+    };
+
+    // Helper to check if item should be shown
+    const shouldShowItem = (item) => {
+        if (showChanges) return true; // Show everything in edit mode (including removed)
+        return item.status !== 0; // Standard mode: hide removed
     };
 
     // Función para estimar la altura del contenido
@@ -138,6 +153,8 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
 
         // Items
         orden.forEach(item => {
+            if (!shouldShowItem(item)) return;
+
             // Espacio entre items
             height += 4;
 
@@ -146,6 +163,8 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
                 height += 12;
                 // Items dentro del grupo
                 item.productos.forEach(pizza => {
+                    if (!shouldShowItem(pizza)) return; // Check sub-items status
+
                     height += 10; // Línea principal del item
                     if (pizza.ingredientesNombres && pizza.ingredientesNombres.length > 0) {
                         const ingText = `Ing: ${pizza.ingredientesNombres.join(', ')}`;
@@ -234,84 +253,96 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
                         <Text style={styles.col3}>$$</Text>
                     </View>
 
-                    {orden.map((item, index) => (
-                        <View key={index} style={{ marginBottom: 4 }}>
-                            {/* Si es un grupo (Pizzas, Rectangular, Barra, Magno), mostrar agrupado */}
-                            {isGroup(item) ? (
-                                <>
-                                    {/* Encabezado del grupo */}
-                                    <View style={styles.row}>
-                                        <Text style={styles.col1}>{item.cantidad}</Text>
-                                        <Text style={styles.col2}>{getGroupLabel(item)}</Text>
-                                        <Text style={styles.col3}>{formatoMoneda(item.subtotal)}</Text>
-                                    </View>
-                                    {/* Lista de pizzas indentada */}
-                                    {item.productos.map((pizza, pizzaIndex) => (
-                                        <View key={`${index}-${pizzaIndex}`} style={{ paddingLeft: 10, marginBottom: 1 }}>
-                                            <Text style={[styles.itemDetail, { fontSize: 8 }]}>
-                                                {pizza.cantidad} {pizza.nombre}
-                                                {pizza.conQueso && ' + Orilla de Queso'}
+                    {orden.map((item, index) => {
+                        if (!shouldShowItem(item)) return null;
+
+                        return (
+                            <View key={index} style={{ marginBottom: 4 }}>
+                                {/* Si es un grupo (Pizzas, Rectangular, Barra, Magno), mostrar agrupado */}
+                                {isGroup(item) ? (
+                                    <>
+                                        {/* Encabezado del grupo */}
+                                        <View style={styles.row}>
+                                            <Text style={styles.col1}>{item.cantidad}</Text>
+                                            <Text style={styles.col2}>
+                                                {getChangeIndicator(item)}{getGroupLabel(item)}
                                             </Text>
-                                            {pizza.ingredientesNombres && pizza.ingredientesNombres.length > 0 && (
-                                                <Text style={[styles.itemDetail, { paddingLeft: 5 }]}>
-                                                    Ing: {pizza.ingredientesNombres.join(', ')}
-                                                </Text>
+                                            <Text style={styles.col3}>{formatoMoneda(item.subtotal)}</Text>
+                                        </View>
+                                        {/* Lista de pizzas indentada */}
+                                        {item.productos.map((pizza, pizzaIndex) => {
+                                            if (!shouldShowItem(pizza)) return null;
+
+                                            return (
+                                                <View key={`${index}-${pizzaIndex}`} style={{ paddingLeft: 10, marginBottom: 1 }}>
+                                                    <Text style={[styles.itemDetail, { fontSize: 8 }]}>
+                                                        {getChangeIndicator(pizza)}{pizza.cantidad} {pizza.nombre}
+                                                        {pizza.conQueso && ' + Orilla de Queso'}
+                                                    </Text>
+                                                    {pizza.ingredientesNombres && pizza.ingredientesNombres.length > 0 && (
+                                                        <Text style={[styles.itemDetail, { paddingLeft: 5 }]}>
+                                                            Ing: {pizza.ingredientesNombres.join(', ')}
+                                                        </Text>
+                                                    )}
+                                                </View>
+                                            );
+                                        })}
+                                    </>
+                                ) : (
+                                    /* Para otros items (no grupos de pizzas) */
+                                    <>
+                                        <View style={styles.row}>
+                                            <Text style={styles.col1}>{item.cantidad}</Text>
+                                            <Text style={styles.col2}>
+                                                {getChangeIndicator(item)}{item.nombre}
+                                            </Text>
+                                            <Text style={styles.col3}>{formatoMoneda(item.subtotal || (item.precio * item.cantidad))}</Text>
+                                        </View>
+                                        {/* Detalles */}
+                                        <View>
+                                            {item.tamano && item.tamano !== 'N/A' && <Text style={styles.itemDetail}>Tam: {item.tamano}</Text>}
+                                            {item.conQueso && <Text style={styles.itemDetail}>+ Orilla de Queso</Text>}
+                                            {item.numeroPaquete && item.nombresDetalle ? (
+                                                <View>
+                                                    {item.numeroPaquete === 1 && (
+                                                        <>
+                                                            <Text style={styles.itemDetail}>2 Pizzas: {item.nombresDetalle?.rectangular || item.detallePaquete}</Text>
+                                                            <Text style={styles.itemDetail}>{item.nombresDetalle.refresco}</Text>
+                                                        </>
+                                                    )}
+                                                    {item.numeroPaquete === 2 && (
+                                                        <>
+                                                            <Text style={styles.itemDetail}>{item.nombresDetalle.complemento}</Text>
+                                                            <Text style={styles.itemDetail}>Pizza: {item.nombresDetalle.pizza}</Text>
+                                                            <Text style={styles.itemDetail}>{item.nombresDetalle.refresco}</Text>
+                                                        </>
+                                                    )}
+                                                    {item.numeroPaquete === 3 && (
+                                                        <>
+                                                            {item.nombresDetalle.pizzas && item.nombresDetalle.pizzas.map((p, i) => (
+                                                                <Text key={i} style={styles.itemDetail}>Pizza {i + 1}: {p}</Text>
+                                                            ))}
+                                                            <Text style={styles.itemDetail}>{item.nombresDetalle.refresco}</Text>
+                                                        </>
+                                                    )}
+                                                </View>
+                                            ) : (
+                                                item.numeroPaquete && item.detallePaquete && (
+                                                    <Text style={styles.itemDetail}>
+                                                        {item.numeroPaquete === 1 && `Slices: ${item.detallePaquete}`}
+                                                        {item.numeroPaquete === 3 && `Pizzas: ${item.detallePaquete}`}
+                                                    </Text>
+                                                )
+                                            )}
+                                            {item.ingredientesNombres && item.ingredientesNombres.length > 0 && (
+                                                <Text style={styles.itemDetail}>Ing: {item.ingredientesNombres.join(', ')}</Text>
                                             )}
                                         </View>
-                                    ))}
-                                </>
-                            ) : (
-                                /* Para otros items (no grupos de pizzas) */
-                                <>
-                                    <View style={styles.row}>
-                                        <Text style={styles.col1}>{item.cantidad}</Text>
-                                        <Text style={styles.col2}>{item.nombre}</Text>
-                                        <Text style={styles.col3}>{formatoMoneda(item.subtotal || (item.precio * item.cantidad))}</Text>
-                                    </View>
-                                    {/* Detalles */}
-                                    <View>
-                                        {item.tamano && item.tamano !== 'N/A' && <Text style={styles.itemDetail}>Tam: {item.tamano}</Text>}
-                                        {item.conQueso && <Text style={styles.itemDetail}>+ Orilla de Queso</Text>}
-                                        {item.numeroPaquete && item.nombresDetalle ? (
-                                            <View>
-                                                {item.numeroPaquete === 1 && (
-                                                    <>
-                                                        <Text style={styles.itemDetail}>2 Pizzas: {item.nombresDetalle?.rectangular || item.detallePaquete}</Text>
-                                                        <Text style={styles.itemDetail}>{item.nombresDetalle.refresco}</Text>
-                                                    </>
-                                                )}
-                                                {item.numeroPaquete === 2 && (
-                                                    <>
-                                                        <Text style={styles.itemDetail}>{item.nombresDetalle.complemento}</Text>
-                                                        <Text style={styles.itemDetail}>Pizza: {item.nombresDetalle.pizza}</Text>
-                                                        <Text style={styles.itemDetail}>{item.nombresDetalle.refresco}</Text>
-                                                    </>
-                                                )}
-                                                {item.numeroPaquete === 3 && (
-                                                    <>
-                                                        {item.nombresDetalle.pizzas && item.nombresDetalle.pizzas.map((p, i) => (
-                                                            <Text key={i} style={styles.itemDetail}>Pizza {i + 1}: {p}</Text>
-                                                        ))}
-                                                        <Text style={styles.itemDetail}>{item.nombresDetalle.refresco}</Text>
-                                                    </>
-                                                )}
-                                            </View>
-                                        ) : (
-                                            item.numeroPaquete && item.detallePaquete && (
-                                                <Text style={styles.itemDetail}>
-                                                    {item.numeroPaquete === 1 && `Slices: ${item.detallePaquete}`}
-                                                    {item.numeroPaquete === 3 && `Pizzas: ${item.detallePaquete}`}
-                                                </Text>
-                                            )
-                                        )}
-                                        {item.ingredientesNombres && item.ingredientesNombres.length > 0 && (
-                                            <Text style={styles.itemDetail}>Ing: {item.ingredientesNombres.join(', ')}</Text>
-                                        )}
-                                    </View>
-                                </>
-                            )}
-                        </View>
-                    ))}
+                                    </>
+                                )}
+                            </View>
+                        );
+                    })}
                 </View>
 
                 {/* Totals */}

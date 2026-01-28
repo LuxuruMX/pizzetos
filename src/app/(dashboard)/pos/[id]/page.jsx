@@ -359,14 +359,6 @@ const POSEdit = () => {
     const ordenImpresion = {
       orden: orden,
       total: total,
-      datosExtra: {
-        nombreClie: nombreClie,
-        mesa: mesa,
-        id_cliente: clienteSeleccionado?.value,
-        id_direccion: direccionSeleccionada,
-        fecha_entrega: detalleVenta.fecha_entrega
-      },
-      cliente: clienteSeleccionado ? { ...clienteSeleccionado, nombre: clienteSeleccionado.label } : null,
       tipoServicio: tipoServicio,
       comentarios: comentarios,
       folio: idVenta,
@@ -378,12 +370,12 @@ const POSEdit = () => {
         <TicketPDF
           orden={ordenImpresion.orden}
           total={ordenImpresion.total}
-          datosExtra={ordenImpresion.datosExtra}
           fecha={ordenImpresion.fecha}
           cliente={ordenImpresion.cliente}
           tipoServicio={ordenImpresion.tipoServicio}
           comentarios={ordenImpresion.comentarios}
           folio={ordenImpresion.folio}
+          showChanges={true}
         />
       ).toBlob();
 
