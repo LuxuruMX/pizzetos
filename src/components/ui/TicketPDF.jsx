@@ -112,9 +112,9 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
     // Helper for change indicators
     const getChangeIndicator = (item) => {
         if (!showChanges) return '';
-        if (item.status === 0) return '(-) ';
-        if (item.esNuevo) return '(+) ';
-        if (item.esModificado) return '(M) ';
+        if (item.status === 0) return '- ';
+        if (item.esNuevo) return '+ ';
+        if (item.esModificado) return 'M ';
         return '';
     };
 
