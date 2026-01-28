@@ -614,7 +614,7 @@ const POSEdit = () => {
         <CustomPizzaModal
           isOpen={modalCustomPizza}
           onClose={() => setModalCustomPizza(false)}
-          onConfirm={handleConfirmarCustomPizza}
+          onConfirmar={handleConfirmarCustomPizza}
           ingredientes={ingredientes}
           tamanos={tamanosPizzas}
         />
