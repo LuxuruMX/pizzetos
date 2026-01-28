@@ -116,6 +116,16 @@ export const fetchDetalleVenta = async (idVenta) => {
   }
 };
 
+export const fetchTicketDetalle = async (idVenta) => {
+  try {
+    const response = await api.get(`/pos/recrea-ticket/${idVenta}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener detalle para ticket:', error);
+    throw new Error('No se pudo cargar el detalle para el ticket');
+  }
+};
+
 /**
  * Actualizar un pedido existente
  * Recibe el payload generado por getPayloadActualizacion() del hook

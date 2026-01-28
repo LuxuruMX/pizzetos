@@ -8,7 +8,7 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import api from "@/services/api";
 import { MdOutlinePayments, MdPrint } from "react-icons/md";
 import PaymentModal from "@/components/ui/PaymentModal";
-import { pagarVenta, fetchDetalleVenta, fetchProductosPorCategoria } from "@/services/orderService";
+import { pagarVenta, fetchDetalleVenta, fetchProductosPorCategoria, fetchTicketDetalle } from "@/services/orderService";
 import { catalogsService } from "@/services/catalogsService";
 import CancellationModal from "@/components/ui/CancellationModal";
 import { pdf } from '@react-pdf/renderer';
@@ -378,7 +378,7 @@ export default function TodosPedidosPage() {
       }
 
       // 1. Obtener detalles completos
-      const detalle = await fetchDetalleVenta(row.id_venta);
+      const detalle = await fetchTicketDetalle(row.id_venta);
 
       // 2. Reconstruir orden
       const ordenTicket = reconstructOrderForTicket(detalle.productos, prods);
