@@ -71,6 +71,9 @@ const POSEdit = () => {
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
 
+  // Estado para redirección después de imprimir
+  const [shouldRedirectAfterPrint, setShouldRedirectAfterPrint] = useState(false);
+
   const {
     orden,
     total,
@@ -615,8 +618,8 @@ const POSEdit = () => {
       {/* PDF Viewer Modal */}
       <PDFViewerModal
         isOpen={pdfModalOpen}
-        onClose={() => setPdfModalOpen(false)}
         pdfUrl={pdfUrl}
+        autoPrint={shouldRedirectAfterPrint}
       />
 
     </div>
