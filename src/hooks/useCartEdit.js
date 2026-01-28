@@ -1087,36 +1087,35 @@ export const useCartEdit = () => {
     orden.forEach((item) => {
       // 1. Manejo de Paquetes
       if (item.esPaquete) {
+        // Construir objeto id_paquete completo
+        const idRefresco = item.datoPaquete.id_refresco || 17;
+        let idPizzas = [];
+        
+        if (item.datoPaquete.detalle_paquete) {
+            idPizzas = item.datoPaquete.detalle_paquete.toString().split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+        } else if (item.datoPaquete.id_pizza) {
+            idPizzas = [parseInt(item.datoPaquete.id_pizza)];
+        }
+
+        const paqueteObj = {
+            id_paquete: item.datoPaquete.id_paquete,
+            id_pizzas: idPizzas,
+            id_hamb: item.datoPaquete.id_hamb || 0,
+            id_alis: item.datoPaquete.id_alis || 0,
+            id_refresco: idRefresco
+        };
+
         const paqueteData = {
           cantidad: item.cantidad,
           precio_unitario: item.precioUnitario,
-          id_paquete: item.datoPaquete.id_paquete,
+          id_paquete: paqueteObj,
           status: item.status ?? 1,
         };
 
-        if (!item.esOriginal) {
-           if (item.datoPaquete.detalle_paquete) {
-             paqueteData.detalle_paquete = item.datoPaquete.detalle_paquete;
-           }
-           if (item.datoPaquete.id_pizza) {
-             paqueteData.id_pizza = item.datoPaquete.id_pizza;
-           }
-           if (item.datoPaquete.id_hamb) {
-             paqueteData.id_hamb = item.datoPaquete.id_hamb;
-           }
-           if (item.datoPaquete.id_alis) {
-             paqueteData.id_alis = item.datoPaquete.id_alis;
-           }
-           if (item.datoPaquete.id_refresco) {
-             paqueteData.id_refresco = item.datoPaquete.id_refresco;
-           }
-        }
         items.push(paqueteData);
         return;
       }
 
-      // 2. Manejo de Grupos Especiales (Rectangular, Barra, Magno)
-      // Estos se deben enviar como UN solo item con array de IDs
       if (['id_rec', 'id_barr', 'id_magno'].includes(item.tipoId) && item.productos && item.productos.length > 0) {
           
           // Extraer IDs de los subproductos activos
@@ -1133,9 +1132,7 @@ export const useCartEdit = () => {
              };
              items.push(itemData);
           } else if (item.esOriginal) {
-             // Si era original y se vació, enviar cancelación si es necesario, 
-             // pero generalmente id_rec se maneja por reemplazo o status 0 del grupo.
-             // Si el grupo tiene status 0, se maneja abajo o aquí mismo.
+
              if (item.status === 0) {
                  items.push({
                      cantidad: 0,
