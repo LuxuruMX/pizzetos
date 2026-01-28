@@ -20,21 +20,41 @@ const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta", au
                     onLoad={(e) => {
                         try {
                             const iframe = e.target;
-                            // Wait for the pdf to be fully rendered inside
+
+                            // Prevent infinite loops
+                            if (iframe.dataset.printed === 'true') return;
+                            iframe.dataset.printed = 'true';
+
                             setTimeout(() => {
                                 iframe.contentWindow.focus();
 
-                                // Clean previous listeners if any
-                                iframe.contentWindow.onafterprint = null;
-
-                                iframe.contentWindow.onafterprint = () => {
-                                    handleClose();
+                                // Improved print handling
+                                const closeAfterPrint = () => {
+                                    // Small delay to ensure print dialog logic is done
+                                    setTimeout(() => {
+                                        handleClose();
+                                    }, 500);
                                 };
 
+                                // Listeners for afterprint
+                                iframe.contentWindow.onafterprint = closeAfterPrint;
+
+                                // Fallback: On some browsers, print() blocks, so code after it runs when closed.
+                                // On others, it doesn't.
+                                // We also listen for focus returning to the main window
+                                const onFocus = () => {
+                                    window.removeEventListener('focus', onFocus);
+                                    closeAfterPrint();
+                                };
+                                window.addEventListener('focus', onFocus);
+
                                 iframe.contentWindow.print();
+
                             }, 500);
                         } catch (err) {
                             console.error("Auto-print error:", err);
+                            // Fallback to manual close if error
+                            handleClose();
                         }
                     }}
                 />

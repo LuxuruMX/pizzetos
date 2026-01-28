@@ -71,6 +71,9 @@ const POSEdit = () => {
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
 
+  // Estado para redirección después de imprimir
+  const [shouldRedirectAfterPrint, setShouldRedirectAfterPrint] = useState(false);
+
   const {
     orden,
     total,
@@ -236,17 +239,20 @@ const POSEdit = () => {
       if (detalleVenta.cliente) payload.id_cliente = detalleVenta.cliente;
       if (detalleVenta.id_direccion) payload.id_direccion = detalleVenta.id_direccion;
 
-      console.log("🆔 ID Venta:", idVenta);
-      console.log("📦 Tipo de Servicio (Original):", detalleVenta.tipo_servicio);
-      console.log("💰 Total:", total);
-      console.log("📋 Items enviados:", items.length);
+      console.log("ID Venta:", idVenta);
+      console.log("Tipo de Servicio (Original):", detalleVenta.tipo_servicio);
+      console.log("Total:", total);
+      console.log("Items enviados:", items.length);
       console.log(JSON.stringify(payload, null, 2));
 
 
       await actualizarPedidoCocina(idVenta, payload);
 
       toast.success("Pedido actualizado exitosamente");
-      router.push("/pos");
+
+      setShouldRedirectAfterPrint(true);
+      handleImprimirTicket();
+
     } catch (error) {
       console.error("Error al actualizar pedido:", error);
       toast.error(error.message || "Hubo un error al actualizar el pedido.");
@@ -359,14 +365,6 @@ const POSEdit = () => {
     const ordenImpresion = {
       orden: orden,
       total: total,
-      datosExtra: {
-        nombreClie: nombreClie,
-        mesa: mesa,
-        id_cliente: clienteSeleccionado?.value,
-        id_direccion: direccionSeleccionada,
-        fecha_entrega: detalleVenta.fecha_entrega
-      },
-      cliente: clienteSeleccionado ? { ...clienteSeleccionado, nombre: clienteSeleccionado.label } : null,
       tipoServicio: tipoServicio,
       comentarios: comentarios,
       folio: idVenta,
@@ -378,12 +376,12 @@ const POSEdit = () => {
         <TicketPDF
           orden={ordenImpresion.orden}
           total={ordenImpresion.total}
-          datosExtra={ordenImpresion.datosExtra}
           fecha={ordenImpresion.fecha}
           cliente={ordenImpresion.cliente}
           tipoServicio={ordenImpresion.tipoServicio}
           comentarios={ordenImpresion.comentarios}
           folio={ordenImpresion.folio}
+          showChanges={true}
         />
       ).toBlob();
 
@@ -623,8 +621,14 @@ const POSEdit = () => {
       {/* PDF Viewer Modal */}
       <PDFViewerModal
         isOpen={pdfModalOpen}
-        onClose={() => setPdfModalOpen(false)}
+        onClose={() => {
+          setPdfModalOpen(false);
+          if (shouldRedirectAfterPrint) {
+            router.push("/pos");
+          }
+        }}
         pdfUrl={pdfUrl}
+        autoPrint={shouldRedirectAfterPrint}
       />
 
     </div>
