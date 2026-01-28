@@ -913,26 +913,33 @@ export const useCartEdit = () => {
             const updatedProducts = item.productos.map(p => {
                 if (p.id === productoId) {
                     diff = nuevaCantidad - p.cantidad;
-                    return { ...p, cantidad: nuevaCantidad, esModificado: true };
+                    // Asegurar que el status vuelva a 1 si se restaura
+                    return { ...p, cantidad: nuevaCantidad, status: 1, esModificado: true };
                 }
                 return p;
             });
             
             const gruposEspeciales = ['id_rec', 'id_barr', 'id_magno'];
-            let nuevaCantidadPadre = item.cantidad + diff;
+            // Si el item padre estaba en status 0 (cancelado completamente), reactivarlo
+            // Pero mantener la logica de cantidad
+            let nuevaCantidadPadre = item.cantidad;
             
-            if (gruposEspeciales.includes(item.tipoId)) {
-                nuevaCantidadPadre = item.cantidad; // No cambia cantidad grupos
+            if (!gruposEspeciales.includes(item.tipoId)) {
+                 nuevaCantidadPadre = item.cantidad + diff;
+            } else {
+                 // Para grupos especiales, si estaba cancelado (cantidad 0), restaurar a 1 si es necesario
+                 if (item.cantidad === 0 && nuevaCantidad > 0) nuevaCantidadPadre = 1;
             }
 
             return {
               ...item,
               cantidad: nuevaCantidadPadre,
+              status: 1, // Reactivar padre
               esModificado: true,
               productos: updatedProducts
             };
           } else {
-            return { ...item, cantidad: nuevaCantidad, esModificado: true };
+            return { ...item, cantidad: nuevaCantidad, status: 1, esModificado: true };
           }
         }
         return item;
