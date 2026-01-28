@@ -7,18 +7,6 @@ export const useCartEdit = () => {
   const [statusPrincipal, setStatusPrincipal] = useState(1);
   const [ingredientesCache, setIngredientesCache] = useState([]); // Nuevo estado para cache de ingredientes/nombres
 
-  const calcularPrecioYSubtotal = (precioBase, cantidad) => {
-    const pares = Math.floor(cantidad / 2);
-    const sueltos = cantidad % 2;
-    const subtotal = pares * precioBase + sueltos * precioBase * 0.6;
-    const precioUnitario = subtotal / cantidad;
-
-    return {
-      precioUnitario,
-      subtotal,
-    };
-  };
-
   const recalcularPrecios = (nuevaOrden) => {
     return nuevaOrden.map(item => {
       // Si el item está cancelado (status 0) y no es un grupo, su subtotal es 0
@@ -1216,18 +1204,6 @@ export const useCartEdit = () => {
     // Marcar productos originales eliminados completamente que no estén en la nueva lista
     productosOriginales.forEach((prodOrig) => {
       // Verificar si ya fue procesado en los items activos o cancelados arriba
-      // (Esta lógica es compleja si IDs cambian, pero intentamos matchear)
-      
-      // Si es un grupo especial, ya se manejó arriba por el ID del item padre o reconstrucción.
-      // Pero si el usuario borró todo el grupo Rectangular, 'orden' no lo tendrá.
-      // Necesitamos detectar si falta un grupo original completo.
-      
-      // ... Simplificación: El backend suele manejar actualizaciones por "Diferencia" o "Reemplazo completo".
-      // Si el backend reemplaza los items de la venta con los enviados, no necesitamos enviar explícitamente los borrados (salvo status 0).
-      // Si el backend actualiza status, sí necesitamos enviar status 0.
-      
-      // Asumiremos que enviar status 0 es lo correcto para lo eliminado.
-      
       const enNuevaOrden = orden.some(item => {
           // Checar items simples
           if (item.idProducto === prodOrig.idProducto && item.tipoId === prodOrig.tipoId) return true;
@@ -1235,15 +1211,9 @@ export const useCartEdit = () => {
           if (item.productos) {
               return item.productos.some(p => p.idProducto === prodOrig.idProducto);
           }
-          // Checar grupos especiales (si el grupo existe, el producto está "cubierto" aunque sea en otro formato?)
-          // Si es rectangular, prodOrig.idProducto era un array? No, prodOrig venía desglosado si era item simple
-          // O si venía como grupo...
-          
+
           if (['id_rec', 'id_barr', 'id_magno'].includes(prodOrig.tipoId)) {
-             // Si hay algún item de este tipo en la orden, asumimos que se está actualizando ese set.
-             // (Esto puede ser arriesgado si había 2 rectangulares y borra 1)
-             // Pero por ID compuesto no podemos traquear fácil.
-             // Revisar si prodOrig venía de un composite...
+
              if (item.tipoId === prodOrig.tipoId) return true; // Asumimos continuidad por tipo
           }
           return false;

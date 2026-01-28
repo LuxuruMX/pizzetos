@@ -104,9 +104,6 @@ const POSEdit = () => {
   const [variantesProducto, setVariantesProducto] = useState([]);
 
 
-
-
-
   // Cargar datos iniciales
   useEffect(() => {
     const cargarDatos = async () => {
@@ -157,14 +154,10 @@ const POSEdit = () => {
   useEffect(() => {
     const hayRectangulares = orden.some(item => item.tipoId === 'id_rec');
     // Calcular total de porciones/slices reales
-    // En POS Edit, item.cantidad puede ser la cantidad de grupos si ya está agrupado,
-    // o cantidad de items. Dependiendo de cómo lo maneje useCartEdit.
-    // useCartEdit maneja grupos.
     const cantidadTotalRectangulares = orden.reduce((acc, item) => {
       if (item.tipoId === 'id_rec') {
         if (item.productos && Array.isArray(item.productos)) {
           // Si tiene subproductos, contar sus cantidades
-          // OJO: En useCartEdit, item.cantidad es la cantidad de GRUPOS si está bien formado.
           // Pero necesitamos verificar slices individuales.
           const slicesEnGrupo = item.productos.reduce((s, p) => p.status !== 0 ? s + p.cantidad : s, 0);
           return acc + slicesEnGrupo;
@@ -243,23 +236,12 @@ const POSEdit = () => {
       if (detalleVenta.cliente) payload.id_cliente = detalleVenta.cliente;
       if (detalleVenta.id_direccion) payload.id_direccion = detalleVenta.id_direccion;
 
-      // Nota: Si el backend requiere "pagos" para "Llevar", tendremos que enviarlos de vuelta.
-      // Asumiremos que el backend no borra pagos si no se mandan en update, o que fetchDetalleVenta trae pagos y aquí los reenvíamos.
-      // Si fetchDetalleVenta NO trae array de pagos, esto podría ser un problema si el backend espera recibirlos siempre.
-      // Por ahora enviaremos "pagos: []" o lo que tengamos, pero como quitamos el estado `pagos`,
-      // enviaremos vacío o null. Dependerá de la lógica del backend "actualizarPedidoCocina".
-      // Si actualiza solo status/items, perfecto.
-
-      // Mostrar en consola lo que se envía al backend
-      console.log("═══════════════════════════════════════════════════════");
-      console.log("📤 ENVIANDO ACTUALIZACIÓN AL BACKEND - POS EDIT (PRODUCT ONLY)");
-      console.log("═══════════════════════════════════════════════════════");
       console.log("🆔 ID Venta:", idVenta);
       console.log("📦 Tipo de Servicio (Original):", detalleVenta.tipo_servicio);
       console.log("💰 Total:", total);
       console.log("📋 Items enviados:", items.length);
       console.log(JSON.stringify(payload, null, 2));
-      console.log("═══════════════════════════════════════════════════════\n");
+
 
       await actualizarPedidoCocina(idVenta, payload);
 
