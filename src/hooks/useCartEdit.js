@@ -474,11 +474,15 @@ export const useCartEdit = () => {
 
         // Buscar items compatibles para este grupo
         const grupo = productos.filter(
-          (p, i) =>
-            !yaAgrupados.has(i) &&
+          (p, i) => {
+            const tamanoP = (p.tamano || '').toString().trim().toLowerCase();
+            const tamanoProd = (prod.tamano || '').toString().trim().toLowerCase();
+            
+            return !yaAgrupados.has(i) &&
             ((p.tipoId === 'id_pizza' || p.tipoId === 'custom_pizza' || p.tipoId === 'id_maris') ? targetGroupType === 'pizza_group' : p.tipoId === prod.tipoId) &&
-            p.tamano === prod.tamano &&
-            !p.esPaquete
+            tamanoP === tamanoProd &&
+            !p.esPaquete;
+          }
         );
 
         grupo.forEach((p, i) => {
@@ -508,10 +512,10 @@ export const useCartEdit = () => {
             const statusGrupo = grupo.some(p => p.status !== 0) ? 1 : 0;
 
             agrupados.push({
-                id: `pizza_group_${prod.tamano}_original_${Date.now()}`,
+                id: `pizza_group_${(prod.tamano || 'N/A').trim()}_original_${Date.now()}`,
                 tipoId: 'pizza_group', // UNIFICADO
-                nombre: `Pizzas ${prod.tamano}`,
-                tamano: prod.tamano,
+                nombre: `Pizzas ${(prod.tamano || '').trim()}`,
+                tamano: (prod.tamano || '').trim(),
                 precioOriginal: 0, 
                 precioUnitario: 0,
                 cantidad: cantidadTotal,
