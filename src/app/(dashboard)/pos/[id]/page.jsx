@@ -25,6 +25,7 @@ import { MdComment, MdArrowBack, MdPrint } from "react-icons/md";
 import { fetchIngredientes, fetchTamanosPizzas } from '@/services/pricesService';
 import { getProductTypeId } from '@/utils/productUtils';
 import ProductModal from "@/components/ui/ProductModal";
+import { toast } from "react-toastify";
 
 
 
@@ -141,7 +142,7 @@ const POSEdit = () => {
 
       } catch (error) {
         console.error("Error al cargar datos:", error);
-        alert("Error al cargar el detalle del pedido");
+        toast.error("Error al cargar el detalle del pedido");
       } finally {
         setLoading(false);
       }
@@ -210,11 +211,11 @@ const POSEdit = () => {
   const handleActualizarPedido = async () => {
     // Validar grupos incompletos
     if (grupoRectangularIncompleto) {
-      alert('Debes completar 4 porciones para cada pizza Rectangular.');
+      toast.error('Debes completar 4 porciones para cada pizza Rectangular.');
       return;
     }
     if (grupoBarraMagnoIncompleto) {
-      alert('Debes completar 2 porciones para cada pizza Barra o Magno.');
+      toast.error('Debes completar 2 porciones para cada pizza Barra o Magno.');
       return;
     }
 
@@ -260,26 +261,16 @@ const POSEdit = () => {
       console.log(JSON.stringify(payload, null, 2));
       console.log("═══════════════════════════════════════════════════════\n");
 
-      // await actualizarPedidoCocina(idVenta, payload);
+      await actualizarPedidoCocina(idVenta, payload);
 
-      alert("Pedido actualizado exitosamente (SIMULACION - Payload en consola)");
-      // router.push("/pos");
+      toast.success("Pedido actualizado exitosamente");
+      router.push("/pos");
     } catch (error) {
       console.error("Error al actualizar pedido:", error);
-      alert(error.message || "Hubo un error al actualizar el pedido.");
+      toast.error(error.message || "Hubo un error al actualizar el pedido.");
     }
   };
 
-  const handleConfirmarPagos = (pagosConfirmados) => {
-    setPagos(pagosConfirmados);
-    setModalPagosAbierto(false);
-  };
-
-  const handleConfirmarDireccion = (cliente, idDireccion) => {
-    setClienteSeleccionado(cliente);
-    setDireccionSeleccionada(idDireccion);
-    setModalDireccionAbierto(false);
-  };
 
   const handleCategoriaChange = (categoria) => {
     setCategoriaActiva(categoria);
