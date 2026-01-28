@@ -1141,21 +1141,12 @@ export const useCartEdit = () => {
              const itemData = {
                  cantidad: item.cantidad, // Cantidad de GRUPOS (generalmente 1)
                  precio_unitario: item.precioUnitario, // Precio del grupo completo
-                 [item.tipoId]: ids, // Array de IDs: id_rec: [1, 2, 3, 4]
-                 status: item.status ?? 1
+                  status: item.status ?? 1
              };
              items.push(itemData);
-          } else if (item.esOriginal) {
-
-             if (item.status === 0) {
-                 items.push({
-                     cantidad: 0,
-                     precio_unitario: item.precioOriginal || 0,
-                     [item.tipoId]: [], // Array vacío o null?
-                     status: 0
-                 });
-             }
-          }
+          } 
+          // Si no hay IDs activos (length 0), NO enviamos nada para estos grupos.
+          // El backend fallará si enviamos array vacío, y el usuario prefiere "no enviar nada".
           return;
       }
 
