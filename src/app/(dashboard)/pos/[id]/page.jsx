@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { catalogsService } from "@/services/catalogsService";
 import {
   fetchProductosPorCategoria,
   fetchDetalleVenta,
@@ -12,16 +11,23 @@ import {
 import { useCartEdit } from "@/hooks/useCartEdit";
 import CartSection from "@/components/ui/CartSection";
 import ProductsSection from "@/components/ui/ProductsSection";
-import ProductModal from "@/components/ui/ProductModal";
-import PaymentModal from "@/components/ui/PaymentModal";
-import AddressSelectionModal from "@/components/ui/AddressSelectionModal";
+import Link from "next/link";
 import {
   ModalPaquete1,
   ModalPaquete2,
   ModalPaquete3,
 } from "@/components/ui/PaquetesModal";
-import { MdComment, MdArrowBack } from "react-icons/md";
-import Link from "next/link";
+import CustomPizzaModal from "@/components/ui/CustomPizzaModal";
+import PDFViewerModal from "@/components/ui/PDFViewerModal";
+import TicketPDF from "@/components/ui/TicketPDF";
+import { pdf } from '@react-pdf/renderer';
+import { MdComment, MdArrowBack, MdPrint } from "react-icons/md";
+import { fetchIngredientes, fetchTamanosPizzas } from '@/services/pricesService';
+import { getProductTypeId } from '@/utils/productUtils';
+import ProductModal from "@/components/ui/ProductModal";
+import { toast } from "react-toastify";
+
+
 
 const POSEdit = () => {
   const params = useParams();
@@ -45,6 +51,26 @@ const POSEdit = () => {
     pizzas: [],
   });
 
+  // Estados para modales de paquetes y custom pizza
+  const [modalPaquete1, setModalPaquete1] = useState(false);
+  const [modalPaquete2, setModalPaquete2] = useState(false); // Fix overlap issues by putting this here if needed, but wait, state is further down.
+  const [modalPaquete3, setModalPaquete3] = useState(false);
+  const [modalCustomPizza, setModalCustomPizza] = useState(false);
+
+  // Estados para datos de custom pizza y validaciones
+  const [ingredientes, setIngredientes] = useState([]);
+  const [tamanosPizzas, setTamanosPizzas] = useState([]);
+  const [grupoRectangularIncompleto, setGrupoRectangularIncompleto] = useState(false);
+  const [grupoBarraMagnoIncompleto, setGrupoBarraMagnoIncompleto] = useState(false);
+
+  // Estado para auto-selección de tamaño (pizzas y mariscos)
+  const [ultimoTamanoSeleccionado, setUltimoTamanoSeleccionado] = useState(null);
+  const [usarTamanoAutomatico, setUsarTamanoAutomatico] = useState(false);
+
+  // Estado para impresión
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+
   const {
     orden,
     total,
@@ -56,47 +82,41 @@ const POSEdit = () => {
     cargarProductosOriginales,
     statusPrincipal,
     setStatusPrincipal,
+    toggleQueso,
+    agregarPizzaCustom
   } = useCartEdit();
 
   const [categorias] = useState(CATEGORIAS);
   const [categoriaActiva, setCategoriaActiva] = useState("pizzas");
 
-  // Estados para tipo de servicio y pagos
+  // Estados para tipo de servicio (interno para lógica de productos)
   const [tipoServicio, setTipoServicio] = useState(0);
-  const [pagos, setPagos] = useState([]);
-  const [modalPagosAbierto, setModalPagosAbierto] = useState(false);
-  const [mesa, setMesa] = useState('');
-  const [nombreClie, setNombreClie] = useState('');
-
-  // Estados para dirección de domicilio
-  const [clientes, setClientes] = useState([]);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  const [direccionSeleccionada, setDireccionSeleccionada] = useState(null);
-  const [modalDireccionAbierto, setModalDireccionAbierto] = useState(false);
 
   // Estados para comentarios
   const [comentarios, setComentarios] = useState("");
   const [modalComentarios, setModalComentarios] = useState(false);
+
+
 
   // Estados para el modal de productos
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [variantesProducto, setVariantesProducto] = useState([]);
 
-  // Estados para modales de paquetes
-  const [modalPaquete1, setModalPaquete1] = useState(false);
-  const [modalPaquete2, setModalPaquete2] = useState(false);
-  const [modalPaquete3, setModalPaquete3] = useState(false);
+
+
+
 
   // Cargar datos iniciales
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
-        const [detalleData, productosData, clientesData] = await Promise.all([
+        const [detalleData, productosData, ingredientesData, tamanosData] = await Promise.all([
           fetchDetalleVenta(idVenta),
           fetchProductosPorCategoria(),
-          catalogsService.getNombresClientes(),
+          fetchIngredientes(),
+          fetchTamanosPizzas()
         ]);
 
         console.log("Detalle de venta recibido:", detalleData);
@@ -106,48 +126,23 @@ const POSEdit = () => {
         setComentarios(detalleData.comentarios || "");
         setStatusPrincipal(detalleData.status);
 
-        // Cargar tipo de servicio y datos relacionados
-        if (detalleData.tipo_servicio !== undefined) {
-          setTipoServicio(detalleData.tipo_servicio);
-        }
-        if (detalleData.mesa) {
-          setMesa(detalleData.mesa.toString());
-        }
-        if (detalleData.nombreClie) {
-          setNombreClie(detalleData.nombreClie);
-        }
+        // Guardar ingredientes y tamaños
+        setIngredientes(ingredientesData || []);
+        setTamanosPizzas(tamanosData || []);
 
         // Cargar productos originales
         if (detalleData.productos && Array.isArray(detalleData.productos)) {
-          cargarProductosOriginales(detalleData.productos, productosData);
+          // Pasamos ingredientesData para que pueda mapear nombres de custom pizzas
+          cargarProductosOriginales(detalleData.productos, productosData, ingredientesData || []);
         } else {
           console.warn("No se encontraron productos en el detalle de venta");
-          cargarProductosOriginales([], productosData);
+          cargarProductosOriginales([], productosData, ingredientesData || []);
         }
 
-        // Configurar clientes para domicilio
-        const opcionesClientes = clientesData.map((cliente) => ({
-          value: cliente.id_clie,
-          label:
-            cliente.nombre || cliente.razon_social || "Nombre no disponible",
-        }));
-        setClientes(opcionesClientes);
 
-        // Si es domicilio, cargar cliente
-        if (detalleData.tipo_servicio === 2 && detalleData.cliente) {
-          const clienteEncontrado = opcionesClientes.find(
-            (c) => c.value === detalleData.cliente
-          );
-          if (clienteEncontrado) {
-            setClienteSeleccionado(clienteEncontrado);
-          }
-          if (detalleData.id_direccion) {
-            setDireccionSeleccionada(detalleData.id_direccion);
-          }
-        }
       } catch (error) {
         console.error("Error al cargar datos:", error);
-        alert("Error al cargar el detalle del pedido");
+        toast.error("Error al cargar el detalle del pedido");
       } finally {
         setLoading(false);
       }
@@ -158,24 +153,73 @@ const POSEdit = () => {
     }
   }, [idVenta]);
 
-  const handleActualizarPedido = async () => {
-    // Validación por tipo de servicio
-    if (tipoServicio === 2) { // Domicilio
-      if (!clienteSeleccionado || !direccionSeleccionada) {
-        setModalDireccionAbierto(true);
-        return;
+  // Efecto para verificar grupos incompletos (Portado de POS Creation)
+  useEffect(() => {
+    const hayRectangulares = orden.some(item => item.tipoId === 'id_rec');
+    // Calcular total de porciones/slices reales
+    // En POS Edit, item.cantidad puede ser la cantidad de grupos si ya está agrupado,
+    // o cantidad de items. Dependiendo de cómo lo maneje useCartEdit.
+    // useCartEdit maneja grupos.
+    const cantidadTotalRectangulares = orden.reduce((acc, item) => {
+      if (item.tipoId === 'id_rec') {
+        if (item.productos && Array.isArray(item.productos)) {
+          // Si tiene subproductos, contar sus cantidades
+          // OJO: En useCartEdit, item.cantidad es la cantidad de GRUPOS si está bien formado.
+          // Pero necesitamos verificar slices individuales.
+          const slicesEnGrupo = item.productos.reduce((s, p) => p.status !== 0 ? s + p.cantidad : s, 0);
+          return acc + slicesEnGrupo;
+        }
+        return acc + (item.status !== 0 ? item.cantidad : 0);
       }
-    } else if (tipoServicio === 1) { // Para Llevar
-      if (pagos.length === 0) {
-        setModalPagosAbierto(true);
-        return;
-      }
-    } else if (tipoServicio === 0) { // Comer Aquí
-      if (!mesa || mesa.trim() === '') {
-        alert('Por favor, ingresa el número de mesa.');
-        return;
+      return acc;
+    }, 0);
+
+    // Si hay rectangulares y no son multiplos de 4
+    if (hayRectangulares && cantidadTotalRectangulares % 4 !== 0) {
+      setGrupoRectangularIncompleto(true);
+    } else {
+      setGrupoRectangularIncompleto(false);
+    }
+  }, [orden]);
+
+  useEffect(() => {
+    const tiposRevisar = ['id_barr', 'id_magno'];
+    let hayIncompleto = false;
+
+    for (const tipo of tiposRevisar) {
+      const hayProducto = orden.some(item => item.tipoId === tipo);
+
+      const cantidadTotal = orden.reduce((acc, item) => {
+        if (item.tipoId === tipo) {
+          if (item.productos && Array.isArray(item.productos)) {
+            const slicesEnGrupo = item.productos.reduce((s, p) => p.status !== 0 ? s + p.cantidad : s, 0);
+            return acc + slicesEnGrupo;
+          }
+          return acc + (item.status !== 0 ? item.cantidad : 0);
+        }
+        return acc;
+      }, 0);
+
+      if (hayProducto && cantidadTotal % 2 !== 0) {
+        hayIncompleto = true;
+        break;
       }
     }
+    setGrupoBarraMagnoIncompleto(hayIncompleto);
+  }, [orden]);
+
+  const handleActualizarPedido = async () => {
+    // Validar grupos incompletos
+    if (grupoRectangularIncompleto) {
+      toast.error('Debes completar 4 porciones para cada pizza Rectangular.');
+      return;
+    }
+    if (grupoBarraMagnoIncompleto) {
+      toast.error('Debes completar 2 porciones para cada pizza Barra o Magno.');
+      return;
+    }
+
+    // Ya no validamos servicio/pagos/cliente, asumimos que viene del backend y es readonly aquí.
 
     try {
       const items = getPayloadActualizacion();
@@ -183,71 +227,50 @@ const POSEdit = () => {
       // Si el status principal es 2 (Listo), cambiarlo a 1 (En preparación)
       const nuevoStatusPrincipal = statusPrincipal === 2 ? 1 : statusPrincipal;
 
-      // Preparar datos adicionales según tipo de servicio
+      // Mantener datos originales del servicio (readonly)
       const payload = {
         id_suc: detalleVenta.id_suc || 1,
         total: total,
         comentarios: comentarios.trim() || null,
         status: nuevoStatusPrincipal,
-        tipo_servicio: tipoServicio,
+        tipo_servicio: detalleVenta.tipo_servicio, // Usar original
         items: items
       };
 
-      // Agregar campos según tipo de servicio
-      if (tipoServicio === 0) { // Comedor
-        payload.mesa = parseInt(mesa);
-        if (nombreClie.trim()) {
-          payload.nombreClie = nombreClie;
-        }
-      } else if (tipoServicio === 1) { // Para Llevar
-        payload.pagos = pagos.map(p => ({
-          id_metpago: parseInt(p.id_metpago),
-          monto: parseFloat(p.monto)
-        }));
-        if (nombreClie.trim()) {
-          payload.nombreClie = nombreClie;
-        }
-      } else if (tipoServicio === 2) { // Domicilio
-        payload.id_cliente = clienteSeleccionado.value;
-        payload.id_direccion = direccionSeleccionada;
-      }
+      // Pasar passthrough de datos originales si es necesario
+      if (detalleVenta.mesa) payload.mesa = detalleVenta.mesa;
+      if (detalleVenta.nombreClie) payload.nombreClie = detalleVenta.nombreClie;
+      if (detalleVenta.cliente) payload.id_cliente = detalleVenta.cliente;
+      if (detalleVenta.id_direccion) payload.id_direccion = detalleVenta.id_direccion;
+
+      // Nota: Si el backend requiere "pagos" para "Llevar", tendremos que enviarlos de vuelta.
+      // Asumiremos que el backend no borra pagos si no se mandan en update, o que fetchDetalleVenta trae pagos y aquí los reenvíamos.
+      // Si fetchDetalleVenta NO trae array de pagos, esto podría ser un problema si el backend espera recibirlos siempre.
+      // Por ahora enviaremos "pagos: []" o lo que tengamos, pero como quitamos el estado `pagos`,
+      // enviaremos vacío o null. Dependerá de la lógica del backend "actualizarPedidoCocina".
+      // Si actualiza solo status/items, perfecto.
 
       // Mostrar en consola lo que se envía al backend
       console.log("═══════════════════════════════════════════════════════");
-      console.log("📤 ENVIANDO ACTUALIZACIÓN AL BACKEND - POS EDIT");
+      console.log("📤 ENVIANDO ACTUALIZACIÓN AL BACKEND - POS EDIT (PRODUCT ONLY)");
       console.log("═══════════════════════════════════════════════════════");
       console.log("🆔 ID Venta:", idVenta);
-      console.log("📦 Tipo de Servicio:", tipoServicio === 0 ? "Comedor" : tipoServicio === 1 ? "Para Llevar" : "Domicilio");
+      console.log("📦 Tipo de Servicio (Original):", detalleVenta.tipo_servicio);
       console.log("💰 Total:", total);
       console.log("📋 Items enviados:", items.length);
-      console.log("\n🔍 ITEMS DETALLADOS:");
-      items.forEach((item, index) => {
-        console.log(`  Item ${index + 1}:`, JSON.stringify(item, null, 2));
-      });
-      console.log("\n📄 PAYLOAD COMPLETO:");
       console.log(JSON.stringify(payload, null, 2));
       console.log("═══════════════════════════════════════════════════════\n");
 
       await actualizarPedidoCocina(idVenta, payload);
 
-      alert("Pedido actualizado exitosamente");
+      toast.success("Pedido actualizado exitosamente");
       router.push("/pos");
     } catch (error) {
       console.error("Error al actualizar pedido:", error);
-      alert(error.message || "Hubo un error al actualizar el pedido.");
+      toast.error(error.message || "Hubo un error al actualizar el pedido.");
     }
   };
 
-  const handleConfirmarPagos = (pagosConfirmados) => {
-    setPagos(pagosConfirmados);
-    setModalPagosAbierto(false);
-  };
-
-  const handleConfirmarDireccion = (cliente, idDireccion) => {
-    setClienteSeleccionado(cliente);
-    setDireccionSeleccionada(idDireccion);
-    setModalDireccionAbierto(false);
-  };
 
   const handleCategoriaChange = (categoria) => {
     setCategoriaActiva(categoria);
@@ -255,6 +278,7 @@ const POSEdit = () => {
 
   // Categorías que requieren modal
   const categoriasConModal = ["pizzas", "refrescos", "mariscos"];
+  const categoriasConAutoTamano = ['pizzas', 'mariscos']; // Para auto-selección
 
   const handleProductoClick = (producto, tipoId) => {
     if (categoriasConModal.includes(categoriaActiva)) {
@@ -262,6 +286,21 @@ const POSEdit = () => {
       const variantes = productosCategoria.filter(
         (p) => p.nombre === producto.nombre
       );
+
+      // Lógica de Auto-Tamaño
+      if (categoriasConAutoTamano.includes(categoriaActiva) && ultimoTamanoSeleccionado && usarTamanoAutomatico) {
+        const varianteConTamano = variantes.find(v => {
+          const tamano = v.subcategoria || v.tamano || v.tamaño;
+          return tamano === ultimoTamanoSeleccionado.tamano;
+        });
+
+        if (varianteConTamano) {
+          const tipoIdVariante = getProductTypeId(varianteConTamano);
+          agregarAlCarrito(varianteConTamano, tipoIdVariante);
+          setUsarTamanoAutomatico(false);
+          return;
+        }
+      }
 
       setProductoSeleccionado(producto.nombre);
       setVariantesProducto(variantes);
@@ -274,6 +313,13 @@ const POSEdit = () => {
   const handleSeleccionarVariante = (variante, tipoId) => {
     agregarAlCarrito(variante, tipoId);
     setModalAbierto(false);
+
+    // Guardar tamaño solo para pizzas y mariscos
+    if (categoriasConAutoTamano.includes(categoriaActiva)) {
+      const tamano = variante.subcategoria || variante.tamano || variante.tamaño;
+      setUltimoTamanoSeleccionado({ tamano, tipoId });
+      setUsarTamanoAutomatico(true);
+    }
   };
 
   // Handlers para los paquetes
@@ -309,6 +355,64 @@ const POSEdit = () => {
     setModalPaquete3(false);
   };
 
+  const handleConfirmarCustomPizza = (customPizzaData) => {
+    const ingredientesNombres = customPizzaData.ingredientes
+      .map(idIng => {
+        const ing = ingredientes.find(i => i.id_ingrediente === idIng);
+        return ing ? ing.nombre : '';
+      })
+      .filter(nombre => nombre !== '');
+
+    agregarPizzaCustom({
+      ...customPizzaData,
+      ingredientesNombres
+    });
+    setModalCustomPizza(false);
+  };
+
+  const handleImprimirTicket = async () => {
+    if (!detalleVenta) return;
+
+    // Construir objeto orden temporal para impresión
+    const ordenImpresion = {
+      orden: orden,
+      total: total,
+      datosExtra: {
+        nombreClie: nombreClie,
+        mesa: mesa,
+        id_cliente: clienteSeleccionado?.value,
+        id_direccion: direccionSeleccionada,
+        fecha_entrega: detalleVenta.fecha_entrega
+      },
+      cliente: clienteSeleccionado ? { ...clienteSeleccionado, nombre: clienteSeleccionado.label } : null,
+      tipoServicio: tipoServicio,
+      comentarios: comentarios,
+      folio: idVenta,
+      fecha: new Date().toISOString()
+    };
+
+    try {
+      const blob = await pdf(
+        <TicketPDF
+          orden={ordenImpresion.orden}
+          total={ordenImpresion.total}
+          datosExtra={ordenImpresion.datosExtra}
+          fecha={ordenImpresion.fecha}
+          cliente={ordenImpresion.cliente}
+          tipoServicio={ordenImpresion.tipoServicio}
+          comentarios={ordenImpresion.comentarios}
+          folio={ordenImpresion.folio}
+        />
+      ).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+      setPdfModalOpen(true);
+    } catch (error) {
+      console.error("Error generando PDF:", error);
+    }
+  };
+
   const procesarProductos = () => {
     const productosCategoria = productos[categoriaActiva] || [];
 
@@ -320,6 +424,21 @@ const POSEdit = () => {
         }
       });
       return Object.values(nombresUnicos);
+    }
+
+    // Multiplicar por 4 el precio de las rectangulares para mostrar
+    if (categoriaActiva === 'rectangular') {
+      return productosCategoria.map(producto => ({
+        ...producto,
+        precio: parseFloat(producto.precio) * 4
+      }));
+    }
+
+    if (categoriaActiva === 'barra' || categoriaActiva === 'magno') {
+      return productosCategoria.map(producto => ({
+        ...producto,
+        precio: parseFloat(producto.precio) * 2
+      }));
     }
 
     return productosCategoria;
@@ -388,6 +507,19 @@ const POSEdit = () => {
           >
             Paquete 3
           </button>
+          <button
+            onClick={() => setModalCustomPizza(true)}
+            className="bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors shadow"
+          >
+            Por Ingrediente
+          </button>
+          <button
+            onClick={handleImprimirTicket}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-full transition-colors ml-2"
+            title="Reimprimir ticket"
+          >
+            <MdPrint size={24} />
+          </button>
         </div>
       </div>
 
@@ -399,6 +531,7 @@ const POSEdit = () => {
           productos={procesarProductos()}
           onProductoClick={handleProductoClick}
           mostrarPrecio={!categoriasConModal.includes(categoriaActiva)}
+          deshabilitarCategorias={grupoRectangularIncompleto || grupoBarraMagnoIncompleto}
         />
 
         <CartSection
@@ -409,14 +542,10 @@ const POSEdit = () => {
           onEnviarOrden={handleActualizarPedido}
           comentarios={comentarios}
           onAbrirComentarios={() => setModalComentarios(true)}
-          tipoServicio={tipoServicio}
-          onTipoServicioChange={setTipoServicio}
-          mesa={mesa}
-          onMesaChange={setMesa}
-          nombreClie={nombreClie}
-          onNombreClieChange={setNombreClie}
+          hideServiceSelection={true}
           esEdicion={true}
           textoBoton="Actualizar Pedido"
+          onToggleQueso={toggleQueso}
         />
       </div>
 
@@ -498,26 +627,24 @@ const POSEdit = () => {
         pizzas={productos.pizzas}
       />
 
-      {/* Modal de Pagos */}
-      <PaymentModal
-        isOpen={modalPagosAbierto}
-        onClose={() => setModalPagosAbierto(false)}
-        total={total}
-        onConfirm={handleConfirmarPagos}
+      {/* Modal Custom Pizza */}
+      {modalCustomPizza && (
+        <CustomPizzaModal
+          isOpen={modalCustomPizza}
+          onClose={() => setModalCustomPizza(false)}
+          onConfirm={handleConfirmarCustomPizza}
+          ingredientes={ingredientes}
+          tamanos={tamanosPizzas}
+        />
+      )}
+
+      {/* PDF Viewer Modal */}
+      <PDFViewerModal
+        isOpen={pdfModalOpen}
+        onClose={() => setPdfModalOpen(false)}
+        pdfUrl={pdfUrl}
       />
 
-      {/* Modal de Dirección */}
-      <AddressSelectionModal
-        isOpen={modalDireccionAbierto}
-        onClose={() => setModalDireccionAbierto(false)}
-        onConfirm={handleConfirmarDireccion}
-        clientes={clientes}
-        clienteSeleccionado={clienteSeleccionado}
-        onClienteChange={setClienteSeleccionado}
-        onClienteCreado={(nuevoCliente) => {
-          setClientes(prev => [...prev, nuevoCliente]);
-        }}
-      />
     </div>
   );
 };

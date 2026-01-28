@@ -258,7 +258,16 @@ export const useCart = (initialCartFromUrl = []) => {
 
 
   const agregarAlCarrito = (producto, tipoId) => {
-    const id = producto[tipoId];
+    // Intentar obtener ID usando el tipoId provisto
+    let id = producto[tipoId];
+    
+    // Si no encuentra ID (ej. forzamos 'id_maris' pero el objeto trae 'id_pizza'), buscar en producto
+    if (id === undefined || id === null) {
+        id = producto.id || producto.id_pizza || producto.id_maris || producto.id_hamb || producto.id_alis || 
+             producto.id_cos || producto.id_spag || producto.id_papa || producto.id_rec || 
+             producto.id_barr || producto.id_refresco || producto.id_paquete;
+    }
+
     const precioOriginal = parseFloat(producto.precio);
     const tamanoRaw = producto.subcategoria || producto.tamano || producto.tamaño || 'N/A';
     const tamano = typeof tamanoRaw === 'string' ? tamanoRaw.trim() : tamanoRaw;
@@ -369,11 +378,21 @@ export const useCart = (initialCartFromUrl = []) => {
       const categoriasConDescuento = ['id_pizza', 'id_maris'];
 
       if (categoriasConDescuento.includes(tipoId)) {
-        // Lógica UNIFICADA para Pizzas y Mariscos
+        // Normalizar tamaño
+        const normalizedTamano = typeof tamano === 'string' ? tamano.trim().toLowerCase() : tamano;
+
+        // Determinar tipo de grupo objetivo
+        let targetGroupType = tipoId;
+        if (tipoId === 'id_pizza' || tipoId === 'id_maris') {
+            targetGroupType = 'pizza_group';
+        }
+
+        // Buscar grupo compatible
         const existingGroupIndex = prevOrden.findIndex(
-            item => item.tipoId === 'pizza_group' && 
-            (typeof item.tamano === 'string' ? item.tamano.trim().toLowerCase() : item.tamano) === 
-            (typeof tamano === 'string' ? tamano.trim().toLowerCase() : tamano)
+          (item) =>
+            item.tipoId === targetGroupType &&
+            (typeof item.tamano === 'string' ? item.tamano.trim().toLowerCase() : item.tamano) === normalizedTamano && 
+            !item.esPaquete
         );
 
         let nuevaOrden = [...prevOrden];
@@ -382,8 +401,11 @@ export const useCart = (initialCartFromUrl = []) => {
             // Grupo existe
             const group = nuevaOrden[existingGroupIndex];
             
-            // Buscar si ya existe este producto específico en el grupo
-            const existingProdIndex = group.productos.findIndex(p => p.id === id);
+            // Buscar si ya existe este producto específico en el grupo (por ID y TIPO)
+            // Usamos idProducto para la búsqueda lógica, o el ID compuesto si ya migramos
+            const existingProdIndex = group.productos.findIndex(
+                p => (p.idProducto === id || p.id === `${tipoId}_${id}` || p.id === id) && p.tipoId === tipoId
+            );
 
             let nuevosProductos = [...group.productos];
             if (existingProdIndex >= 0) {
@@ -394,8 +416,11 @@ export const useCart = (initialCartFromUrl = []) => {
                 };
             } else {
                 // Agregar nuevo producto al grupo
+                // Crear ID único compuesto para evitar colisiones de Keys en React
+                const uniqueId = `${tipoId}_${id}`;
                 nuevosProductos.push({
-                    id,
+                    id: uniqueId,
+                    idProducto: id, // Guardar ID original
                     nombre,
                     precio: precioOriginal,
                     cantidad: 1,
@@ -410,24 +435,45 @@ export const useCart = (initialCartFromUrl = []) => {
             };
 
         } else {
-            // Crear nuevo grupo de Pizzas
-            nuevaOrden.push({
-                id: `pizza_group_${tamano}`,
-                tipoId: 'pizza_group',
-                nombre: `Pizzas ${tamano}`,
-                tamano: tamano,
-                esPaquete: false,
-                cantidad: 1,
-                precioUnitario: 0, 
-                subtotal: 0,
-                productos: [{
-                    id,
-                    nombre,
-                    precio: precioOriginal,
+            // Crear nuevo grupo
+            // Si es pizza o marisco, usar estructura pizza_group unificada
+             if (targetGroupType === 'pizza_group') {
+                 const uniqueId = `${tipoId}_${id}`;
+                 nuevaOrden.push({
+                    id: `pizza_group_${tamano}_${Date.now()}`,
+                    tipoId: 'pizza_group',
+                    nombre: `Pizzas ${tamano}`,
+                    tamano: tamano,
+                    esPaquete: false,
                     cantidad: 1,
-                    tipoId // Guardar tipoId
-                }]
-            });
+                    precioUnitario: 0, 
+                    subtotal: 0,
+                    productos: [{
+                        id: uniqueId,
+                        idProducto: id,
+                        nombre,
+                        precio: precioOriginal,
+                        cantidad: 1,
+                        tipoId // Guardar tipoId
+                    }]
+                });
+             } else {
+                 // Fallback para otros si existieran
+                const uniqueId = `${tipoId}_${id}`;
+                nuevaOrden.push({
+                    id: `${tipoId}_${tamano}_${Date.now()}`,
+                    tipoId,
+                    nombre: `Producto ${tamano}`,
+                    tamano: tamano,
+                    esPaquete: false,
+                    cantidad: 1,
+                    precioUnitario: precioOriginal,
+                    subtotal: precioOriginal,
+                    productos: [{
+                       id: uniqueId, idProducto: id, nombre, precio: precioOriginal, cantidad: 1, tipoId
+                    }]
+                });
+             }
         }
 
         return recalcularPrecios(nuevaOrden);

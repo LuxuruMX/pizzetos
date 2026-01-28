@@ -108,7 +108,7 @@ export const invalidateCache = () => {
 
 export const fetchDetalleVenta = async (idVenta) => {
   try {
-    const response = await api.get(`/pos/recrea-ticket/${idVenta}`);
+    const response = await api.get(`/pos/edit/${idVenta}/detalle`);
     return response.data;
   } catch (error) {
     console.error('Error al obtener detalle de venta:', error);
@@ -262,10 +262,13 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
                // Usamos el tipoId guardado (id_pizza o id_maris)
                const tipoIdReal = producto.tipoId || 'id_pizza'; 
                
+               // Usar idProducto (numérico original) si existe, sino intentar parsear id (legacy)
+               const idReal = producto.idProducto ? parseInt(producto.idProducto) : parseInt(producto.id);
+
                const itemData = {
                   cantidad: 1, 
                   precio_unitario: parseFloat(producto.precio), 
-                  [tipoIdReal]: parseInt(producto.id),
+                  [tipoIdReal]: idReal,
                   queso: producto.conQueso ? precioQueso : null, // Enviar precio del queso o null
                   status: 1
                };
@@ -279,10 +282,11 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
     // Si es un item agrupado (pizzas/mariscos con productos múltiples - LEGACY, pero mantenemos por si acaso)
     if (item.productos && Array.isArray(item.productos)) {
       return item.productos.map(producto => {
+        const idReal = producto.idProducto ? parseInt(producto.idProducto) : parseInt(producto.id);
         const itemData = {
           cantidad: parseInt(producto.cantidad),
           precio_unitario: parseFloat(item.precioUnitario),
-          [item.tipoId]: parseInt(producto.id),
+          [item.tipoId]: idReal,
           status: 1
         };
         return itemData;

@@ -14,6 +14,24 @@ const ProductsSection = ({
 }) => {
   const [mostrarMasCategorias, setMostrarMasCategorias] = useState(false);
 
+  const catToTipoId = {
+    'pizzas': 'id_pizza',
+    'mariscos': 'id_maris',
+    'hamburguesas': 'id_hamb',
+    'alitas': 'id_alis',
+    'costillas': 'id_cos',
+    'spaguetty': 'id_spag',
+    'papas': 'id_papa',
+    'refrescos': 'id_refresco',
+    'rectangular': 'id_rec',
+    'barra': 'id_barr',
+    'magno': 'id_magno'
+  };
+
+
+  // const tipoId declaraction removed here, will be used inside map loop or derived locally
+
+
   // Categorías principales que siempre se muestran
   const categoriasPrincipales = ['pizzas', 'mariscos', 'rectangular', 'barra'];
 
@@ -49,7 +67,7 @@ const ProductsSection = ({
   };
 
   return (
-    <div className="w-2/3 ml-6 flex flex-col h-full">
+    <div className="w-2/3 ml-6 flex flex-col h-full" >
       <div className="px-6 pt-6">
 
         {/* Contenedor para Categorías */}
@@ -103,14 +121,16 @@ const ProductsSection = ({
       </div>
 
       {/* Sección de productos */}
-      <div className="flex-1 px-6 pb-6 pt-1">
+      <div className="flex-1 px-6 pb-6 pt-1" >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {productos.length === 0 ? (
             <p className="text-gray-500 col-span-3 text-center">No hay productos disponibles</p>
           ) : (
             productos.map((producto) => {
               if (!producto) return null;
-              const tipoId = getProductTypeId(producto);
+              // Determinar tipoId basado en la categoría activa (prioridad) o fallback a detección 
+              const tipoId = catToTipoId[categoriaActiva] || getProductTypeId(producto);
+
               if (!tipoId) return null;
 
               return (
@@ -125,8 +145,8 @@ const ProductsSection = ({
             })
           )}
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

@@ -13,7 +13,7 @@ const ProductCard = ({ producto, tipoId, onProductoClick, mostrarPrecio = true }
     >
       {/* Efecto de fondo en hover */}
       <div className="absolute inset-0 bg-gradient-to-r from-yellow-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-      
+
       <div className="relative z-10">
         <h3 className="font-bold text-lg text-gray-800 mb-2">{nombre}</h3>
         {mostrarPrecio && (

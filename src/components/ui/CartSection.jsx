@@ -17,7 +17,8 @@ const CartSection = ({
   onMesaChange,
   nombreClie,
   onNombreClieChange,
-  onToggleQueso
+  onToggleQueso,
+  hideServiceSelection = false
 }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const menuRef = useRef(null);
@@ -81,7 +82,7 @@ const CartSection = ({
         )}
 
         {/* Input de Mesa (Solo para Comedor - Tipo 0) */}
-        {tipoServicio === 0 && (
+        {!hideServiceSelection && tipoServicio === 0 && (
           <div className="mb-4 text-black">
             <label className="block text-sm font-bold mb-1">Mesa:</label>
             <input
@@ -103,7 +104,7 @@ const CartSection = ({
         )}
 
         {/* Input de Nombre (Para Comedor y Para Llevar - Tipos 0 y 1) */}
-        {(tipoServicio === 0 || tipoServicio === 1) && (
+        {!hideServiceSelection && (tipoServicio === 0 || tipoServicio === 1) && (
           <div className="mb-4 text-black">
             <label className="block text-sm font-bold mb-1">Nombre:</label>
             <input
@@ -130,51 +131,61 @@ const CartSection = ({
         </button>
 
         {/* Botón Enviar Orden */}
-        {/* Botón Enviar Orden con Selector Split */}
-        <div className="flex rounded-lg shadow-sm" ref={menuRef}>
-          {/* Botón Izquierdo: Selector */}
-          <div className="relative">
-            <button
-              onClick={() => setMenuAbierto(!menuAbierto)}
-              className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-3 rounded-l border-r border-orange-600 flex items-center justify-center gap-2 transition-colors h-full min-w-[140px]"
-            >
-              <span className="text-lg">{servicioActual.icon}</span>
-              <span className="text-sm">{servicioActual.label}</span>
-              {menuAbierto ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
-            </button>
-
-            {/* Menú Dropdown */}
-            {menuAbierto && (
-              <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
-                {opcionesServicio.map((opcion) => (
-                  <button
-                    key={opcion.id}
-                    onClick={() => {
-                      onTipoServicioChange(opcion.id);
-                      setMenuAbierto(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-orange-50 transition-colors ${tipoServicio === opcion.id ? 'bg-orange-100 text-orange-700 font-medium' : 'text-gray-700'
-                      }`}
-                  >
-                    <span className={tipoServicio === opcion.id ? 'text-orange-600' : 'text-gray-500'}>
-                      {opcion.icon}
-                    </span>
-                    {opcion.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Botón Derecho: Enviar */}
+        {hideServiceSelection ? (
           <button
             onClick={onEnviarOrden}
             disabled={orden.length === 0}
-            className="flex-1 bg-orange-400 hover:bg-orange-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-r transition-colors flex items-center justify-center"
+            className="w-full bg-orange-400 hover:bg-orange-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded transition-colors flex items-center justify-center"
           >
-            Enviar Orden
+            Actualizar Orden
           </button>
-        </div>
+        ) : (
+          /* Botón Enviar Orden con Selector Split */
+          <div className="flex rounded-lg shadow-sm" ref={menuRef}>
+            {/* Botón Izquierdo: Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setMenuAbierto(!menuAbierto)}
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-3 rounded-l border-r border-orange-600 flex items-center justify-center gap-2 transition-colors h-full min-w-[140px]"
+              >
+                <span className="text-lg">{servicioActual.icon}</span>
+                <span className="text-sm">{servicioActual.label}</span>
+                {menuAbierto ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+              </button>
+
+              {/* Menú Dropdown */}
+              {menuAbierto && (
+                <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+                  {opcionesServicio.map((opcion) => (
+                    <button
+                      key={opcion.id}
+                      onClick={() => {
+                        onTipoServicioChange(opcion.id);
+                        setMenuAbierto(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-orange-50 transition-colors ${tipoServicio === opcion.id ? 'bg-orange-100 text-orange-700 font-medium' : 'text-gray-700'
+                        }`}
+                    >
+                      <span className={tipoServicio === opcion.id ? 'text-orange-600' : 'text-gray-500'}>
+                        {opcion.icon}
+                      </span>
+                      {opcion.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Botón Derecho: Enviar */}
+            <button
+              onClick={onEnviarOrden}
+              disabled={orden.length === 0}
+              className="flex-1 bg-orange-400 hover:bg-orange-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-r transition-colors flex items-center justify-center"
+            >
+              Enviar Orden
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
