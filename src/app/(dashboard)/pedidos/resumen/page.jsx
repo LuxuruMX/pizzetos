@@ -835,7 +835,7 @@ export default function TodosPedidosPage() {
               setModalPagosOpen(false);
               setPedidoAPagar(null);
             }}
-            total={pedidoAPagar.total}
+            total={pedidoAPagar.total - (pedidoAPagar.pagado || 0)}
             onConfirm={async (pagos) => {
               try {
                 await pagarVenta(pedidoAPagar.id_venta, pagos);
