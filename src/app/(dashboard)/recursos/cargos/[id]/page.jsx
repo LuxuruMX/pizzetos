@@ -6,6 +6,7 @@ import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { showToast } from '@/utils/toast';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
 
 export default function EditarCargoPage() {
@@ -46,13 +47,13 @@ export default function EditarCargoPage() {
       // Obtener todos los cargos y buscar el que coincida con el ID
       const response = await api.get('/recursos/cargos');
       const cargo = response.data.find(c => c.id_cargo === parseInt(params.id));
-      
+
       if (!cargo) {
-        alert('Cargo no encontrado');
+        showToast.warning('Cargo no encontrado');
         router.push('/recursos/cargos');
         return;
       }
-      
+
       setFormData({
         nombre: cargo.cargo,
         // Productos
@@ -78,7 +79,7 @@ export default function EditarCargoPage() {
       });
     } catch (error) {
       console.error('Error fetching cargo:', error);
-      alert('Error al cargar el cargo');
+      showToast.error('Error al cargar el cargo');
       router.push('/recursos/cargos');
     } finally {
       setLoading(false);
@@ -102,11 +103,11 @@ export default function EditarCargoPage() {
   };
 
   const handleSelectAll = (module) => {
-    const allChecked = formData[`crear_${module}`] && 
-                       formData[`modificar_${module}`] && 
-                       formData[`eliminar_${module}`] && 
-                       formData[`ver_${module}`];
-    
+    const allChecked = formData[`crear_${module}`] &&
+      formData[`modificar_${module}`] &&
+      formData[`eliminar_${module}`] &&
+      formData[`ver_${module}`];
+
     setFormData(prev => ({
       ...prev,
       [`crear_${module}`]: !allChecked,
@@ -118,9 +119,9 @@ export default function EditarCargoPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.nombre.trim()) {
-      alert('El nombre del cargo es obligatorio');
+      showToast.warning('El nombre del cargo es obligatorio');
       return;
     }
 
@@ -130,18 +131,18 @@ export default function EditarCargoPage() {
       router.push('/recursos/cargos');
     } catch (error) {
       console.error('Error updating cargo:', error);
-      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al actualizar el cargo ❌';
-      alert(errorMsg);
+      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al actualizar el cargo';
+      showToast.error(errorMsg);
     } finally {
       setSaving(false);
     }
   };
 
   const PermissionSection = ({ title, module, color }) => {
-    const allChecked = formData[`crear_${module}`] && 
-                       formData[`modificar_${module}`] && 
-                       formData[`eliminar_${module}`] && 
-                       formData[`ver_${module}`];
+    const allChecked = formData[`crear_${module}`] &&
+      formData[`modificar_${module}`] &&
+      formData[`eliminar_${module}`] &&
+      formData[`ver_${module}`];
 
     return (
       <div className={`p-4 rounded-lg border-2 ${color}`}>
@@ -250,24 +251,24 @@ export default function EditarCargoPage() {
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Permisos del Cargo</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <PermissionSection 
-                title="Productos" 
-                module="producto" 
+              <PermissionSection
+                title="Productos"
+                module="producto"
                 color="border-blue-200 bg-blue-50"
               />
-              <PermissionSection 
-                title="Empleados" 
-                module="empleado" 
+              <PermissionSection
+                title="Empleados"
+                module="empleado"
                 color="border-green-200 bg-green-50"
               />
-              <PermissionSection 
-                title="Ventas" 
-                module="venta" 
+              <PermissionSection
+                title="Ventas"
+                module="venta"
                 color="border-yellow-200 bg-yellow-50"
               />
-              <PermissionSection 
-                title="Recursos" 
-                module="recurso" 
+              <PermissionSection
+                title="Recursos"
+                module="recurso"
                 color="border-purple-200 bg-purple-50"
               />
             </div>

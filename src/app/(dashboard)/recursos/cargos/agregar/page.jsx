@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function AgregarCargoPage() {
   const router = useRouter();
@@ -52,11 +53,11 @@ export default function AgregarCargoPage() {
   };
 
   const handleSelectAll = (module) => {
-    const allChecked = formData[`crear_${module}`] && 
-                       formData[`modificar_${module}`] && 
-                       formData[`eliminar_${module}`] && 
-                       formData[`ver_${module}`];
-    
+    const allChecked = formData[`crear_${module}`] &&
+      formData[`modificar_${module}`] &&
+      formData[`eliminar_${module}`] &&
+      formData[`ver_${module}`];
+
     setFormData(prev => ({
       ...prev,
       [`crear_${module}`]: !allChecked,
@@ -68,9 +69,9 @@ export default function AgregarCargoPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.nombre.trim()) {
-      alert('El nombre del cargo es obligatorio');
+      showToast.warning('El nombre del cargo es obligatorio');
       return;
     }
 
@@ -80,18 +81,18 @@ export default function AgregarCargoPage() {
       router.push('/recursos/cargos');
     } catch (error) {
       console.error('Error creating cargo:', error);
-      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al crear el cargo ❌';
-      alert(errorMsg);
+      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al crear el cargo';
+      showToast.error(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
   const PermissionSection = ({ title, module, color }) => {
-    const allChecked = formData[`crear_${module}`] && 
-                       formData[`modificar_${module}`] && 
-                       formData[`eliminar_${module}`] && 
-                       formData[`ver_${module}`];
+    const allChecked = formData[`crear_${module}`] &&
+      formData[`modificar_${module}`] &&
+      formData[`eliminar_${module}`] &&
+      formData[`ver_${module}`];
 
     return (
       <div className={`p-4 rounded-lg border-2 ${color}`}>
@@ -188,24 +189,24 @@ export default function AgregarCargoPage() {
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Permisos del Cargo</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <PermissionSection 
-                title="Productos" 
-                module="producto" 
+              <PermissionSection
+                title="Productos"
+                module="producto"
                 color="border-blue-200 bg-blue-50"
               />
-              <PermissionSection 
-                title="Empleados" 
-                module="empleado" 
+              <PermissionSection
+                title="Empleados"
+                module="empleado"
                 color="border-green-200 bg-green-50"
               />
-              <PermissionSection 
-                title="Ventas" 
-                module="venta" 
+              <PermissionSection
+                title="Ventas"
+                module="venta"
                 color="border-yellow-200 bg-yellow-50"
               />
-              <PermissionSection 
-                title="Recursos" 
-                module="recurso" 
+              <PermissionSection
+                title="Recursos"
+                module="recurso"
                 color="border-purple-200 bg-purple-50"
               />
             </div>

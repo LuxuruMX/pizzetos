@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import Popconfirm from '@/components/ui/Popconfirm'; // Asegúrate de tener esta importación
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function SucursalesPage() {
   const router = useRouter();
@@ -57,12 +58,12 @@ export default function SucursalesPage() {
   const handleDelete = async (sucursal) => {
     try {
       await api.delete(`/recursos/sucursales?id_suc=${sucursal.id_suc}`);
-      alert('Sucursal eliminada correctamente ✅');
+      showToast.success('Sucursal eliminada correctamente');
       fetchSucursales();
     } catch (error) {
       console.error('Error deleting sucursal:', error);
-      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al eliminar la sucursal ❌';
-      alert(errorMsg);
+      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al eliminar la sucursal';
+      showToast.error(errorMsg);
     }
   };
 
@@ -71,30 +72,30 @@ export default function SucursalesPage() {
   };
 
   if (permisos === null) {
-      return (
-        <div className="p-6">
-          <Card>
-            <div className="text-center py-8">
-              <p className="text-gray-600">Cargando...</p>
-            </div>
-          </Card>
-        </div>
-      );
-    }
+    return (
+      <div className="p-6">
+        <Card>
+          <div className="text-center py-8">
+            <p className="text-gray-600">Cargando...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const columns = [
-    { 
-      header: 'NOMBRE', 
+    {
+      header: 'NOMBRE',
       accessor: 'nombre',
       render: (row) => <span className="font-semibold text-gray-900">{row.nombre}</span>
     },
-    { 
-      header: 'DIRECCIÓN', 
+    {
+      header: 'DIRECCIÓN',
       accessor: 'direccion',
       render: (row) => <span className="text-gray-700">{row.direccion}</span>
     },
-    { 
-      header: 'TELÉFONO', 
+    {
+      header: 'TELÉFONO',
       accessor: 'telefono',
       render: (row) => <span className="text-gray-700">{row.telefono}</span>
     },

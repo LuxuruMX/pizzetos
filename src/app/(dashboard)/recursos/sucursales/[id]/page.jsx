@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function EditarSucursalPage() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function EditarSucursalPage() {
   const fetchSucursal = async () => {
     try {
       const response = await api.get(`/recursos/sucursales/${params.id}`);
-      
+
       setFormData({
         nombre: response.data.nombre || '',
         direccion: response.data.direccion || '',
@@ -34,7 +35,7 @@ export default function EditarSucursalPage() {
       });
     } catch (error) {
       console.error('Error fetching sucursal:', error);
-      alert('Error al cargar la sucursal');
+      showToast.error('Error al cargar la sucursal');
       router.push('/recursos/sucursales');
     } finally {
       setLoading(false);
@@ -51,9 +52,9 @@ export default function EditarSucursalPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.nombre.trim() || !formData.direccion.trim() || !String(formData.telefono).trim()) {
-      alert('Todos los campos son obligatorios');
+      showToast.warning('Todos los campos son obligatorios');
       return;
     }
 
@@ -63,8 +64,8 @@ export default function EditarSucursalPage() {
       router.push('/recursos/sucursales');
     } catch (error) {
       console.error('Error updating sucursal:', error);
-      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al actualizar la sucursal ❌';
-      alert(errorMsg);
+      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al actualizar la sucursal';
+      showToast.error(errorMsg);
     } finally {
       setSaving(false);
     }

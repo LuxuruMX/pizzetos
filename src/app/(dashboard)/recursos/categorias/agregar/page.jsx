@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function AgregarCategoriaPage() {
   const router = useRouter();
@@ -25,21 +26,21 @@ export default function AgregarCategoriaPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.descripcion.trim()) {
-      alert('La descripción es obligatoria');
+      showToast.warning('La descripción es obligatoria');
       return;
     }
 
     setLoading(true);
     try {
       await api.post('/recursos/categorias', formData);
-      alert('Categoría creada correctamente ✅');
+      showToast.success('Categoría creada correctamente');
       router.push('/recursos/categorias');
     } catch (error) {
       console.error('Error creating categoria:', error);
-      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al crear la categoría ❌';
-      alert(errorMsg);
+      const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al crear la categoría';
+      showToast.error(errorMsg);
     } finally {
       setLoading(false);
     }
