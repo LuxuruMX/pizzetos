@@ -378,6 +378,11 @@ export default function TodosPedidosPage() {
         }
       }
 
+      if (!prods || !clis || Object.keys(prods).length === 0) {
+        showToast.error("No se pudieron cargar los datos necesarios para el ticket. Intente de nuevo.");
+        return;
+      }
+
       // 1. Obtener detalles completos
       const detalle = await fetchTicketDetalle(row.id_venta);
 
@@ -534,6 +539,8 @@ export default function TodosPedidosPage() {
   // Calcular suma total de todos los pedidos
   const sumaTotal = pedidos.reduce((acc, pedido) => acc + pedido.total, 0);
 
+  const catalogsReady = productosCache && clientesCache;
+
   // Columnas de la tabla
   const columns = [
     {
@@ -677,8 +684,9 @@ export default function TodosPedidosPage() {
           {
             <button
               onClick={() => handlePrint(row)}
-              className="text-gray-600 hover:text-gray-800 transition-colors"
-              title="Imprimir"
+              disabled={!catalogsReady}
+              className={`transition-colors ${!catalogsReady ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-gray-800'}`}
+              title={catalogsReady ? "Imprimir" : "Cargando datos..."}
             >
               <MdPrint size={22} />
             </button>
