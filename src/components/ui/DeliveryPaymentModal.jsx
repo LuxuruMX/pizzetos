@@ -212,7 +212,7 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
 
                                             {metodo.id === 2 && ( // Tarjeta
                                                 <p className="text-xs text-gray-500 italic bg-white p-1 rounded">
-                                                    Se enviará terminal inalámbrica.
+                                                    Se enviará terminal.
                                                 </p>
                                             )}
 
