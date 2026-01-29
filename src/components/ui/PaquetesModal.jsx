@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { IoClose } from "react-icons/io5";
+import { showToast } from '@/utils/toast';
 
 
 // Modal para Paquete 1 (con opciones de pizza)
@@ -101,7 +102,7 @@ export const ModalPaquete2 = ({ isOpen, onClose, onConfirmar, pizzas, hamburgues
 
   const handleConfirmar = () => {
     if (!seleccion.idProducto || !seleccion.idPizza) {
-      alert('Por favor selecciona todos los productos');
+      showToast.error('Por favor selecciona todos los productos');
       return;
     }
     const prod = productosDisponibles.find(p =>
@@ -244,7 +245,7 @@ export const ModalPaquete3 = ({ isOpen, onClose, onConfirmar, pizzas }) => {
 
   const handleConfirmar = () => {
     if (pizzasSeleccionadas.length !== 3) {
-      alert('Debes seleccionar exactamente 3 pizzas');
+      showToast.error('Debes seleccionar exactamente 3 pizzas');
       return;
     }
     // Mapear IDs a nombres

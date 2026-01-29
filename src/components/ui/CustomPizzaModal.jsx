@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { IoClose } from 'react-icons/io5';
 import { FaPizzaSlice } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 const CustomPizzaModal = ({ isOpen, onClose, tamanos, ingredientes, onConfirmar }) => {
     const [tamanoSeleccionado, setTamanoSeleccionado] = useState(null);
@@ -20,11 +21,11 @@ const CustomPizzaModal = ({ isOpen, onClose, tamanos, ingredientes, onConfirmar 
 
     const handleConfirmar = () => {
         if (!tamanoSeleccionado) {
-            alert('Por favor, selecciona un tamaño de pizza');
+            showToast.error('Por favor, selecciona un tamaño de pizza');
             return;
         }
         if (ingredientesSeleccionados.length === 0) {
-            alert('Por favor, selecciona al menos un ingrediente');
+            showToast.error('Por favor, selecciona al menos un ingrediente');
             return;
         }
 
@@ -78,8 +79,8 @@ const CustomPizzaModal = ({ isOpen, onClose, tamanos, ingredientes, onConfirmar 
                                         key={tamano.id_tamañop}
                                         onClick={() => setTamanoSeleccionado(tamano)}
                                         className={`p-4 rounded-lg border-2 transition-all ${isSelected
-                                                ? 'border-orange-500 bg-orange-50 shadow-md'
-                                                : 'border-gray-200 bg-gray-50 hover:border-orange-300 hover:bg-orange-50'
+                                            ? 'border-orange-500 bg-orange-50 shadow-md'
+                                            : 'border-gray-200 bg-gray-50 hover:border-orange-300 hover:bg-orange-50'
                                             }`}
                                     >
                                         <div className="font-semibold text-gray-800 text-lg mb-1">
@@ -107,8 +108,8 @@ const CustomPizzaModal = ({ isOpen, onClose, tamanos, ingredientes, onConfirmar 
                                         key={ingrediente.id_ingrediente}
                                         onClick={() => handleToggleIngrediente(ingrediente.id_ingrediente)}
                                         className={`p-3 rounded-lg border-2 transition-all text-sm ${isSelected
-                                                ? 'border-orange-500 bg-orange-500 text-white shadow-md'
-                                                : 'border-gray-200 bg-white text-gray-700 hover:border-orange-300'
+                                            ? 'border-orange-500 bg-orange-500 text-white shadow-md'
+                                            : 'border-gray-200 bg-white text-gray-700 hover:border-orange-300'
                                             }`}
                                     >
                                         {ingrediente.nombre}

@@ -19,6 +19,7 @@ import { pdf } from '@react-pdf/renderer';
 import TicketPDF from '@/components/ui/TicketPDF';
 import PDFViewerModal from '@/components/ui/PDFViewerModal';
 import { getProductTypeId } from '@/utils/productUtils';
+import { showToast } from '@/utils/toast';
 
 const decodeCartFromUrl = () => {
   if (typeof window !== 'undefined' && window.location.search) {
@@ -255,7 +256,7 @@ const POS = () => {
     });
 
     if (gruposRectangularesIncompletos) {
-      alert('Debes completar 4 porciones para cada pizza Rectangular.');
+      showToast.error('Debes completar 4 porciones para cada pizza Rectangular.');
       return;
     }
 
@@ -269,7 +270,7 @@ const POS = () => {
     });
 
     if (gruposDoblesIncompletos) {
-      alert('Debes completar 2 porciones para cada pizza Barra o Magno.');
+      showToast.error('Debes completar 2 porciones para cada pizza Barra o Magno.');
       return;
     }
 
@@ -290,7 +291,7 @@ const POS = () => {
       }
     } else if (tipoServicio === 0) {
       if (!mesa || mesa.trim() === '') {
-        alert('Por favor, ingresa el número de mesa.');
+        showToast.error('Por favor, ingresa el número de mesa.');
         return;
       }
     }
@@ -348,7 +349,7 @@ const POS = () => {
       setTipoServicio(2);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
-      alert(error.message || 'Hubo un error al enviar la orden.');
+      showToast.error(error.message || 'Hubo un error al enviar la orden.');
     }
   };
 
@@ -394,7 +395,7 @@ const POS = () => {
       setTipoServicio(2);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
-      alert(error.message || 'Hubo un error al enviar la orden.');
+      showToast.error(error.message || 'Hubo un error al enviar la orden.');
     }
   };
 
@@ -453,7 +454,7 @@ const POS = () => {
       setTipoServicio(2);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
-      alert(error.message || 'Hubo un error al enviar la orden.');
+      showToast.error(error.message || 'Hubo un error al enviar la orden.');
     }
   };
 
@@ -498,7 +499,7 @@ const POS = () => {
       setTipoServicio(2);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
-      alert(error.message || 'Hubo un error al enviar la orden.');
+      showToast.error(error.message || 'Hubo un error al enviar la orden.');
     }
   };
 

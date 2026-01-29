@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaTimes, FaTrash } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 const PaymentModal = ({ isOpen, onClose, total, onConfirm, allowPartial = false }) => {
   const [pagos, setPagos] = useState([]);
@@ -27,12 +28,12 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm, allowPartial = false 
   const handleAgregarPago = () => {
     const monto = parseFloat(montoInput);
     if (isNaN(monto) || monto <= 0) {
-      alert('Por favor ingresa un monto válido');
+      showToast.error('Por favor ingresa un monto válido');
       return;
     }
 
     if (!allowPartial && monto > montoRestante) {
-      alert('El monto no puede ser mayor al restante');
+      showToast.error('El monto no puede ser mayor al restante');
       return;
     }
 
@@ -43,13 +44,13 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm, allowPartial = false 
     // Lo que NO debe pasar es que pague MAS del total? Depende.
     // Supongamos que no debe pagar mas del total.
     if (monto > montoRestante) {
-      alert('El monto no puede ser mayor al restante');
+      showToast.error('El monto no puede ser mayor al restante');
       return;
     }
 
     // Validar referencia para tarjeta o transferencia
     if ((metodoSeleccionado === 1 || metodoSeleccionado === 3) && !referenciaInput.trim()) {
-      alert('Por favor ingresa el número de referencia/folio');
+      showToast.error('Por favor ingresa el número de referencia/folio');
       return;
     }
 
@@ -81,7 +82,7 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm, allowPartial = false 
 
   const handleConfirmar = () => {
     if (!allowPartial && montoRestante > 0.01) { // Margen de error pequeño por decimales
-      alert(`Falta cubrir $${montoRestante.toFixed(2)} del total`);
+      showToast.error(`Falta cubrir $${montoRestante.toFixed(2)} del total`);
       return;
     }
 

@@ -7,6 +7,7 @@ import { clientesService } from '@/services/clientesService';
 import { FaMapMarkerAlt, FaTimes, FaUserPlus, FaPlus, FaCalendarAlt } from 'react-icons/fa';
 import AddClientModal from './AddClientModal';
 import ModalDirecciones from './ModalDirecciones';
+import { showToast } from '@/utils/toast';
 
 const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSeleccionado, onClienteChange, onClienteCreado, askForDate = false }) => {
     const [direcciones, setDirecciones] = useState([]);
@@ -81,7 +82,7 @@ const AddressSelectionModal = ({ isOpen, onClose, onConfirm, clientes, clienteSe
             setModalAgregarDireccion(false);
         } catch (err) {
             console.error('Error al crear dirección:', err);
-            alert(err.message || 'Error al crear la dirección');
+            showToast.error(err.message || 'Error al crear la dirección');
         } finally {
             setLoadingDireccion(false);
         }

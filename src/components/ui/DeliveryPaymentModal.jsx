@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaTimes } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
     const [metodoSeleccionado, setMetodoSeleccionado] = useState(1); // 1: Transferencia, 2: Tarjeta, 3: Efectivo
@@ -25,18 +26,18 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
         if (metodoSeleccionado === 1) {
             // Transferencia: requiere referencia
             if (!referenciaInput.trim()) {
-                alert('Por favor ingresa el número de referencia de la transferencia');
+                showToast.error('Por favor ingresa el número de referencia de la transferencia');
                 return;
             }
         } else if (metodoSeleccionado === 3) {
             // Efectivo: requiere cantidad con la que pagará
             const cantidad = parseFloat(cantidadEfectivo);
             if (isNaN(cantidad) || cantidad <= 0) {
-                alert('Por favor ingresa una cantidad válida');
+                showToast.error('Por favor ingresa una cantidad válida');
                 return;
             }
             if (cantidad < total) {
-                alert(`La cantidad debe ser mayor o igual al total ($${total.toFixed(2)})`);
+                showToast.error(`La cantidad debe ser mayor o igual al total ($${total.toFixed(2)})`);
                 return;
             }
         }
@@ -96,8 +97,8 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
                                 key={metodo.id}
                                 onClick={() => setMetodoSeleccionado(metodo.id)}
                                 className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${metodoSeleccionado === metodo.id
-                                        ? 'bg-yellow-50 border-yellow-500 ring-2 ring-yellow-200'
-                                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                                    ? 'bg-yellow-50 border-yellow-500 ring-2 ring-yellow-200'
+                                    : 'bg-white border-gray-200 hover:bg-gray-50'
                                     }`}
                             >
                                 <div className={`text-2xl ${metodoSeleccionado === metodo.id ? 'text-yellow-600' : 'text-gray-400'}`}>
@@ -110,8 +111,8 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
                                     <div className="text-xs text-gray-500">{metodo.descripcion}</div>
                                 </div>
                                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${metodoSeleccionado === metodo.id
-                                        ? 'border-yellow-500 bg-yellow-500'
-                                        : 'border-gray-300'
+                                    ? 'border-yellow-500 bg-yellow-500'
+                                    : 'border-gray-300'
                                     }`}>
                                     {metodoSeleccionado === metodo.id && (
                                         <div className="w-2 h-2 bg-white rounded-full"></div>
