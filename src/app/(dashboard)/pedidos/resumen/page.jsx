@@ -15,7 +15,7 @@ import { pdf } from '@react-pdf/renderer';
 import TicketPDF from '@/components/ui/TicketPDF';
 import PDFViewerModal from '@/components/ui/PDFViewerModal';
 import { PRECIOS_ORILLA_QUESO } from '@/config/prices';
-import toast from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 // Función auxiliar para reconstruir la orden (adaptada de useCartEdit)
 const reconstructOrderForTicket = (productosBackend, productosCache) => {
@@ -457,7 +457,7 @@ export default function TodosPedidosPage() {
 
     } catch (err) {
       console.error("Error al imprimir ticket:", err);
-      toast.error("Error al generar el ticket. Consulta la consola para más detalles.");
+      showToast.error("Error al generar el ticket. Consulta la consola para más detalles.");
     } finally {
       setLoading(false);
     }
@@ -507,7 +507,7 @@ export default function TodosPedidosPage() {
       setPedidoACancelar(null);
     } catch (error) {
       console.error(error);
-      toast.error("Error al cancelar el pedido: " + (error.response?.data?.message || error.message));
+      showToast.error("Error al cancelar el pedido: " + (error.response?.data?.message || error.message));
     } finally {
       setCanceling(false);
     }
@@ -835,7 +835,7 @@ export default function TodosPedidosPage() {
                 setPedidoAPagar(null);
                 fetchTodosPedidos(); // Recargar lista
               } catch (error) {
-                toast.error(error.response?.data?.message || 'Error al procesar el pago');
+                showToast.error(error.response?.data?.message || 'Error al procesar el pago');
               }
             }}
           />
