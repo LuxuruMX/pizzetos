@@ -668,7 +668,7 @@ export default function TodosPedidosPage() {
           )}
 
           {
-            !row.pagado && row.status !== 5 && (
+            (row.total > (row.pagado || 0)) && row.status !== 5 && (
               <button
                 onClick={() => {
                   setPedidoAPagar(row);
