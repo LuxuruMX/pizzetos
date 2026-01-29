@@ -653,7 +653,7 @@ export default function TodosPedidosPage() {
                 </button>
               )}
 
-              {permisos?.eliminar_venta && (
+              {permisos?.eliminar_venta && row.status !== 2 && (
                 <button
                   onClick={() => handleDelete(row)}
                   className="text-red-600 hover:text-red-800 transition-colors"
@@ -666,7 +666,7 @@ export default function TodosPedidosPage() {
           )}
 
           {
-            !row.pagado && (
+            !row.pagado && row.status !== 5 && (
               <button
                 onClick={() => {
                   setPedidoAPagar(row);
