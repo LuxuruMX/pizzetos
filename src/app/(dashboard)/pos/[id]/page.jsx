@@ -25,7 +25,7 @@ import { MdComment, MdArrowBack, MdPrint } from "react-icons/md";
 import { fetchIngredientes, fetchTamanosPizzas } from '@/services/pricesService';
 import { getProductTypeId } from '@/utils/productUtils';
 import ProductModal from "@/components/ui/ProductModal";
-import { toast } from "react-toastify";
+import { showToast } from '@/utils/toast';
 
 
 
@@ -142,7 +142,7 @@ const POSEdit = () => {
 
       } catch (error) {
         console.error("Error al cargar datos:", error);
-        toast.error("Error al cargar el detalle del pedido");
+        showToast.error("Error al cargar el detalle del pedido");
       } finally {
         setLoading(false);
       }
@@ -207,11 +207,11 @@ const POSEdit = () => {
   const handleActualizarPedido = async () => {
     // Validar grupos incompletos
     if (grupoRectangularIncompleto) {
-      toast.error('Debes completar 4 porciones para cada pizza Rectangular.');
+      showToast.error('Debes completar 4 porciones para cada pizza Rectangular.');
       return;
     }
     if (grupoBarraMagnoIncompleto) {
-      toast.error('Debes completar 2 porciones para cada pizza Barra o Magno.');
+      showToast.error('Debes completar 2 porciones para cada pizza Barra o Magno.');
       return;
     }
 
@@ -248,14 +248,14 @@ const POSEdit = () => {
 
       await actualizarPedidoCocina(idVenta, payload);
 
-      toast.success("Pedido actualizado exitosamente");
+      showToast.success("Pedido actualizado exitosamente");
 
       setShouldRedirectAfterPrint(true);
       handleImprimirTicket();
 
     } catch (error) {
       console.error("Error al actualizar pedido:", error);
-      toast.error(error.message || "Hubo un error al actualizar el pedido.");
+      showToast.error(error.message || "Hubo un error al actualizar el pedido.");
     }
   };
 
