@@ -645,7 +645,7 @@ export default function TodosPedidosPage() {
         <div className="flex justify-center gap-2">
           {row.status !== 5 && (
             <>
-              {permisos?.modificar_venta && row.status !== 2 && (
+              {permisos?.modificar_venta && (
                 <button
                   onClick={() => handleEdit(row)}
                   className="text-blue-600 hover:text-blue-800 transition-colors"
