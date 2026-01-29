@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useClientes } from '@/hooks/useClientes';
 import Input from '@/components/ui/Input';
 import { FaTimes, FaUserPlus, FaSave } from 'react-icons/fa';
+import { showToast } from '@/components/ui/Toast';
 
 const AddClientModal = ({ isOpen, onClose, onClienteCreado }) => {
     const { createCliente } = useClientes();
@@ -55,14 +56,14 @@ const AddClientModal = ({ isOpen, onClose, onClienteCreado }) => {
 
         // Validación de datos del cliente (siempre obligatorios)
         if (!formData.nombre || !formData.apellido || !formData.telefono) {
-            alert('Por favor completa todos los campos obligatorios del cliente.');
+            showToast.error('Por favor completa todos los campos obligatorios del cliente.');
             return;
         }
 
         // Si hay datos en la dirección, validar campos esenciales
         if (direccionTieneDatos()) {
             if (!direccionForm.calle || !direccionForm.colonia) {
-                alert('Si agregas una dirección, los campos Calle y Colonia son obligatorios.');
+                showToast.error('Si agregas una dirección, los campos Calle y Colonia son obligatorios.');
                 return;
             }
         }
@@ -92,7 +93,7 @@ const AddClientModal = ({ isOpen, onClose, onClienteCreado }) => {
 
                 if (!clienteId) {
                     console.error('No se pudo obtener el ID del cliente:', clienteData);
-                    alert('Cliente creado pero no se pudo obtener el ID. Por favor recarga la página.');
+                    showToast.error('Cliente creado pero no se pudo obtener el ID. Por favor recarga la página.');
                     resetForm();
                     onClose();
                     return;
@@ -111,11 +112,11 @@ const AddClientModal = ({ isOpen, onClose, onClienteCreado }) => {
                 onClienteCreado(nuevoCliente);
                 onClose();
             } else {
-                alert(`Error al crear cliente: ${result.error || 'Error desconocido'}`);
+                showToast.error(`Error al crear cliente: ${result.error || 'Error desconocido'}`);
             }
         } catch (error) {
             console.error('Error inesperado al crear cliente:', error);
-            alert('Error inesperado al crear cliente.');
+            showToast.error('Error inesperado al crear cliente.');
         } finally {
             setLoading(false);
         }

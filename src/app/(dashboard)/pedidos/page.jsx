@@ -7,6 +7,7 @@ import { FaClock } from "react-icons/fa";
 import { PiCookingPotFill } from "react-icons/pi";
 import { MdComment, MdExpandMore, MdExpandLess } from "react-icons/md";
 import api from '@/services/api';
+import { showToast } from '@/components/ui/Toast';
 
 import { getSucursalFromToken } from '@/services/jwt';
 
@@ -104,7 +105,7 @@ export default function Pedidos() {
 
       if (response.status !== 200) {
         const error = response.data;
-        alert(error.detail);
+        showToast.error(error.detail);
         // Revertir en caso de error
         updateLocalPedido(id_venta, { status: status });
       } else {
@@ -119,7 +120,7 @@ export default function Pedidos() {
       }
     } catch (err) {
       console.error('Error al actualizar:', err);
-      alert('Error al actualizar el estado del pedido');
+      showToast.error('Error al actualizar el estado del pedido');
       // Revertir en caso de error de red
       updateLocalPedido(id_venta, { status: status });
     }
@@ -142,7 +143,7 @@ export default function Pedidos() {
 
       if (response.status !== 200) {
         const error = response.data;
-        alert(error.detail);
+        showToast.error(error.detail);
         // Revertir en caso de error
         updateLocalPedido(id_venta, { status: 1 });
       } else {
@@ -157,7 +158,7 @@ export default function Pedidos() {
       }
     } catch (err) {
       console.error('Error al completar:', err);
-      alert('Error al completar el pedido');
+      showToast.error('Error al completar el pedido');
       // Revertir en caso de error de red
       updateLocalPedido(id_venta, { status: 1 });
     }
@@ -178,7 +179,7 @@ export default function Pedidos() {
       }
     } catch (err) {
       console.error('Error:', err);
-      alert('Error al cargar el detalle del pedido');
+      showToast.error('Error al cargar el detalle del pedido');
       setModalOpen(false);
     } finally {
       setLoadingDetalle(false);

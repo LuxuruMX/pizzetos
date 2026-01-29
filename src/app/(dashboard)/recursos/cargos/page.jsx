@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Popconfirm from '@/components/ui/Popconfirm';
 import { FaPlus, FaEdit, FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function CargosPage() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function CargosPage() {
       setCargos(response.data);
     } catch (error) {
       console.error('Error fetching cargos:', error);
-      alert('Error al cargar los cargos');
+      showToast.error('Error al cargar los cargos');
     } finally {
       setLoading(false);
     }
@@ -49,12 +50,12 @@ export default function CargosPage() {
   const handleDelete = async (cargo) => {
     try {
       await api.delete(`/recursos/cargos/${cargo.id_cargo}`);
-      alert('Cargo eliminado correctamente ✅');
+      showToast.success('Cargo eliminado correctamente ✅');
       fetchCargos();
     } catch (error) {
       console.error('Error deleting cargo:', error);
       const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al eliminar el cargo ❌';
-      alert(errorMsg);
+      showToast.error(errorMsg);
     }
   };
 
@@ -101,12 +102,12 @@ export default function CargosPage() {
             </p>
           </div>
           {permisos.crear_producto && (
-          <Button 
-            icon={FaPlus}
-            onClick={() => router.push('/recursos/cargos/agregar')}
-          >
-            Agregar Cargo
-          </Button>
+            <Button
+              icon={FaPlus}
+              onClick={() => router.push('/recursos/cargos/agregar')}
+            >
+              Agregar Cargo
+            </Button>
           )}
         </div>
 
@@ -139,19 +140,19 @@ export default function CargosPage() {
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-blue-50">M</th>
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-blue-50">E</th>
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-blue-50 border-r">V</th>
-                
+
                 {/* Empleados */}
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-green-50">C</th>
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-green-50">M</th>
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-green-50">E</th>
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-green-50 border-r">V</th>
-                
+
                 {/* Ventas */}
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-yellow-50">C</th>
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-yellow-50">M</th>
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-yellow-50">E</th>
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-yellow-50 border-r">V</th>
-                
+
                 {/* Recursos */}
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-purple-50">C</th>
                 <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 bg-purple-50">M</th>
@@ -172,56 +173,56 @@ export default function CargosPage() {
                     <td className="px-4 py-3 whitespace-nowrap font-semibold text-gray-900 border-r">
                       {cargo.cargo}
                     </td>
-                    
+
                     {/* Productos */}
                     <td className="px-2 py-3 text-center bg-blue-50"><PermissionIcon value={cargo.crear_producto} /></td>
                     <td className="px-2 py-3 text-center bg-blue-50"><PermissionIcon value={cargo.modificar_producto} /></td>
                     <td className="px-2 py-3 text-center bg-blue-50"><PermissionIcon value={cargo.eliminar_producto} /></td>
                     <td className="px-2 py-3 text-center bg-blue-50 border-r"><PermissionIcon value={cargo.ver_producto} /></td>
-                    
+
                     {/* Empleados */}
                     <td className="px-2 py-3 text-center bg-green-50"><PermissionIcon value={cargo.crear_empleado} /></td>
                     <td className="px-2 py-3 text-center bg-green-50"><PermissionIcon value={cargo.modificar_empleado} /></td>
                     <td className="px-2 py-3 text-center bg-green-50"><PermissionIcon value={cargo.eliminar_empleado} /></td>
                     <td className="px-2 py-3 text-center bg-green-50 border-r"><PermissionIcon value={cargo.ver_empleado} /></td>
-                    
+
                     {/* Ventas */}
                     <td className="px-2 py-3 text-center bg-yellow-50"><PermissionIcon value={cargo.crear_venta} /></td>
                     <td className="px-2 py-3 text-center bg-yellow-50"><PermissionIcon value={cargo.modificar_venta} /></td>
                     <td className="px-2 py-3 text-center bg-yellow-50"><PermissionIcon value={cargo.eliminar_venta} /></td>
                     <td className="px-2 py-3 text-center bg-yellow-50 border-r"><PermissionIcon value={cargo.ver_venta} /></td>
-                    
+
                     {/* Recursos */}
                     <td className="px-2 py-3 text-center bg-purple-50"><PermissionIcon value={cargo.crear_recurso} /></td>
                     <td className="px-2 py-3 text-center bg-purple-50"><PermissionIcon value={cargo.modificar_recurso} /></td>
                     <td className="px-2 py-3 text-center bg-purple-50"><PermissionIcon value={cargo.eliminar_recurso} /></td>
                     <td className="px-2 py-3 text-center bg-purple-50 border-r"><PermissionIcon value={cargo.ver_recurso} /></td>
-                    
+
                     <td className="px-4 py-3 whitespace-nowrap text-center">
                       <div className="flex justify-center gap-2">
                         {permisos.modificar_recurso && (
-                        <button
-                          onClick={() => router.push(`/recursos/cargos/${cargo.id_cargo}`)}
-                          className="text-blue-600 hover:text-blue-800 transition-colors"
-                          title="Editar"
-                        >
-                          <FaEdit size={18} />
-                        </button>
+                          <button
+                            onClick={() => router.push(`/recursos/cargos/${cargo.id_cargo}`)}
+                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                            title="Editar"
+                          >
+                            <FaEdit size={18} />
+                          </button>
                         )}
                         {permisos.eliminar_recurso && (
-                        <Popconfirm
-                          title="¿Seguro que quiere eliminar?"
-                          okText="Sí"
-                          cancelText="No"
-                          onConfirm={() => handleDelete(cargo)}
-                        >
-                          <button
-                            className="text-red-600 hover:text-red-800 transition-colors"
-                            title="Eliminar"
+                          <Popconfirm
+                            title="¿Seguro que quiere eliminar?"
+                            okText="Sí"
+                            cancelText="No"
+                            onConfirm={() => handleDelete(cargo)}
                           >
-                            <FaTrash size={18} />
-                          </button>
-                        </Popconfirm>
+                            <button
+                              className="text-red-600 hover:text-red-800 transition-colors"
+                              title="Eliminar"
+                            >
+                              <FaTrash size={18} />
+                            </button>
+                          </Popconfirm>
                         )}
                       </div>
                     </td>

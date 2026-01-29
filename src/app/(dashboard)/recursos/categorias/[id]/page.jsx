@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showToast } from '@/components/ui/Toast';
 
 export default function EditarCategoriaPage() {
   const router = useRouter();
@@ -25,19 +26,19 @@ export default function EditarCategoriaPage() {
     try {
       const response = await api.get('/ventas/categoria');
       const categoria = response.data.find(c => c.id_cat === parseInt(params.id));
-      
+
       if (!categoria) {
-        alert('Categoría no encontrada');
+        showToast.error('Categoría no encontrada');
         router.push('/recursos/categorias');
         return;
       }
-      
+
       setFormData({
         descripcion: categoria.descripcion
       });
     } catch (error) {
       console.error('Error fetching categoria:', error);
-      alert('Error al cargar la categoría');
+      showToast.error('Error al cargar la categoría');
       router.push('/recursos/categorias');
     } finally {
       setLoading(false);
@@ -54,21 +55,21 @@ export default function EditarCategoriaPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.descripcion.trim()) {
-      alert('La descripción es obligatoria');
+      showToast.error('La descripción es obligatoria');
       return;
     }
 
     setSaving(true);
     try {
       await api.put(`/ventas/categoria/${params.id}`, formData);
-      alert('Categoría actualizada correctamente ✅');
+      showToast.success('Categoría actualizada correctamente ✅');
       router.push('/recursos/categorias');
     } catch (error) {
       console.error('Error updating categoria:', error);
       const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al actualizar la categoría ❌';
-      alert(errorMsg);
+      showToast.error(errorMsg);
     } finally {
       setSaving(false);
     }

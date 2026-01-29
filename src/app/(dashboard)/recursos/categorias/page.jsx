@@ -17,21 +17,21 @@ export default function CategoriasPage() {
   const [error, setError] = useState(null);
 
   const [permisos, setPermisos] = useState(null);
-  
-    useEffect(() => {
-      // Leer permisos del token
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('access_token');
-        if (token) {
-          try {
-            const decoded = jwtDecode(token);
-            setPermisos(decoded.permisos || {});
-          } catch (e) {
-            console.error('Token inválido', e);
-          }
+
+  useEffect(() => {
+    // Leer permisos del token
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          setPermisos(decoded.permisos || {});
+        } catch (e) {
+          console.error('Token inválido', e);
         }
       }
-    }, []);
+    }
+  }, []);
 
   useEffect(() => {
     fetchCategorias();
@@ -57,12 +57,12 @@ export default function CategoriasPage() {
   const handleDelete = async (categoria) => {
     try {
       await api.delete(`/recursos/categorias/${categoria.id_cat}`);
-      alert('Categoría eliminada correctamente ✅');
+      showToast.success('Categoría eliminada correctamente ✅');
       fetchCategorias();
     } catch (error) {
       console.error('Error deleting categoria:', error);
       const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al eliminar la categoría ❌';
-      alert(errorMsg);
+      showToast.error(errorMsg);
     }
   };
 
@@ -71,25 +71,25 @@ export default function CategoriasPage() {
   };
 
   if (permisos === null) {
-      return (
-        <div className="p-6">
-          <Card>
-            <div className="text-center py-8">
-              <p className="text-gray-600">Cargando...</p>
-            </div>
-          </Card>
-        </div>
-      );
-    }
+    return (
+      <div className="p-6">
+        <Card>
+          <div className="text-center py-8">
+            <p className="text-gray-600">Cargando...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const columns = [
-    { 
-      header: 'ID', 
+    {
+      header: 'ID',
       accessor: 'id_cat',
       render: (row) => <span className="font-mono text-gray-600">#{row.id_cat}</span>
     },
-    { 
-      header: 'DESCRIPCIÓN', 
+    {
+      header: 'DESCRIPCIÓN',
       accessor: 'descripcion',
       render: (row) => <span className="font-semibold text-gray-900">{row.descripcion}</span>
     },
