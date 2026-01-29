@@ -90,7 +90,7 @@ const menuConfig = [
     name: 'Configuración',
     icon: IoIosSettings,
     permiso: null,
-    path: '/Configuracion'
+    path: '/configuracion'
   }
 ];
 

@@ -8,7 +8,7 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import api from "@/services/api";
 import { MdOutlinePayments, MdPrint } from "react-icons/md";
 import PaymentModal from "@/components/ui/PaymentModal";
-import { pagarVenta, fetchDetalleVenta, fetchProductosPorCategoria, fetchTicketDetalle } from "@/services/orderService";
+import { pagarVenta, fetchProductosPorCategoria, fetchTicketDetalle } from "@/services/orderService";
 import { catalogsService } from "@/services/catalogsService";
 import CancellationModal from "@/components/ui/CancellationModal";
 import { pdf } from '@react-pdf/renderer';
@@ -643,7 +643,7 @@ export default function TodosPedidosPage() {
         <div className="flex justify-center gap-2">
           {row.status !== 5 && (
             <>
-              {permisos?.modificar_venta && (
+              {permisos?.modificar_venta && row.status !== 2 && (
                 <button
                   onClick={() => handleEdit(row)}
                   className="text-blue-600 hover:text-blue-800 transition-colors"
