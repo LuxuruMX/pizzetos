@@ -15,6 +15,7 @@ import { pdf } from '@react-pdf/renderer';
 import TicketPDF from '@/components/ui/TicketPDF';
 import PDFViewerModal from '@/components/ui/PDFViewerModal';
 import { PRECIOS_ORILLA_QUESO } from '@/config/prices';
+import toast from 'react-hot-toast';
 
 // Función auxiliar para reconstruir la orden (adaptada de useCartEdit)
 const reconstructOrderForTicket = (productosBackend, productosCache) => {
@@ -383,12 +384,6 @@ export default function TodosPedidosPage() {
       // 2. Reconstruir orden
       const ordenTicket = reconstructOrderForTicket(detalle.productos, prods);
 
-      // 3. Preparar datos cliente
-      // Prioridad: 
-      // 1. Cliente encontrado previamente en `clis` (si detalle.cliente es ID)
-      // 2. detalle.cliente si es un string (nombre directo)
-      // 3. detalle.nombre_cliente o detalle.nombreClie
-
       let clienteObj = { nombre: 'No especificado', telefono: detalle.telefono || '' };
 
       if (detalle.cliente) {
@@ -462,7 +457,7 @@ export default function TodosPedidosPage() {
 
     } catch (err) {
       console.error("Error al imprimir ticket:", err);
-      alert("Error al generar el ticket. Consulta la consola para más detalles.");
+      toast.error("Error al generar el ticket. Consulta la consola para más detalles.");
     } finally {
       setLoading(false);
     }
@@ -512,7 +507,7 @@ export default function TodosPedidosPage() {
       setPedidoACancelar(null);
     } catch (error) {
       console.error(error);
-      alert("Error al cancelar el pedido: " + (error.response?.data?.message || error.message));
+      toast.error("Error al cancelar el pedido: " + (error.response?.data?.message || error.message));
     } finally {
       setCanceling(false);
     }
@@ -840,7 +835,7 @@ export default function TodosPedidosPage() {
                 setPedidoAPagar(null);
                 fetchTodosPedidos(); // Recargar lista
               } catch (error) {
-                alert(error.response?.data?.message || 'Error al procesar el pago');
+                toast.error(error.response?.data?.message || 'Error al procesar el pago');
               }
             }}
           />
