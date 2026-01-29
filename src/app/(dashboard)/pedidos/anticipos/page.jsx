@@ -13,6 +13,7 @@ import PaymentModal from "@/components/ui/PaymentModal";
 
 import { getSucursalFromToken, getPermisosFromToken } from "@/services/jwt";
 import CancellationModal from "@/components/ui/CancellationModal";
+import { showToast } from "@/utils/toast";
 
 export default function AnticiposPage() {
     const [loading, setLoading] = useState(false);
@@ -56,7 +57,7 @@ export default function AnticiposPage() {
             }
         } catch (err) {
             console.error('Error:', err);
-            alert('Error al cargar el detalle del pedido');
+            showToast.error('Error al cargar el detalle del pedido');
             setModalOpen(false);
         } finally {
             setLoadingDetalle(false);
@@ -101,7 +102,7 @@ export default function AnticiposPage() {
             }
         } catch (err) {
             console.error('Error al completar:', err);
-            alert('Error al completar el pedido. ' + (err.response?.data?.message || err.message));
+            showToast.error('Error al completar el pedido. ' + (err.response?.data?.message || err.message));
         }
     };
 
@@ -137,7 +138,7 @@ export default function AnticiposPage() {
             }
         } catch (error) {
             console.error(error);
-            alert("Error al cancelar el pedido: " + (error.response?.data?.message || error.message));
+            showToast.error("Error al cancelar el pedido: " + (error.response?.data?.message || error.message));
         } finally {
             setCanceling(false);
         }
@@ -534,7 +535,7 @@ export default function AnticiposPage() {
 
                                 setPedidoAPagar(null);
                             } catch (error) {
-                                alert(error.response?.data?.message || 'Error al procesar el pago');
+                                showToast.error(error.response?.data?.message || 'Error al procesar el pago');
                             }
                         }}
                     />

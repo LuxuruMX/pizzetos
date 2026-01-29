@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { showToast } from '@/utils/toast';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -21,7 +22,7 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     if (!username || !password) {
-      alert('Por favor llena todos los campos');
+      showToast.warning('Por favor llena todos los campos');
       return;
     }
 
@@ -30,7 +31,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (!result.success) {
-      alert(result.error);
+      showToast.error(result.error);
     }
   };
 
@@ -40,9 +41,9 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <img 
-              src="/pizzetos.png" 
-              alt="Pizzetos Logo" 
+            <img
+              src="/pizzetos.png"
+              alt="Pizzetos Logo"
               className="w-32 h-32 object-contain"
             />
           </div>

@@ -9,11 +9,12 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function EditarEmpleadoPage() {
   const router = useRouter();
   const params = useParams();
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     direccion: '',
@@ -23,7 +24,7 @@ export default function EditarEmpleadoPage() {
     nickName: '',
     password: '',
   });
-  
+
   const [cargos, setCargos] = useState([]);
   const [sucursales, setSucursales] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,22 +40,22 @@ export default function EditarEmpleadoPage() {
         catalogsService.getCargosEmpleados(),
         catalogsService.getSucursales()
       ]);
-      
+
       setCargos(cargosData);
       setSucursales(sucursalesData);
-      
+
       const response = await api.get(`/empleados/${params.id}`);
       const empleado = response.data;
-      
+
       // Buscar los IDs basados en los nombres
       const cargoEncontrado = cargosData.find(
         c => c.nombre === empleado.cargo
       );
-      
+
       const sucursalEncontrada = sucursalesData.find(
         s => s.nombre === empleado.sucursal
       );
-      
+
       setFormData({
         nombre: empleado.nombre || '',
         direccion: empleado.direccion || '',
@@ -66,7 +67,7 @@ export default function EditarEmpleadoPage() {
       });
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('Error al cargar los datos');
+      showToast.error('Error al cargar los datos');
     } finally {
       setLoadingData(false);
     }
@@ -82,15 +83,15 @@ export default function EditarEmpleadoPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.nombre || !formData.direccion || !formData.telefono || 
-        !formData.cargo || !formData.sucursal) {
-      alert('Por favor completa todos los campos obligatorios');
+
+    if (!formData.nombre || !formData.direccion || !formData.telefono ||
+      !formData.cargo || !formData.sucursal) {
+      showToast.warning('Por favor completa todos los campos obligatorios');
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const dataToSend = {
         nombre: formData.nombre,
@@ -112,11 +113,11 @@ export default function EditarEmpleadoPage() {
       }
 
       await api.put(`/empleados/${params.id}`, dataToSend);
-      
+
       router.push('/empleados');
     } catch (error) {
       console.error('Error updating empleado:', error);
-      alert('Error al actualizar el empleado ❌');
+      showToast.error('Error al actualizar el empleado');
     } finally {
       setLoading(false);
     }
@@ -138,8 +139,8 @@ export default function EditarEmpleadoPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/empleados')}
           >
@@ -221,15 +222,15 @@ export default function EditarEmpleadoPage() {
           />
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/empleados')}

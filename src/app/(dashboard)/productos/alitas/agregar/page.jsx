@@ -72,7 +72,6 @@ export default function AgregarAlitasPage() {
     } catch (error) {
       console.error('Error creating product:', error);
       showToast.error('Error al crear el producto');
-      // alert('Error al crear el producto ❌');
     } finally {
       setLoading(false);
     }
