@@ -417,8 +417,8 @@ const POS = () => {
         id_cliente: cliente.value,
         id_direccion: idDireccion
       };
-      // Convertir pagoData a array de pagos
-      const pagosArray = pagoData ? [pagoData] : [];
+      // Convertir pagoData a array de pagos si no lo es ya
+      const pagosArray = Array.isArray(pagoData) ? pagoData : (pagoData ? [pagoData] : []);
 
       const payload = { orden, datosExtra, comentarios, tipoServicio, pagosArray };
       console.log('Enviando orden al backend (enviarOrdenDomicilio):', JSON.stringify(payload, null, 2));
