@@ -7,7 +7,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
-import { showToast } from '@/components/ui/Toast';
+import { showToast } from '@/utils/toast';
 
 export default function EditarCategoriaPage() {
   const router = useRouter();

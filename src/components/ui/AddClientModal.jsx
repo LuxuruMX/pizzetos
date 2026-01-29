@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useClientes } from '@/hooks/useClientes';
 import Input from '@/components/ui/Input';
 import { FaTimes, FaUserPlus, FaSave } from 'react-icons/fa';
-import { showToast } from '@/components/ui/Toast';
+import { showToast } from '@/utils/toast';
 
 const AddClientModal = ({ isOpen, onClose, onClienteCreado }) => {
     const { createCliente } = useClientes();

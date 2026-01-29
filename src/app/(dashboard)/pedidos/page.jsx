@@ -7,7 +7,7 @@ import { FaClock } from "react-icons/fa";
 import { PiCookingPotFill } from "react-icons/pi";
 import { MdComment, MdExpandMore, MdExpandLess } from "react-icons/md";
 import api from '@/services/api';
-import { showToast } from '@/components/ui/Toast';
+import { showToast } from '@/utils/toast';
 
 import { getSucursalFromToken } from '@/services/jwt';
 
