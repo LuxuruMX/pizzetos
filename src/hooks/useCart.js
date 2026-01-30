@@ -191,7 +191,7 @@ export const useCart = (initialCartFromUrl = []) => {
         : 'Personalizada';
       
       const idProducto = `custom_${Date.now()}`;
-      const nombreProducto = `Pizza Custom - ${nombreIngredientes}`;
+      const nombreProducto = `Pizza - ${nombreIngredientes}`;
       const precio = customPizza.precio;
 
       // Buscar grupo existente por tamaño

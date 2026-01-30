@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useProducts } from '@/hooks/useProducts';
+import { catalogsService } from '@/services/catalogsService';
 import { productsService } from '@/services/productsService';
+import api from '@/services/api';
 import { showToast } from '@/utils/toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
 
 export default function EditarMagnoPage() {
@@ -21,19 +24,79 @@ export default function EditarMagnoPage() {
     precio: '',
   });
 
+  const [refrescos, setRefrescos] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
-    fetchProduct();
+    const init = async () => {
+      const refs = await fetchRefrescos();
+      const esps = await fetchEspecialidades();
+      if (params.id) {
+        await fetchProduct(refs, esps);
+      }
+    };
+    init();
   }, [params.id]);
 
-  const fetchProduct = async () => {
+  const fetchRefrescos = async () => {
+    try {
+      const response = await api.get('/ventas/refrescos/');
+      setRefrescos(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching refrescos:', error);
+      showToast.error('Error al cargar refrescos');
+      return [];
+    }
+  };
+
+  const fetchEspecialidades = async () => {
+    try {
+      const data = await catalogsService.getEspecialidades();
+      setEspecialidades(data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching especialidades:', error);
+      showToast.error('Error al cargar especialidades');
+      return [];
+    }
+  };
+
+  const fetchProduct = async (currentRefrescos = [], currentEspecialidades = []) => {
     try {
       const product = await productsService.getById('magno', params.id);
+
+      let refrescoValue = '';
+      if (product.id_refresco) {
+        refrescoValue = product.id_refresco.toString();
+      } else if (product.refresco) {
+        // Find by name if ID is missing
+        const found = currentRefrescos.find(r =>
+          r.nombre.toLowerCase() === product.refresco.toLowerCase() ||
+          `${r.nombre} - ${r.tamaño}`.toLowerCase() === product.refresco.toLowerCase()
+        );
+        if (found) {
+          refrescoValue = found.id_refresco.toString();
+        }
+      }
+
+      let especialidadValue = '';
+      if (product.id_especialidad) {
+        especialidadValue = product.id_especialidad.toString();
+      } else if (product.especialidad) {
+        const found = currentEspecialidades.find(e =>
+          e.nombre.toLowerCase() === product.especialidad.toLowerCase()
+        );
+        if (found) {
+          especialidadValue = found.id_esp.toString();
+        }
+      }
+
       setFormData({
-        especialidad: product.especialidad || '',
-        refresco: product.refresco || '',
+        especialidad: especialidadValue,
+        refresco: refrescoValue,
         precio: product.precio || '',
       });
     } catch (error) {
@@ -63,7 +126,8 @@ export default function EditarMagnoPage() {
     setLoading(true);
 
     const productData = {
-      ...formData,
+      id_especialidad: parseInt(formData.especialidad),
+      id_refresco: parseInt(formData.refresco),
       precio: parseFloat(formData.precio),
     };
 
@@ -108,21 +172,31 @@ export default function EditarMagnoPage() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
-          <Input
+          <Select
             label="Especialidad"
             name="especialidad"
             value={formData.especialidad}
             onChange={handleChange}
-            placeholder="Ej: Combo Especial"
+            options={especialidades}
+            valueKey="id_esp"
+            labelKey="nombre"
+            placeholder="Selecciona una especialidad"
             required
           />
 
-          <Input
+          <Select
             label="Refresco"
             name="refresco"
             value={formData.refresco}
             onChange={handleChange}
-            placeholder="Ej: Coca Cola"
+            options={refrescos.map(ref => ({
+              id_refresco: ref.id_refresco,
+              label: `${ref.nombre} - ${ref.tamaño}`
+            }))}
+            valueKey="id_refresco"
+            labelKey="label"
+            placeholder="Selecciona un refresco"
+            required
           />
 
           <Input
