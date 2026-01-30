@@ -4,7 +4,7 @@ import { showToast } from '@/utils/toast';
 
 const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
     // Usamos un objeto para tracking de selección: { 1: true, 3: true }
-    const [selectedMethods, setSelectedMethods] = useState({ 2: true }); // Default: Tarjeta (ID 2)
+    const [selectedMethods, setSelectedMethods] = useState({}); // Default: Ninguno
 
     // Estado para montos a cobrar por cada método: { 1: 100, 2: 155 }
     const [amounts, setAmounts] = useState({});
@@ -18,8 +18,8 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
     useEffect(() => {
         if (isOpen) {
             // Reset states
-            setSelectedMethods({ 2: true }); // Default Tarjeta
-            setAmounts({ 2: total }); // Todo el monto a tarjeta por defecto
+            setSelectedMethods({}); // Default Ninguno
+            setAmounts({}); // Ningún monto asignado
             setReferenciaInput('');
             setEfectivoEntregado('');
         }
@@ -36,18 +36,15 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
 
         if (newSelected[id]) {
             // Si ya estaba seleccionado, lo quitamos
-            // PERO no dejamos quitar el último si es el único
-            const count = Object.keys(newSelected).length;
-            if (count > 1) {
-                delete newSelected[id];
-                const newAmounts = { ...amounts };
-                delete newAmounts[id];
-                setAmounts(newAmounts);
-            }
+            // Permitimos quitar el último para regresar a estado sin selección si se desea
+            delete newSelected[id];
+            const newAmounts = { ...amounts };
+            delete newAmounts[id];
+            setAmounts(newAmounts);
         } else {
             // Lo agregamos
             newSelected[id] = true;
-            // No asignamos monto automático, el usuario deberá ajustar
+            // No asignamos monto automático aquí, el useEffect lo manejará si es único
         }
         setSelectedMethods(newSelected);
     };
