@@ -26,9 +26,9 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
     }, [isOpen, total]);
 
     const metodosPago = [
-        { id: 1, nombre: 'Transferencia', icon: <FaExchangeAlt />, descripcion: 'Requiere referencia' },
-        { id: 2, nombre: 'Tarjeta', icon: <FaCreditCard />, descripcion: 'Se enviará terminal' },
-        { id: 3, nombre: 'Efectivo', icon: <FaMoneyBillWave />, descripcion: 'Se enviará cambio' },
+        { id: 3, nombre: 'Transferencia', icon: <FaExchangeAlt />, descripcion: 'Requiere referencia' },
+        { id: 1, nombre: 'Tarjeta', icon: <FaCreditCard />, descripcion: 'Se enviará terminal' },
+        { id: 2, nombre: 'Efectivo', icon: <FaMoneyBillWave />, descripcion: 'Se enviará cambio' },
     ];
 
     const handleToggleMethod = (id) => {
@@ -81,15 +81,15 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
         }
 
         // 2. Validaciones específicas
-        if (selectedMethods[1]) { // Transferencia
+        if (selectedMethods[3]) { // Transferencia
             if (!referenciaInput.trim()) {
                 showToast.error('Debes ingresar la referencia para la Transferencia');
                 return;
             }
         }
 
-        if (selectedMethods[3]) { // Efectivo
-            const montoACobrar = amounts[3] || 0;
+        if (selectedMethods[2]) { // Efectivo
+            const montoACobrar = amounts[2] || 0;
             const entregado = parseFloat(efectivoEntregado) || 0;
             if (entregado < montoACobrar) {
                 showToast.error(`El efectivo entregado ($${entregado}) debe ser mayor o igual al monto a cobrar en efectivo ($${montoACobrar})`);
@@ -106,9 +106,9 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
                 referencia: '' // Default empty
             };
 
-            if (id === 1) { // Transferencia
+            if (id === 3) { // Transferencia
                 item.referencia = referenciaInput.trim();
-            } else if (id === 3) { // Efectivo
+            } else if (id === 2) { // Efectivo
                 // Aquí usamos la referencia para guardar con cuánto pagó ("Paga con: 500") 
                 // O el cambio? El requerimiento dice: "con cuanto va a pagar"
                 // En el backend actual, reference se usaba para eso en efectivo.
@@ -197,7 +197,7 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
                                             </div>
 
                                             {/* Specific Fields */}
-                                            {metodo.id === 1 && ( // Transferencia
+                                            {metodo.id === 3 && ( // Transferencia
                                                 <div>
                                                     <label className="block text-xs font-medium text-blue-800 mb-1">Número de Referencia *</label>
                                                     <input
@@ -210,13 +210,13 @@ const DeliveryPaymentModal = ({ isOpen, onClose, total, onConfirm }) => {
                                                 </div>
                                             )}
 
-                                            {metodo.id === 2 && ( // Tarjeta
+                                            {metodo.id === 1 && ( // Tarjeta
                                                 <p className="text-xs text-gray-500 italic bg-white p-1 rounded">
                                                     Se enviará terminal.
                                                 </p>
                                             )}
 
-                                            {metodo.id === 3 && ( // Efectivo
+                                            {metodo.id === 2 && ( // Efectivo
                                                 <div>
                                                     <label className="block text-xs font-medium text-green-800 mb-1">¿Con cuánto paga el cliente?</label>
                                                     <div className="relative">
