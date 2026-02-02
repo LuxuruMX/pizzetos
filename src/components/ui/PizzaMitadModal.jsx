@@ -52,7 +52,7 @@ const PizzaMitadModal = ({ isOpen, onClose, tamanos, especialidades, onConfirmar
             // El usuario dijo "en lugar de enviar ingredientes, seran especialidades"
             // Y el payload example mostraba ingredientes: [0, 0] (ids)
             // Usar id_esp que viene de la API
-            especialidades: especialidadesSeleccionadas.map(e => e.id_esp || e.id || e.nombre),
+            especialidades: especialidadesSeleccionadas, // Enviar objetos completos para que useCartEdit extraiga IDs y nombres
             especialidadesNombres: especialidadesSeleccionadas.map(e => e.nombre),
             precio: parseFloat(tamanoSeleccionado.precio),
             nombreTamano: tamanoSeleccionado.tamano

@@ -18,6 +18,7 @@ import {
   ModalPaquete3,
 } from "@/components/ui/PaquetesModal";
 import CustomPizzaModal from "@/components/ui/CustomPizzaModal";
+import PizzaMitadModal from "@/components/ui/PizzaMitadModal";
 import PDFViewerModal from "@/components/ui/PDFViewerModal";
 import TicketPDF from "@/components/ui/TicketPDF";
 import { pdf } from '@react-pdf/renderer';
@@ -56,6 +57,7 @@ const POSEdit = () => {
   const [modalPaquete2, setModalPaquete2] = useState(false); // Fix overlap issues by putting this here if needed, but wait, state is further down.
   const [modalPaquete3, setModalPaquete3] = useState(false);
   const [modalCustomPizza, setModalCustomPizza] = useState(false);
+  const [modalPizzaMitad, setModalPizzaMitad] = useState(false);
 
   // Estados para datos de custom pizza y validaciones
   const [ingredientes, setIngredientes] = useState([]);
@@ -87,7 +89,8 @@ const POSEdit = () => {
     statusPrincipal,
     setStatusPrincipal,
     toggleQueso,
-    agregarPizzaCustom
+    agregarPizzaCustom,
+    agregarPizzaMitad
   } = useCartEdit();
 
   const [categorias] = useState(CATEGORIAS);
@@ -361,6 +364,11 @@ const POSEdit = () => {
     setModalCustomPizza(false);
   };
 
+  const handleConfirmarPizzaMitad = (pizzaMitadData) => {
+    agregarPizzaMitad(pizzaMitadData);
+    setModalPizzaMitad(false);
+  };
+
   const handleImprimirTicket = async () => {
     if (!detalleVenta) return;
 
@@ -497,6 +505,12 @@ const POSEdit = () => {
             Por Ingrediente
           </button>
           <button
+            onClick={() => setModalPizzaMitad(true)}
+            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors shadow"
+          >
+            Mitad y Mitad
+          </button>
+          <button
             onClick={handleImprimirTicket}
             className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-full transition-colors ml-2"
             title="Reimprimir ticket"
@@ -611,12 +625,24 @@ const POSEdit = () => {
       />
 
       {/* Modal Custom Pizza */}
+      {/* Modal Custom Pizza */}
       {modalCustomPizza && (
         <CustomPizzaModal
           isOpen={modalCustomPizza}
           onClose={() => setModalCustomPizza(false)}
           onConfirmar={handleConfirmarCustomPizza}
           ingredientes={ingredientes}
+          tamanos={tamanosPizzas}
+        />
+      )}
+
+      {/* Modal Pizza Mitad */}
+      {modalPizzaMitad && (
+        <PizzaMitadModal
+          isOpen={modalPizzaMitad}
+          onClose={() => setModalPizzaMitad(false)}
+          onConfirmar={handleConfirmarPizzaMitad}
+          especialidades={especialidades}
           tamanos={tamanosPizzas}
         />
       )}

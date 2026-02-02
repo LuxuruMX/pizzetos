@@ -214,10 +214,22 @@ export const useCartEdit = () => {
           let detalles = prod.detalles_ingredientes || {};
           let especialidadesNombres = detalles.especialidades || [];
           let tamano = prod.tamano || '';
+          
+          console.log("Procesando Original Pizza Mitad:", prod);
+          
+          // Manejo del payload de edición: puede venir en prod.pizza_mitad o prod.id (legacy/structure specific)
+          let idsSpecs = [];
+          let tamanoIdRaw = null;
 
-          // Manejo del payload de edición donde id es un objeto { tamano: 11, ingredientes: [id1, id2] }
-          if (prod.id && typeof prod.id === 'object' && !Array.isArray(prod.id) && prod.id.ingredientes) {
-              const idsSpecs = prod.id.ingredientes || [];
+          if (prod.pizza_mitad && prod.pizza_mitad.ingredientes) {
+              idsSpecs = prod.pizza_mitad.ingredientes;
+              tamanoIdRaw = prod.pizza_mitad.tamano;
+          } else if (prod.id && typeof prod.id === 'object' && !Array.isArray(prod.id) && prod.id.ingredientes) {
+              idsSpecs = prod.id.ingredientes;
+              tamanoIdRaw = prod.id.tamano;
+          }
+
+          if (idsSpecs.length > 0) {
               const idEspBackend = idsSpecs.map(id => parseInt(id)); // Normalizar a int
               
               especialidadesNombres = idEspBackend.map(idEsp => {
@@ -233,24 +245,28 @@ export const useCartEdit = () => {
                       const esp = especialidadesCacheData.find(e => e.id_esp === idEsp || e.id === idEsp);
                       return esp ? { id_esp: esp.id_esp, nombre: esp.nombre } : { id_esp: idEsp, nombre: `Esp #${idEsp}` };
                  }); 
-                 detalles.especialidades = specsObjs.map(s => s.nombre); // Solo nombres para display simple
+                 detalles.especialidades = specsObjs; // Guardar objetos completos para agregarPizzaMitad/modal
                  detalles.especialidadesIds = idEspBackend;
               } else {
                  detalles.especialidades = especialidadesNombres;
+                 detalles.especialidadesIds = idEspBackend;
               }
 
               // Intentar mapear tamaño ID a nombre
-              if (prod.id.tamano && tamanosCacheData.length > 0) {
-                  const tId = parseInt(prod.id.tamano);
+              if (tamanoIdRaw && tamanosCacheData.length > 0) {
+                  const tId = parseInt(tamanoIdRaw);
                   const tObj = tamanosCacheData.find(t => 
                       t.id === tId || 
                       t.id_tamano === tId || 
-                      t.id_tamañop === tId // Correccion basada en PricesService
+                      t.id_tamañop === tId 
                   );
                   
                   if (tObj) tamano = tObj.tamano || tObj.nombre || tObj.tamaño;
                   detalles.tamano = tId;
               }
+              console.log("Datos extraidos Mitad Original:", { idsSpecs, tamanoIdRaw, detalles });
+          } else {
+             console.warn("No se encontraron ingredientes para Pizza Mitad Original:", prod);
           }
 
           const nombre = prod.nombre || `Pizza Mitad - ${especialidadesNombres.join(' / ')}`;
@@ -600,6 +616,7 @@ export const useCartEdit = () => {
                 precio: p.precioOriginal,
                 conQueso: p.conQueso || false,
                 ingredientes: p.ingredientes, // para custom
+                detalles_ingredientes: p.detalles_ingredientes, // para pizza mitad
                 tipoId: p.tipoId // guardar tipo original
             }));
 
@@ -951,6 +968,75 @@ export const useCartEdit = () => {
     });
   };
 
+  const agregarPizzaMitad = (mitadData) => {
+    console.log("agregarPizzaMitad recibio:", mitadData);
+    setOrden((prevOrden) => {
+        const tamano = mitadData.tamanoNombre || 'Mediana'; // Nombre para agrupar
+        // Asegurar que tenemos IDs de especialidades
+        // Las especialidades pueden venir como objetos con id, id_pizza (si son pizzas), o id_esp
+        const especialidadesIds = mitadData.especialidades.map(e => e.id_esp || e.id || e.id_pizza || e.idProducto);
+        console.log("IDs extraidos:", especialidadesIds);
+        const especialidadesNombres = mitadData.especialidades.map(e => e.nombre);
+        
+        const nombreProducto = `Pizza Mitad - ${especialidadesNombres.join(' / ')}`;
+        const precio = parseFloat(mitadData.precio);
+        const tamanoId = mitadData.tamano || mitadData.idTamano || 0; // ID entero, fallback 0
+
+        // Buscar grupo existente
+        const existingGroupIndex = prevOrden.findIndex(
+            item => item.tipoId === 'pizza_group' && 
+            (typeof item.tamano === 'string' ? item.tamano.trim().toLowerCase() : item.tamano) === tamano.trim().toLowerCase()
+        );
+
+        let nuevaOrden = [...prevOrden];
+        const uniqueId = `mitad_${Date.now()}_${Math.random()}`;
+
+        const nuevoItem = {
+            id: uniqueId,
+            idProducto: null,
+            nombre: nombreProducto,
+            precio: precio,
+            cantidad: 1,
+            tipoId: 'pizza_mitad',
+            status: 1, esNuevo: true, esCustom: true,
+            conQueso: false,
+            detalles_ingredientes: {
+                tamano: tamanoId, // ID
+                especialidades: especialidadesNombres,
+                especialidadesIds: especialidadesIds, // IMPORTANTE para payload
+                cantidad_especialidades: 2
+            },
+            ingredientesNombres: especialidadesNombres
+        };
+
+        if (existingGroupIndex >= 0) {
+            const group = nuevaOrden[existingGroupIndex];
+            const nuevosProductos = [...(group.productos || []), nuevoItem];
+            
+            nuevaOrden[existingGroupIndex] = {
+                ...group,
+                cantidad: group.cantidad + 1,
+                status: 1, esModificado: true,
+                productos: nuevosProductos
+            };
+        } else {
+             nuevaOrden.push({
+                id: `pizza_group_${tamano}_${Date.now()}`,
+                tipoId: 'pizza_group',
+                nombre: `Pizzas ${tamano}`,
+                tamano: tamano,
+                esPaquete: false,
+                cantidad: 1,
+                precioUnitario: 0,
+                subtotal: 0,
+                status: 1, esNuevo: true,
+                productos: [nuevoItem]
+            });
+        }
+        return recalcularPrecios(nuevaOrden);
+    });
+  };
+
   // Agregar paquete
   const agregarPaquete = (paquete) => {
     setOrden((prevOrden) => {
@@ -1253,14 +1339,46 @@ export const useCartEdit = () => {
               ) || sizeName;
               const cheesePrice = PRECIOS_ORILLA_QUESO[tamanoKey] || 0;
 
-              if (prod.tipoId === 'custom_pizza' || prod.esCustom) {
-                  // Custom Pizza
+              if (prod.tipoId === 'pizza_mitad') {
+                  // Pizza Mitad
+                  const tamanoId = prod.detalles_ingredientes ? (prod.detalles_ingredientes.tamano || 0) : 0;
+                  // Usar IDs de especialidades si existen (especialidadesIds), sino mapear nombres? 
+                  // En cargarProductosOriginales guardamos especialidadesIds.
+                  // Si es nuevo, vienen en prod.detalles_ingredientes.especialidades (que son IDs o objetos?)
+                  
+                  let ingredientesIds = [];
+                  if (prod.detalles_ingredientes) {
+                      if (prod.detalles_ingredientes.especialidadesIds) {
+                          ingredientesIds = prod.detalles_ingredientes.especialidadesIds;
+                      } else if (Array.isArray(prod.detalles_ingredientes.especialidades)) {
+                          // Si son objetos o strings, intentar obtener IDs
+                          ingredientesIds = prod.detalles_ingredientes.especialidades.map(e => {
+                              if (typeof e === 'object' && e.id_esp) return e.id_esp;
+                              if (typeof e === 'object' && e.id) return e.id;
+                              return parseInt(e) || e; // Fallback
+                          });
+                      }
+                  }
+
+                  items.push({
+                      cantidad: prod.cantidad,
+                      precio_unitario: parseFloat(prod.precio),
+                      pizza_mitad: {
+                          tamano: parseInt(tamanoId),
+                          ingredientes: ingredientesIds
+                      },
+                      status: prod.status !== undefined ? prod.status : (item.status ?? 1),
+                      queso: prod.conQueso ? cheesePrice : null, 
+                  });
+
+              } else if (prod.tipoId === 'custom_pizza' || prod.esCustom) {
+                  // Custom Pizza (Legacy or Standard Custom)
                   items.push({
                       cantidad: prod.cantidad,
                       precio_unitario: parseFloat(prod.precio),
                       ingredientes: {
-                          tamano: prod.ingredientes.tamano,
-                          ingredientes: Array.isArray(prod.ingredientes.ingredientes) ? prod.ingredientes.ingredientes : []
+                          tamano: prod.ingredientes ? prod.ingredientes.tamano : 0,
+                          ingredientes: prod.ingredientes && Array.isArray(prod.ingredientes.ingredientes) ? prod.ingredientes.ingredientes : []
                       },
                       status: prod.status !== undefined ? prod.status : (item.status ?? 1),
                       queso: prod.conQueso ? cheesePrice : null, 
@@ -1351,5 +1469,6 @@ export const useCartEdit = () => {
     toggleQueso,
     statusPrincipal,
     setStatusPrincipal,
+    agregarPizzaMitad
   };
 };
