@@ -22,7 +22,7 @@ import PDFViewerModal from "@/components/ui/PDFViewerModal";
 import TicketPDF from "@/components/ui/TicketPDF";
 import { pdf } from '@react-pdf/renderer';
 import { MdComment, MdArrowBack, MdPrint } from "react-icons/md";
-import { fetchIngredientes, fetchTamanosPizzas } from '@/services/pricesService';
+import { fetchIngredientes, fetchTamanosPizzas, fetchEspecialidades } from '@/services/pricesService';
 import { getProductTypeId } from '@/utils/productUtils';
 import ProductModal from "@/components/ui/ProductModal";
 import { showToast } from '@/utils/toast';
@@ -59,6 +59,7 @@ const POSEdit = () => {
 
   // Estados para datos de custom pizza y validaciones
   const [ingredientes, setIngredientes] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]);
   const [tamanosPizzas, setTamanosPizzas] = useState([]);
   const [grupoRectangularIncompleto, setGrupoRectangularIncompleto] = useState(false);
   const [grupoBarraMagnoIncompleto, setGrupoBarraMagnoIncompleto] = useState(false);
@@ -112,11 +113,12 @@ const POSEdit = () => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
-        const [detalleData, productosData, ingredientesData, tamanosData] = await Promise.all([
+        const [detalleData, productosData, ingredientesData, tamanosData, especialidadesData] = await Promise.all([
           fetchDetalleVenta(idVenta),
           fetchProductosPorCategoria(),
           fetchIngredientes(),
-          fetchTamanosPizzas()
+          fetchTamanosPizzas(),
+          fetchEspecialidades()
         ]);
 
         console.log("Detalle de venta recibido:", detalleData);
@@ -129,14 +131,15 @@ const POSEdit = () => {
         // Guardar ingredientes y tamaños
         setIngredientes(ingredientesData || []);
         setTamanosPizzas(tamanosData || []);
+        setEspecialidades(especialidadesData || []);
 
         // Cargar productos originales
         if (detalleData.productos && Array.isArray(detalleData.productos)) {
           // Pasamos ingredientesData para que pueda mapear nombres de custom pizzas
-          cargarProductosOriginales(detalleData.productos, productosData, ingredientesData || []);
+          cargarProductosOriginales(detalleData.productos, productosData, ingredientesData || [], especialidadesData || []);
         } else {
           console.warn("No se encontraron productos en el detalle de venta");
-          cargarProductosOriginales([], productosData, ingredientesData || []);
+          cargarProductosOriginales([], productosData, ingredientesData || [], especialidadesData || []);
         }
 
 

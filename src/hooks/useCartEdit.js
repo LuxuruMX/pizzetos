@@ -94,7 +94,7 @@ export const useCartEdit = () => {
   };
 
   // Cargar productos desde el backend y completar con datos de la caché
-  const cargarProductosOriginales = (productosBackend, productosCache, ingredientesCacheData = []) => {
+  const cargarProductosOriginales = (productosBackend, productosCache, ingredientesCacheData = [], especialidadesCacheData = []) => {
     // Definir tipoMap al inicio
     // Definir tipoMap al inicio
     const tipoMap = {
@@ -130,7 +130,7 @@ export const useCartEdit = () => {
     const productosConvertidos = productosBackend.map((prod, index) => {
       const esPaquete = prod.tipo === 'id_paquete';
       const esCustomPizza = prod.tipo === 'custom_pizza' || prod.tipo === 'Pizza Personalizada'; // Admitir nombre previo si aplica
-      const esPizzaMitad = prod.tipo === 'Pizza Mitad'; // Detectar tipo exacto según JSON
+      const esPizzaMitad = prod.tipo === 'Pizza Mitad' || prod.tipo === 'pizza_mitad'; // Detectar ambos tipos
       
       let nombre = `Producto ${prod.id}`;
       let precio = parseFloat(prod.precio || prod.precio_unitario || 0);
@@ -193,9 +193,40 @@ export const useCartEdit = () => {
 
       // --- LOGICA PIZZA MITAD ---
       if (esPizzaMitad) {
-          const detalles = prod.detalles_ingredientes || {};
-          const especialidades = detalles.especialidades || [];
-          const nombre = prod.nombre || `Pizza Mitad - ${especialidades.join(' / ')}`;
+          let detalles = prod.detalles_ingredientes || {};
+          let especialidadesNombres = detalles.especialidades || [];
+          let tamano = prod.tamano || 'Mediana';
+
+          // Manejo del payload de edición donde id es un objeto { tamano: 11, ingredientes: [id1, id2] }
+          if (prod.id && typeof prod.id === 'object' && !Array.isArray(prod.id) && prod.id.ingredientes) {
+              const idsSpecs = prod.id.ingredientes || [];
+              const idEspBackend = idsSpecs.map(id => parseInt(id)); // Normalizar a int
+              
+              especialidadesNombres = idEspBackend.map(idEsp => {
+                  // Buscar primero por id_esp (nueva API), fallback a id
+                  const esp = especialidadesCacheData.find(e => e.id_esp === idEsp || e.id === idEsp);
+                  return esp ? esp.nombre : `Esp #${idEsp}`;
+              });
+
+              // Detalles para el objeto del carrito
+              if (especialidadesCacheData.length > 0) {
+                 // Reconstruir objeto especialidades completo si es posible
+                 const specsObjs = idEspBackend.map(idEsp => {
+                      const esp = especialidadesCacheData.find(e => e.id_esp === idEsp || e.id === idEsp);
+                      return esp ? { id_esp: esp.id_esp, nombre: esp.nombre } : { id_esp: idEsp, nombre: `Esp #${idEsp}` };
+                 }); 
+                 detalles.especialidades = specsObjs.map(s => s.nombre); // Solo nombres para display simple
+                 detalles.especialidadesIds = idEspBackend;
+              } else {
+                 detalles.especialidades = especialidadesNombres;
+              }
+
+              // Intentar mapear tamaño ID a nombre si es necesario
+              // Pero por ahora usamos el tamaño que viene o default
+              // Si tuvieramos el mapa de tamaños, podriamos buscar prod.id.tamano
+          }
+
+          const nombre = prod.nombre || `Pizza Mitad - ${especialidadesNombres.join(' / ')}`;
           const precio = parseFloat(prod.precio || prod.precioUnitario || 0);
 
           const idCarrito = `original_mitad_${index}_${Date.now()}`;
@@ -205,20 +236,24 @@ export const useCartEdit = () => {
             idProducto: null,
             tipoId: 'pizza_mitad',
             nombre: nombre,
-            tamano: prod.tamano || 'Mediana',
+            tamano: tamano, 
             precioOriginal: precio,
             precioUnitario: precio,
             cantidad: prod.cantidad,
             subtotal: precio * prod.cantidad,
             status: prod.status,
             esPaquete: false,
-            esCustom: true, // Tratado como custom para evitar lógicas simples
+            esCustom: true, 
             esOriginal: true,
             esModificado: false,
             productos: null,
-            detalles_ingredientes: detalles,
-            ingredientesNombres: especialidades, // Para compatibilidad
-            conQueso: prod.conQueso || false
+            detalles_ingredientes: {
+                ...detalles,
+                especialidades: especialidadesNombres,
+                especialidadesNombres: especialidadesNombres
+            },
+            ingredientesNombres: especialidadesNombres, 
+            conQueso: prod.queso && parseFloat(prod.queso) > 0 ? true : false
           };
       }
 
