@@ -1,4 +1,4 @@
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaSearch } from 'react-icons/fa';
 import { useState } from 'react';
 import ProductCard from "@/components/ui/ProductCard"
 import { getProductTypeId } from '@/utils/productUtils';
@@ -13,6 +13,7 @@ const ProductsSection = ({
   deshabilitarCategorias = false
 }) => {
   const [mostrarMasCategorias, setMostrarMasCategorias] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const catToTipoId = {
     'pizzas': 'id_pizza',
@@ -106,6 +107,18 @@ const ProductsSection = ({
                   )}
                 </button>
               )}
+
+              {/* Buscador */}
+              <div className="relative flex items-center ml-auto">
+                <FaSearch className="absolute left-3 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar producto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 w-40 transition-all focus:w-60 text-sm text-black"
+                />
+              </div>
             </div>
 
             {/* Categorías Secundarias (Collapsible) */}
@@ -126,23 +139,30 @@ const ProductsSection = ({
           {productos.length === 0 ? (
             <p className="text-gray-500 col-span-3 text-center">No hay productos disponibles</p>
           ) : (
-            productos.map((producto) => {
-              if (!producto) return null;
-              // Determinar tipoId basado en la categoría activa (prioridad) o fallback a detección 
-              const tipoId = catToTipoId[categoriaActiva] || getProductTypeId(producto);
+            productos
+              .filter(producto => {
+                if (!searchTerm) return true;
+                const termino = searchTerm.toLowerCase();
+                const nombre = (producto.nombre || '').toLowerCase();
+                return nombre.includes(termino);
+              })
+              .map((producto) => {
+                if (!producto) return null;
+                // Determinar tipoId basado en la categoría activa (prioridad) o fallback a detección 
+                const tipoId = catToTipoId[categoriaActiva] || getProductTypeId(producto);
 
-              if (!tipoId) return null;
+                if (!tipoId) return null;
 
-              return (
-                <ProductCard
-                  key={producto[tipoId]}
-                  producto={producto}
-                  tipoId={tipoId}
-                  onProductoClick={onProductoClick}
-                  mostrarPrecio={mostrarPrecio}
-                />
-              );
-            })
+                return (
+                  <ProductCard
+                    key={producto[tipoId]}
+                    producto={producto}
+                    tipoId={tipoId}
+                    onProductoClick={onProductoClick}
+                    mostrarPrecio={mostrarPrecio}
+                  />
+                );
+              })
           )}
         </div>
       </div >
