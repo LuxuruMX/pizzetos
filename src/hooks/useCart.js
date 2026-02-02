@@ -256,6 +256,79 @@ export const useCart = (initialCartFromUrl = []) => {
     });
   };
 
+  const agregarPizzaMitad = (mitadData) => {
+    setOrden((prevOrden) => {
+      const tamano = mitadData.nombreTamano || mitadData.tamano; 
+      // Generar nombre descriptivo
+      const nombreProducto = `${mitadData.especialidadesNombres.join(' / ')}`;
+      const idProducto = `mitad_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+      const precio = mitadData.precio;
+
+      // Buscar grupo existente por tamaño
+      const existingGroupIndex = prevOrden.findIndex(
+        item => item.tipoId === 'pizza_group' && item.tamano === tamano
+      );
+
+      let nuevaOrden = [...prevOrden];
+
+      if (existingGroupIndex >= 0) {
+          // Agregar al grupo existente
+          const group = nuevaOrden[existingGroupIndex];
+          const nuevosProductos = [
+              ...(group.productos || []),
+              {
+                  id: idProducto,
+                  nombre: nombreProducto,
+                  precio: precio,
+                  cantidad: 1,
+                  tipoId: 'pizza_mitad', // Identificador clave
+                  esCustom: true,
+                  detalles_ingredientes: {
+                    tamano: mitadData.tamano,
+                    especialidades: mitadData.especialidades,
+                    especialidadesNombres: mitadData.especialidadesNombres,
+                    cantidad_especialidades: 2
+                  }
+              }
+          ];
+          
+          nuevaOrden[existingGroupIndex] = {
+              ...group,
+              cantidad: group.cantidad + 1,
+              productos: nuevosProductos
+          };
+      } else {
+          // Crear nuevo grupo
+          nuevaOrden.push({
+              id: `pizza_group_${tamano}_${Date.now()}`,
+              tipoId: 'pizza_group',
+              nombre: `Pizzas ${tamano}`,
+              tamano: tamano,
+              esPaquete: false,
+              cantidad: 1,
+              precioUnitario: 0,
+              subtotal: 0,
+              productos: [{
+                  id: idProducto,
+                  nombre: nombreProducto,
+                  precio: precio,
+                  cantidad: 1,
+                  tipoId: 'pizza_mitad',
+                  esCustom: true,
+                  detalles_ingredientes: {
+                    tamano: mitadData.tamano,
+                    especialidades: mitadData.especialidades,
+                    especialidadesNombres: mitadData.especialidadesNombres,
+                    cantidad_especialidades: 2
+                  }
+              }]
+          });
+      }
+
+      return recalcularPrecios(nuevaOrden);
+    });
+  };
+
 
   const agregarAlCarrito = (producto, tipoId) => {
     // Intentar obtener ID usando el tipoId provisto
@@ -704,6 +777,7 @@ export const useCart = (initialCartFromUrl = []) => {
     agregarAlCarrito,
     agregarPaquete,
     agregarPizzaCustom,
+    agregarPizzaMitad,
     actualizarCantidad,
     toggleQueso,
     eliminarDelCarrito,

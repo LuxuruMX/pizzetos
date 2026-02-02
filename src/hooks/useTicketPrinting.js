@@ -58,9 +58,9 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
         }
       }
     }
-    // 1. Manejo de PIZZAS y MARISCOS (Normales y Personalizadas)
+    // 1. Manejo de PIZZAS y MARISCOS (Normales, Personalizadas y Mitad)
     // Se unifican para que compartan la lógica de promociones (2x1) por tamaño
-    if (prod.tipo === 'Pizza' || prod.tipo === 'Pizza Personalizada' || prod.tipo === 'Mariscos') {
+    if (prod.tipo === 'Pizza' || prod.tipo === 'Pizza Personalizada' || prod.tipo === 'Mariscos' || prod.tipo === 'Pizza Mitad') { // Añadido Pizza Mitad
       let size = 'Grande'; // Default
       let cleanName = prod.nombre;
 
@@ -75,12 +75,17 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
         cleanName = parts.slice(0, parts.length - 1).join(' - ');
       }
 
-      // Limpiar nombre si es personalizada
+      // Limpiar nombre si es personalizada o mitad
       if (prod.tipo === 'Pizza Personalizada') {
         cleanName = 'Personalizada';
-        if (prod.detalles_ingredientes && prod.detalles_ingredientes.ingredientes) {
-          // Opcional: Agregar ingredientes al nombre o guardarlos aparte
-        }
+      } else if (prod.tipo === 'Pizza Mitad') {
+         // Intentar extraer nombre de especialidades si vienen
+         if (prod.detalles_ingredientes && prod.detalles_ingredientes.especialidades) {
+             const espe = prod.detalles_ingredientes.especialidades;
+             cleanName = `Mitad: ${espe.join(' / ')}`;
+         } else {
+             cleanName = 'Mitad y Mitad';
+         }
       } else {
         // Quitar el tamaño del nombre si viene tipo "Hawaiana - Mediana" -> "Hawaiana"
         cleanName = cleanName.replace(` - ${size}`, '');
@@ -107,6 +112,9 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
         ingredientesNombres: prod.tipo === 'Pizza Personalizada' && prod.detalles_ingredientes
           ? prod.detalles_ingredientes.ingredientes
           : [],
+        especialidades: prod.tipo === 'Pizza Mitad' && prod.detalles_ingredientes && prod.detalles_ingredientes.especialidades
+           ? prod.detalles_ingredientes.especialidades 
+           : [], // Guardar especialidades aparte por si el PDF las usa distinto (aunque arriba las meti en el nombre)
         conQueso: prod.con_queso || prod.conQueso,
         precioUnitario: precio,
         cantidad: prod.cantidad || 1,

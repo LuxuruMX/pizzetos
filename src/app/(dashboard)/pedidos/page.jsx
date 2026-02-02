@@ -285,12 +285,22 @@ export default function Pedidos() {
                   </span>
                 )}
               </p>
-              {prod.es_personalizado && prod.detalles_ingredientes && (
+              {prod.es_personalizado && prod.detalles_ingredientes && prod.tipo !== 'Pizza Mitad' && (
                 <div className="mt-1 text-xs bg-white/50 p-1 rounded">
                   <p className="font-semibold text-gray-700">Tamaño: {prod.detalles_ingredientes.tamano}</p>
                   <p className="text-gray-600">
-                    Ingredientes ({prod.detalles_ingredientes.cantidad_ingredientes}): {prod.detalles_ingredientes.ingredientes.join(', ')}
+                    Ingredientes ({prod.detalles_ingredientes.cantidad_ingredientes}): {prod.detalles_ingredientes.ingredientes?.join(', ')}
                   </p>
+                </div>
+              )}
+              {prod.tipo === 'Pizza Mitad' && prod.detalles_ingredientes && (
+                <div className="mt-1 text-xs bg-orange-50 p-1 rounded border border-orange-100">
+                  <p className="font-semibold text-orange-800">Pizza Mitad ({prod.detalles_ingredientes.tamano})</p>
+                  <ul className="list-disc list-inside text-orange-700 ml-1">
+                    {prod.detalles_ingredientes.especialidades?.map((esp, i) => (
+                      <li key={i}>{esp}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
               {prod.tipo === 'Paquete' && prod.detalles_ingredientes && (
@@ -522,7 +532,7 @@ export default function Pedidos() {
                                 🧀 Con Queso
                               </span>
                             )}
-                            {prod.es_personalizado && prod.detalles_ingredientes && (
+                            {prod.es_personalizado && prod.detalles_ingredientes && prod.tipo !== 'Pizza Mitad' && (
                               <div className="mt-3 bg-orange-50 p-3 rounded-lg border border-orange-100">
                                 <div className="flex justify-between items-center cursor-pointer mb-2"
                                   onClick={() => toggleIngredientes(idx)}>
@@ -546,7 +556,7 @@ export default function Pedidos() {
                                       Ingredientes Seleccionados
                                     </p>
                                     <div className="flex flex-wrap gap-1.5">
-                                      {prod.detalles_ingredientes.ingredientes.map((ing, ingIdx) => (
+                                      {prod.detalles_ingredientes.ingredientes?.map((ing, ingIdx) => (
                                         <span
                                           key={ingIdx}
                                           className="bg-white px-2 py-1 rounded text-xs font-medium text-gray-700 border border-orange-200"
@@ -557,6 +567,24 @@ export default function Pedidos() {
                                     </div>
                                   </div>
                                 )}
+                              </div>
+                            )}
+
+                            {prod.es_personalizado && prod.detalles_ingredientes && prod.tipo === 'Pizza Mitad' && (
+                              <div className="mt-3 bg-red-50 p-3 rounded-lg border border-red-100">
+                                <p className="text-xs text-red-600 font-bold uppercase tracking-wide mb-2">
+                                  Especialidades (Mitad y Mitad)
+                                </p>
+                                <div className="flex flex-col gap-2">
+                                  {prod.detalles_ingredientes.especialidades?.map((esp, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                      <span className="w-6 h-6 rounded-full bg-red-200 text-red-800 flex items-center justify-center text-xs font-bold">
+                                        {i + 1}
+                                      </span>
+                                      <span className="text-gray-800 font-medium">{esp}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             )}
 

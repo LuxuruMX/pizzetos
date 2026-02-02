@@ -252,7 +252,23 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
         
         // Repetir por cantidad de producto *interno*
         for (let i = 0; i < producto.cantidad; i++) {
-            if (producto.esCustom || producto.tipoId === 'custom_pizza') {
+            if (producto.tipoId === 'pizza_mitad') {
+               // Es Pizza Mitad
+               const itemData = {
+                  cantidad: 1,
+                  precio_unitario: parseFloat(producto.precio),
+                  pizza_mitad: {
+                    tamano: parseInt(producto.detalles_ingredientes.tamano || 0),
+                    ingredientes: producto.detalles_ingredientes.especialidades.map(id => {
+                        const parsed = parseInt(id);
+                        return isNaN(parsed) ? id : parsed;
+                    })
+                  },
+                  queso: producto.conQueso ? precioQueso : null,
+                  status: 1
+               };
+               itemsIndividuales.push(itemData);
+            } else if (producto.esCustom || producto.tipoId === 'custom_pizza') {
                // Es Pizza Custom
                const itemData = {
                   cantidad: 1, 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { catalogsService } from '@/services/catalogsService';
 import { fetchProductosPorCategoria, enviarOrdenAPI, CATEGORIAS, fetchPizzaDescriptions } from '@/services/orderService';
-import { fetchIngredientes, fetchTamanosPizzas } from '@/services/pricesService';
+import { fetchIngredientes, fetchTamanosPizzas, fetchEspecialidades } from '@/services/pricesService';
 import { useCart } from '@/hooks/useCart';
 import CartSection from '@/components/ui/CartSection';
 import ProductsSection from '@/components/ui/ProductsSection';
@@ -14,6 +14,7 @@ import AddressSelectionModal from '@/components/ui/AddressSelectionModal';
 import DeliveryPaymentModal from '@/components/ui/DeliveryPaymentModal';
 import { ModalPaquete1, ModalPaquete2, ModalPaquete3 } from '@/components/ui/PaquetesModal';
 import CustomPizzaModal from '@/components/ui/CustomPizzaModal';
+import PizzaMitadModal from '@/components/ui/PizzaMitadModal';
 import { MdComment, MdPrint } from "react-icons/md";
 import { pdf } from '@react-pdf/renderer';
 import TicketPDF from '@/components/ui/TicketPDF';
@@ -54,6 +55,7 @@ const POS = () => {
     agregarAlCarrito,
     agregarPaquete,
     agregarPizzaCustom,
+    agregarPizzaMitad,
     actualizarCantidad,
     toggleQueso,
     eliminarDelCarrito,
@@ -98,7 +100,9 @@ const POS = () => {
   const [modalPaquete2, setModalPaquete2] = useState(false);
   const [modalPaquete3, setModalPaquete3] = useState(false);
   const [modalCustomPizza, setModalCustomPizza] = useState(false);
+  const [modalPizzaMitad, setModalPizzaMitad] = useState(false); // Nuevo modal
   const [ingredientes, setIngredientes] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]); // Nueva variable de estado para especialidades
   const [tamanosPizzas, setTamanosPizzas] = useState([]);
   const [grupoRectangularIncompleto, setGrupoRectangularIncompleto] = useState(false);
   const [grupoBarraMagnoIncompleto, setGrupoBarraMagnoIncompleto] = useState(false);
@@ -175,12 +179,13 @@ const POS = () => {
       // Si hay id_caja, procedemos a cargar los datos
       try {
         setLoading(true);
-        const [productosData, clientesData, descripcionesData, ingredientesData, tamanosData] = await Promise.all([
+        const [productosData, clientesData, descripcionesData, ingredientesData, tamanosData, especialidadesData] = await Promise.all([
           fetchProductosPorCategoria(),
           catalogsService.getNombresClientes(),
           fetchPizzaDescriptions(),
           fetchIngredientes(),
-          fetchTamanosPizzas()
+          fetchTamanosPizzas(),
+          fetchEspecialidades() // Nuevo fetch
         ]);
 
         if (descripcionesData) {
@@ -197,6 +202,7 @@ const POS = () => {
         setClientes(opcionesClientes);
         setIngredientes(ingredientesData || []);
         setTamanosPizzas(tamanosData || []);
+        setEspecialidades(especialidadesData || []);
       } catch (error) {
         console.error('Error al cargar datos:', error);
       } finally {
@@ -637,6 +643,11 @@ const POS = () => {
     setModalCustomPizza(false);
   };
 
+  const handleConfirmarPizzaMitad = (mitadData) => {
+    agregarPizzaMitad(mitadData);
+    setModalPizzaMitad(false);
+  };
+
   const handleConfirmarDireccion = (cliente, idDireccion, fecha = null, direccionObj = null) => {
     setClienteSeleccionado(cliente);
     setDireccionSeleccionada(idDireccion);
@@ -740,6 +751,12 @@ const POS = () => {
           >
             Por Ingrediente
           </button>
+          <button
+            onClick={() => setModalPizzaMitad(true)}
+            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors shadow"
+          >
+            Mitad y Mitad
+          </button>
         </div>
         <div className="flex items-center gap-4">
           {lastOrder && (
@@ -792,6 +809,16 @@ const POS = () => {
           variantes={variantesProducto}
           onSeleccionar={handleSeleccionarVariante}
           descripcion={descripcionesPizzas.find(d => d.nombre === productoSeleccionado)?.descripcion}
+        />
+      )}
+
+      {modalPizzaMitad && (
+        <PizzaMitadModal
+          isOpen={modalPizzaMitad}
+          onClose={() => setModalPizzaMitad(false)}
+          tamanos={Object.values(tamanosPizzas)} // Arrays de objetos
+          especialidades={especialidades}
+          onConfirmar={handleConfirmarPizzaMitad}
         />
       )}
 

@@ -18,11 +18,12 @@ import {
   ModalPaquete3,
 } from "@/components/ui/PaquetesModal";
 import CustomPizzaModal from "@/components/ui/CustomPizzaModal";
+import PizzaMitadModal from "@/components/ui/PizzaMitadModal";
 import PDFViewerModal from "@/components/ui/PDFViewerModal";
 import TicketPDF from "@/components/ui/TicketPDF";
 import { pdf } from '@react-pdf/renderer';
 import { MdComment, MdArrowBack, MdPrint } from "react-icons/md";
-import { fetchIngredientes, fetchTamanosPizzas } from '@/services/pricesService';
+import { fetchIngredientes, fetchTamanosPizzas, fetchEspecialidades } from '@/services/pricesService';
 import { getProductTypeId } from '@/utils/productUtils';
 import ProductModal from "@/components/ui/ProductModal";
 import { showToast } from '@/utils/toast';
@@ -56,9 +57,11 @@ const POSEdit = () => {
   const [modalPaquete2, setModalPaquete2] = useState(false); // Fix overlap issues by putting this here if needed, but wait, state is further down.
   const [modalPaquete3, setModalPaquete3] = useState(false);
   const [modalCustomPizza, setModalCustomPizza] = useState(false);
+  const [modalPizzaMitad, setModalPizzaMitad] = useState(false);
 
   // Estados para datos de custom pizza y validaciones
   const [ingredientes, setIngredientes] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]);
   const [tamanosPizzas, setTamanosPizzas] = useState([]);
   const [grupoRectangularIncompleto, setGrupoRectangularIncompleto] = useState(false);
   const [grupoBarraMagnoIncompleto, setGrupoBarraMagnoIncompleto] = useState(false);
@@ -86,7 +89,8 @@ const POSEdit = () => {
     statusPrincipal,
     setStatusPrincipal,
     toggleQueso,
-    agregarPizzaCustom
+    agregarPizzaCustom,
+    agregarPizzaMitad
   } = useCartEdit();
 
   const [categorias] = useState(CATEGORIAS);
@@ -112,11 +116,12 @@ const POSEdit = () => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
-        const [detalleData, productosData, ingredientesData, tamanosData] = await Promise.all([
+        const [detalleData, productosData, ingredientesData, tamanosData, especialidadesData] = await Promise.all([
           fetchDetalleVenta(idVenta),
           fetchProductosPorCategoria(),
           fetchIngredientes(),
-          fetchTamanosPizzas()
+          fetchTamanosPizzas(),
+          fetchEspecialidades()
         ]);
 
         console.log("Detalle de venta recibido:", detalleData);
@@ -129,14 +134,15 @@ const POSEdit = () => {
         // Guardar ingredientes y tamaños
         setIngredientes(ingredientesData || []);
         setTamanosPizzas(tamanosData || []);
+        setEspecialidades(especialidadesData || []);
 
         // Cargar productos originales
         if (detalleData.productos && Array.isArray(detalleData.productos)) {
           // Pasamos ingredientesData para que pueda mapear nombres de custom pizzas
-          cargarProductosOriginales(detalleData.productos, productosData, ingredientesData || []);
+          cargarProductosOriginales(detalleData.productos, productosData, ingredientesData || [], especialidadesData || [], tamanosData || []);
         } else {
           console.warn("No se encontraron productos en el detalle de venta");
-          cargarProductosOriginales([], productosData, ingredientesData || []);
+          cargarProductosOriginales([], productosData, ingredientesData || [], especialidadesData || [], tamanosData || []);
         }
 
 
@@ -358,6 +364,11 @@ const POSEdit = () => {
     setModalCustomPizza(false);
   };
 
+  const handleConfirmarPizzaMitad = (pizzaMitadData) => {
+    agregarPizzaMitad(pizzaMitadData);
+    setModalPizzaMitad(false);
+  };
+
   const handleImprimirTicket = async () => {
     if (!detalleVenta) return;
 
@@ -494,6 +505,12 @@ const POSEdit = () => {
             Por Ingrediente
           </button>
           <button
+            onClick={() => setModalPizzaMitad(true)}
+            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors shadow"
+          >
+            Mitad y Mitad
+          </button>
+          <button
             onClick={handleImprimirTicket}
             className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-full transition-colors ml-2"
             title="Reimprimir ticket"
@@ -608,12 +625,24 @@ const POSEdit = () => {
       />
 
       {/* Modal Custom Pizza */}
+      {/* Modal Custom Pizza */}
       {modalCustomPizza && (
         <CustomPizzaModal
           isOpen={modalCustomPizza}
           onClose={() => setModalCustomPizza(false)}
           onConfirmar={handleConfirmarCustomPizza}
           ingredientes={ingredientes}
+          tamanos={tamanosPizzas}
+        />
+      )}
+
+      {/* Modal Pizza Mitad */}
+      {modalPizzaMitad && (
+        <PizzaMitadModal
+          isOpen={modalPizzaMitad}
+          onClose={() => setModalPizzaMitad(false)}
+          onConfirmar={handleConfirmarPizzaMitad}
+          especialidades={especialidades}
           tamanos={tamanosPizzas}
         />
       )}
