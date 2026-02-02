@@ -136,10 +136,10 @@ const POSEdit = () => {
         // Cargar productos originales
         if (detalleData.productos && Array.isArray(detalleData.productos)) {
           // Pasamos ingredientesData para que pueda mapear nombres de custom pizzas
-          cargarProductosOriginales(detalleData.productos, productosData, ingredientesData || [], especialidadesData || []);
+          cargarProductosOriginales(detalleData.productos, productosData, ingredientesData || [], especialidadesData || [], tamanosData || []);
         } else {
           console.warn("No se encontraron productos en el detalle de venta");
-          cargarProductosOriginales([], productosData, ingredientesData || [], especialidadesData || []);
+          cargarProductosOriginales([], productosData, ingredientesData || [], especialidadesData || [], tamanosData || []);
         }
 
 

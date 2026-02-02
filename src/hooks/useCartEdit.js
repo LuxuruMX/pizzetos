@@ -94,7 +94,7 @@ export const useCartEdit = () => {
   };
 
   // Cargar productos desde el backend y completar con datos de la caché
-  const cargarProductosOriginales = (productosBackend, productosCache, ingredientesCacheData = [], especialidadesCacheData = []) => {
+  const cargarProductosOriginales = (productosBackend, productosCache, ingredientesCacheData = [], especialidadesCacheData = [], tamanosCacheData = []) => {
     // Definir tipoMap al inicio
     // Definir tipoMap al inicio
     const tipoMap = {
@@ -163,6 +163,24 @@ export const useCartEdit = () => {
           
         nombre = `Pizza Custom - ${nombreIngredientes}`;
         
+        // Resolver nombre de tamaño
+        // Resolver nombre de tamaño sin default "Grande"
+        let tamanoNombre = prod.tamaño || prod.tamano || '';
+        if (tamanoId && tamanosCacheData.length > 0) {
+            const tId = parseInt(tamanoId);
+            // Validar campos según JSDoc: id_tamañop, tamano
+            const tObj = tamanosCacheData.find(t => 
+                t.id === tId || 
+                t.id_tamano === tId || 
+                t.id_tamañop === tId || 
+                t.id == tamanoId
+            );
+            
+            if (tObj) {
+                tamanoNombre = tObj.nombre || tObj.tamano || tObj.tamaño;
+            }
+        }
+
         // Crear item para carrito
         const idCarrito = `original_custom_${index}_${Date.now()}`;
         
@@ -171,7 +189,7 @@ export const useCartEdit = () => {
           idProducto: null, // No tiene ID de producto de catálogo
           tipoId: 'custom_pizza',
           nombre: nombre,
-          tamano: prod.tamaño || prod.tamano || 'Grande', // Asumiendo default
+          tamano: tamanoNombre,
           precioOriginal: precio,
           precioUnitario: precio,
           cantidad: prod.cantidad,
@@ -195,7 +213,7 @@ export const useCartEdit = () => {
       if (esPizzaMitad) {
           let detalles = prod.detalles_ingredientes || {};
           let especialidadesNombres = detalles.especialidades || [];
-          let tamano = prod.tamano || 'Mediana';
+          let tamano = prod.tamano || '';
 
           // Manejo del payload de edición donde id es un objeto { tamano: 11, ingredientes: [id1, id2] }
           if (prod.id && typeof prod.id === 'object' && !Array.isArray(prod.id) && prod.id.ingredientes) {
@@ -221,9 +239,18 @@ export const useCartEdit = () => {
                  detalles.especialidades = especialidadesNombres;
               }
 
-              // Intentar mapear tamaño ID a nombre si es necesario
-              // Pero por ahora usamos el tamaño que viene o default
-              // Si tuvieramos el mapa de tamaños, podriamos buscar prod.id.tamano
+              // Intentar mapear tamaño ID a nombre
+              if (prod.id.tamano && tamanosCacheData.length > 0) {
+                  const tId = parseInt(prod.id.tamano);
+                  const tObj = tamanosCacheData.find(t => 
+                      t.id === tId || 
+                      t.id_tamano === tId || 
+                      t.id_tamañop === tId // Correccion basada en PricesService
+                  );
+                  
+                  if (tObj) tamano = tObj.tamano || tObj.nombre || tObj.tamaño;
+                  detalles.tamano = tId;
+              }
           }
 
           const nombre = prod.nombre || `Pizza Mitad - ${especialidadesNombres.join(' / ')}`;
