@@ -26,9 +26,6 @@ export default function TodosPedidosPage() {
   const [modalPagosOpen, setModalPagosOpen] = useState(false);
   const [permisos, setPermisos] = useState(null);
 
-  // Cached Catalogs
-  const [productosCache, setProductosCache] = useState(null);
-  const [clientesCache, setClientesCache] = useState(null);
 
   const [pedidoAPagar, setPedidoAPagar] = useState(null);
   const [cancellationModalOpen, setCancellationModalOpen] = useState(false);
@@ -114,7 +111,6 @@ export default function TodosPedidosPage() {
   // Calcular suma total de todos los pedidos
   const sumaTotal = pedidos.reduce((acc, pedido) => acc + pedido.total, 0);
 
-  const catalogsReady = productosCache && clientesCache;
 
   // Columnas de la tabla
   const columns = [
@@ -259,9 +255,9 @@ export default function TodosPedidosPage() {
           {
             <button
               onClick={() => handlePrint(row)}
-              disabled={!catalogsReady}
-              className={`transition-colors ${!catalogsReady ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-gray-800'}`}
-              title={catalogsReady ? "Imprimir" : "Cargando datos..."}
+              disabled={printing}
+              className={`transition-colors ${printing ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-gray-800'}`}
+              title={printing ? "Generando ticket..." : "Imprimir"}
             >
               <MdPrint size={22} />
             </button>

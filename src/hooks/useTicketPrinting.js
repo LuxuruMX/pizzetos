@@ -428,9 +428,6 @@ export const useTicketPrinting = () => {
         telefono: clienteObj.telefono
       };
 
-      // 3. RETARDO INTENCIONAL PARA ARREGLAR BUG DE PRIMERA VEZ
-      // Esperamos un poco para asegurar que el thread esté libre y recursos listos
-      await new Promise(resolve => setTimeout(resolve, 1500)); 
 
       // 4. Generar PDF
       const blob = await pdf(
