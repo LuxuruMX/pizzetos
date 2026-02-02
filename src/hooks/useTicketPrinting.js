@@ -448,6 +448,7 @@ export const useTicketPrinting = () => {
           tipoServicio={detalle.tipo_servicio}
           comentarios={detalle.comentarios}
           folio={detalle.id_venta}
+          pagos={detalle.pagos || []}
         />
       ).toBlob();
 

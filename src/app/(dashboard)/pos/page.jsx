@@ -233,6 +233,7 @@ const POS = () => {
           tipoServicio={lastOrder.tipoServicio}
           comentarios={lastOrder.comentarios}
           folio={lastOrder.folio}
+          pagos={lastOrder.pagos || []}
         />
       ).toBlob();
 

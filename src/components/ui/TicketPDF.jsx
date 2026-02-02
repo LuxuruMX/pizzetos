@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     },
 });
 
-const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, comentarios, folio, showChanges = false }) => {
+const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, comentarios, folio, showChanges = false, pagos = [] }) => {
     const formatoMoneda = (cantidad) => {
         return new Intl.NumberFormat('es-MX', {
             style: 'currency',
@@ -356,6 +356,37 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
                     <View style={[styles.section, { marginTop: 5 }]}>
                         <Text style={[styles.bold, { fontSize: 8 }]}>NOTAS:</Text>
                         <Text style={{ fontStyle: 'italic' }}>{comentarios}</Text>
+                    </View>
+                )}
+
+                {/* Métodos de Pago - Solo para Domicilio (o Pedido Especial que es domi con fecha) */}
+                {(tipoServicio === 2 || tipoServicio === 3) && pagos && pagos.length > 0 && (
+                    <View style={[styles.section, { marginTop: 5 }]}>
+                        <Text style={[styles.bold, { fontSize: 8 }]}>FORMA DE PAGO:</Text>
+                        {pagos.map((pago, idx) => {
+                            let texto = '';
+                            if (pago.id_metpago === 3) { // Transferencia
+                                texto = 'Pago con transferencia';
+                            } else if (pago.id_metpago === 1) { // Tarjeta
+                                texto = 'Pagará con tarjeta';
+                            } else if (pago.id_metpago === 2) { // Efectivo
+                                const montoCobrar = pago.monto;
+                                const montoEntregado = parseFloat(pago.referencia) || 0;
+                                texto = `Efectivo: Pagará con ${formatoMoneda(montoEntregado)}`;
+                                if (montoEntregado >= montoCobrar) {
+                                    texto += ` (Cambio: ${formatoMoneda(montoEntregado - montoCobrar)})`;
+                                } else {
+                                    // Fallback si no hay referencia válida o es menor (ej. pago exacto sin ref)
+                                    texto += ` (Cobrar: ${formatoMoneda(montoCobrar)})`;
+                                }
+                            } else {
+                                // Otros
+                                texto = `Método ID ${pago.id_metpago}: ${formatoMoneda(pago.monto)}`;
+                            }
+                            return (
+                                <Text key={idx} style={{ fontSize: 8 }}>{texto}</Text>
+                            );
+                        })}
                     </View>
                 )}
 
