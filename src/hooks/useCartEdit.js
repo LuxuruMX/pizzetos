@@ -129,7 +129,8 @@ export const useCartEdit = () => {
 
     const productosConvertidos = productosBackend.map((prod, index) => {
       const esPaquete = prod.tipo === 'id_paquete';
-      const esCustomPizza = prod.tipo === 'custom_pizza';
+      const esCustomPizza = prod.tipo === 'custom_pizza' || prod.tipo === 'Pizza Personalizada'; // Admitir nombre previo si aplica
+      const esPizzaMitad = prod.tipo === 'Pizza Mitad'; // Detectar tipo exacto según JSON
       
       let nombre = `Producto ${prod.id}`;
       let precio = parseFloat(prod.precio || prod.precio_unitario || 0);
@@ -188,6 +189,37 @@ export const useCartEdit = () => {
           ingredientesNombres: nombresIng,
           conQueso: prod.queso && parseFloat(prod.queso) > 0 ? true : false
         };
+      }
+
+      // --- LOGICA PIZZA MITAD ---
+      if (esPizzaMitad) {
+          const detalles = prod.detalles_ingredientes || {};
+          const especialidades = detalles.especialidades || [];
+          const nombre = prod.nombre || `Pizza Mitad - ${especialidades.join(' / ')}`;
+          const precio = parseFloat(prod.precio || prod.precioUnitario || 0);
+
+          const idCarrito = `original_mitad_${index}_${Date.now()}`;
+
+          return {
+            id: idCarrito,
+            idProducto: null,
+            tipoId: 'pizza_mitad',
+            nombre: nombre,
+            tamano: prod.tamano || 'Mediana',
+            precioOriginal: precio,
+            precioUnitario: precio,
+            cantidad: prod.cantidad,
+            subtotal: precio * prod.cantidad,
+            status: prod.status,
+            esPaquete: false,
+            esCustom: true, // Tratado como custom para evitar lógicas simples
+            esOriginal: true,
+            esModificado: false,
+            productos: null,
+            detalles_ingredientes: detalles,
+            ingredientesNombres: especialidades, // Para compatibilidad
+            conQueso: prod.conQueso || false
+          };
       }
 
       // --- LOGICA PRODUCTO NORMAL ---
@@ -459,7 +491,7 @@ export const useCartEdit = () => {
   // Agrupar pizzas/mariscos del mismo tamaño en un solo item del carrito
   const agruparProductosPorTamano = (productos) => {
     const agrupados = [];
-    const categoriasAgrupables = ["id_pizza", "id_maris", "custom_pizza"]; // Añadido custom_pizza
+    const categoriasAgrupables = ["id_pizza", "id_maris", "custom_pizza", "pizza_mitad"]; // Añadido pizza_mitad
     const yaAgrupados = new Set();
 
     productos.forEach((prod, index) => {
@@ -468,7 +500,7 @@ export const useCartEdit = () => {
       if (categoriasAgrupables.includes(prod.tipoId)) {
         
         let targetGroupType = prod.tipoId;
-        if (prod.tipoId === 'id_pizza' || prod.tipoId === 'custom_pizza' || prod.tipoId === 'id_maris') {
+        if (['id_pizza', 'custom_pizza', 'id_maris', 'pizza_mitad'].includes(prod.tipoId)) {
             targetGroupType = 'pizza_group';
         }
 
@@ -479,7 +511,7 @@ export const useCartEdit = () => {
             const tamanoProd = (prod.tamano || '').toString().trim().toLowerCase();
             
             return !yaAgrupados.has(i) &&
-            ((p.tipoId === 'id_pizza' || p.tipoId === 'custom_pizza' || p.tipoId === 'id_maris') ? targetGroupType === 'pizza_group' : p.tipoId === prod.tipoId) &&
+            ((['id_pizza', 'custom_pizza', 'id_maris', 'pizza_mitad'].includes(p.tipoId)) ? targetGroupType === 'pizza_group' : p.tipoId === prod.tipoId) &&
             tamanoP === tamanoProd &&
             !p.esPaquete;
           }
