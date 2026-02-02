@@ -12,7 +12,12 @@ const PizzaMitadModal = ({ isOpen, onClose, tamanos, especialidades, onConfirmar
 
     const handleToggleEspecialidad = (especialidad) => {
         setEspecialidadesSeleccionadas(prev => {
-            const index = prev.findIndex(e => e.id_especialidad === especialidad.id_especialidad || e.nombre === especialidad.nombre);
+            const index = prev.findIndex(e => {
+                if (e.id_esp && especialidad.id_esp) {
+                    return e.id_esp === especialidad.id_esp;
+                }
+                return e.nombre === especialidad.nombre;
+            });
 
             if (index >= 0) {
                 // Si ya está seleccionada, quitarla
@@ -46,7 +51,8 @@ const PizzaMitadModal = ({ isOpen, onClose, tamanos, especialidades, onConfirmar
             // Enviar solo NOMBRES o IDs dependiendo de lo que el backend espere en "ingredientes"
             // El usuario dijo "en lugar de enviar ingredientes, seran especialidades"
             // Y el payload example mostraba ingredientes: [0, 0] (ids)
-            especialidades: especialidadesSeleccionadas.map(e => e.id_especialidad || e.id), // Asumiendo ID
+            // Usar id_esp que viene de la API
+            especialidades: especialidadesSeleccionadas.map(e => e.id_esp || e.id || e.nombre),
             especialidadesNombres: especialidadesSeleccionadas.map(e => e.nombre),
             precio: parseFloat(tamanoSeleccionado.precio),
             nombreTamano: tamanoSeleccionado.tamano
@@ -128,12 +134,17 @@ const PizzaMitadModal = ({ isOpen, onClose, tamanos, especialidades, onConfirmar
 
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pb-4">
                                 {especialidades.map((esp) => {
-                                    const index = especialidadesSeleccionadas.findIndex(e => e.id_especialidad === esp.id_especialidad || e.nombre === esp.nombre);
+                                    const index = especialidadesSeleccionadas.findIndex(e => {
+                                        if (e.id_esp && esp.id_esp) {
+                                            return e.id_esp === esp.id_esp;
+                                        }
+                                        return e.nombre === esp.nombre;
+                                    });
                                     const isSelected = index >= 0;
 
                                     return (
                                         <button
-                                            key={esp.id_especialidad || esp.nombre} // Fallback to name if id missing
+                                            key={esp.id_esp || esp.nombre} // Fallback to name if id missing
                                             onClick={() => handleToggleEspecialidad(esp)}
                                             className={`p-3 rounded-lg border-2 transition-all text-sm relative overflow-hidden ${isSelected
                                                 ? 'border-red-500 bg-red-50 text-red-800 font-bold shadow-md'

@@ -259,7 +259,10 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
                   precio_unitario: parseFloat(producto.precio),
                   pizza_mitad: {
                     tamano: parseInt(producto.detalles_ingredientes.tamano || 0),
-                    ingredientes: producto.detalles_ingredientes.especialidades.map(id => parseInt(id))
+                    ingredientes: producto.detalles_ingredientes.especialidades.map(id => {
+                        const parsed = parseInt(id);
+                        return isNaN(parsed) ? id : parsed;
+                    })
                   },
                   queso: producto.conQueso ? precioQueso : null,
                   status: 1
