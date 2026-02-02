@@ -76,7 +76,7 @@ const PizzaMitadModal = ({ isOpen, onClose, tamanos, especialidades, onConfirmar
                 <div className="flex justify-between items-center p-6 border-b bg-gradient-to-r from-red-600 to-orange-600">
                     <div className="flex items-center gap-3">
                         <FaPizzaSlice className="text-white text-3xl" />
-                        <h2 className="text-2xl font-bold text-white">Pizza Mitad y Mitad</h2>
+                        <h2 className="text-2xl font-bold text-white">Mitades</h2>
                     </div>
                     <button
                         onClick={handleCancelar}

@@ -260,7 +260,7 @@ export const useCart = (initialCartFromUrl = []) => {
     setOrden((prevOrden) => {
       const tamano = mitadData.nombreTamano || mitadData.tamano; 
       // Generar nombre descriptivo
-      const nombreProducto = `Pizza Mitad - ${mitadData.especialidadesNombres.join(' / ')}`;
+      const nombreProducto = `${mitadData.especialidadesNombres.join(' / ')}`;
       const idProducto = `mitad_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
       const precio = mitadData.precio;
 
