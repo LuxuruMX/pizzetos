@@ -49,9 +49,26 @@ const reconstructOrderForTicket = (productosBackend, productosCache) => {
   };
 
   const newItems = [];
-  const pizzasBySize = {}; // Objeto para agrupar pizzas: { 'Mediana': [prod1, prod2], 'Grande': [...] }
+  const pizzasBySize = {};
 
   productosBackend.forEach((prod, index) => {
+    if (!['Pizza', 'Pizza Personalizada', 'Mariscos', 'Paquete', 'Rectangular', 'Barra', 'Magno', 'Refresco'].includes(prod.tipo)) {
+      if (productosCache) {
+        const cleanName = prod.nombre.split(' - ')[0].trim();
+        const isPizza = productosCache.pizzas?.some(p =>
+          p.nombre === cleanName ||
+          prod.nombre.includes(p.nombre)
+        );
+
+        if (isPizza) {
+          prod.tipo = 'Pizza';
+        }
+        // Intento 2: Buscar en Mariscos
+        else if (productosCache.mariscos?.some(p => prod.nombre.includes(p.nombre))) {
+          prod.tipo = 'Mariscos';
+        }
+      }
+    }
     // 1. Manejo de PIZZAS y MARISCOS (Normales y Personalizadas)
     // Se unifican para que compartan la lógica de promociones (2x1) por tamaño
     if (prod.tipo === 'Pizza' || prod.tipo === 'Pizza Personalizada' || prod.tipo === 'Mariscos') {
@@ -335,9 +352,9 @@ export default function TodosPedidosPage() {
   const [pdfUrl, setPdfUrl] = useState(null);
   const router = useRouter();
 
-  // Cargar catálogos iniciales
+  // Cargar catálogos iniciales y Warm-up de PDF
   useEffect(() => {
-    const loadCatalogs = async () => {
+    const loadCatalogsAndWarmUp = async () => {
       try {
         const [p, c] = await Promise.all([
           fetchProductosPorCategoria(),
@@ -345,11 +362,28 @@ export default function TodosPedidosPage() {
         ]);
         setProductosCache(p);
         setClientesCache(c);
+
+        // Warm-up PDF Generator
+        // Generamos un PDF dummy para forzar la carga de fuentes y lógica de layout
+        const dummyData = {
+          orden: [],
+          total: 0,
+          datosExtra: {},
+          fecha: new Date().toISOString(),
+          cliente: { nombre: 'Warmup' },
+          tipoServicio: 1,
+          comentarios: '',
+          folio: 0
+        };
+        // No necesitamos el blob, solo que se ejecute el renderizado interno
+        await pdf(<TicketPDF {...dummyData} />).toBlob();
+        console.log("PDF Generator warmed up");
+
       } catch (e) {
-        console.error("Error loading ticket catalogs", e);
+        console.error("Error loading ticket catalogs or warming up PDF", e);
       }
     };
-    loadCatalogs();
+    loadCatalogsAndWarmUp();
   }, []);
 
   const handlePrint = async (row) => {
