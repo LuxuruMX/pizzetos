@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { FaMoneyBillWave, FaCreditCard, FaExchangeAlt, FaCoins, FaShoppingCart, FaChartLine, FaReceipt } from 'react-icons/fa';
 import Card from '../ui/Card';
 import { getCaja, cerrarCaja, getVentasCaja, getGastosCaja } from '@/services/cajaService';
-import { FaChevronDown, FaChevronUp, FaFileInvoiceDollar } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaFileInvoiceDollar, FaExclamationTriangle } from 'react-icons/fa';
 import ConfirmModal from '../ui/ConfirmModal';
 
 // Importar dinámicamente el componente de PDF para evitar problemas de SSR
@@ -35,6 +35,7 @@ export default function CajaControlPanel({ cajaId, onClose }) {
     const [showVentas, setShowVentas] = useState(false);
     const [showGastos, setShowGastos] = useState(false);
 
+    const [alertState, setAlertState] = useState(null); // { type: 'closed' | 'notFound', data: any }
     const [isMounted, setIsMounted] = useState(false);
 
     // Detectar cuando el componente está montado en el cliente
@@ -47,9 +48,15 @@ export default function CajaControlPanel({ cajaId, onClose }) {
             try {
                 setLoadingData(true);
                 const data = await getCaja(cajaId);
-                setCajaDetails(data);
 
-                // Fetch gastos AND ventas immediately to include in balance calculation and PDF
+                if (data.estado === 'cerrada') {
+                    setAlertState({ type: 'closed', data: data });
+                    setCajaDetails(data); // Optional: keep data for display if needed, but modal blocks
+                } else {
+                    setCajaDetails(data);
+                }
+
+                // Fetch gastos AND ventas immediately
                 try {
                     const [gastos, ventas] = await Promise.all([
                         getGastosCaja(cajaId),
@@ -59,16 +66,20 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                     setVentasData(ventas);
                 } catch (err) {
                     console.error("Error fetching gastos/ventas:", err);
-                    // Still load the page even if auxiliary data fails? 
-                    // Or maybe handle partial failures. For now just log.
                 }
 
             } catch (error) {
                 console.error('Error al cargar datos de caja:', error);
-                setMessage({
-                    type: 'error',
-                    text: 'Error al cargar los datos de la caja. Por favor, recarga la página.'
-                });
+
+                // Check for 404 or specific error message
+                if (error.response?.status === 404 || error.response?.data?.detail === 'Caja no encontrada') {
+                    setAlertState({ type: 'notFound' });
+                } else {
+                    setMessage({
+                        type: 'error',
+                        text: 'Error al cargar los datos de la caja. Por favor, recarga la página.'
+                    });
+                }
             } finally {
                 setLoadingData(false);
             }
@@ -82,6 +93,12 @@ export default function CajaControlPanel({ cajaId, onClose }) {
     const handleCierreChange = (e) => {
         const { name, value } = e.target;
         setCierreData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleResetCaja = () => {
+        localStorage.removeItem('id_caja');
+        if (onClose) onClose(); // This should trigger parent to clear state
+        router.push('/caja');
     };
 
     const handleCerrarCajaClick = () => {
@@ -98,9 +115,7 @@ export default function CajaControlPanel({ cajaId, onClose }) {
 
             // Limpiar localStorage y redirigir después de 1.5 segundos
             setTimeout(() => {
-                localStorage.removeItem('id_caja');
-                if (onClose) onClose();
-                router.push('/caja');
+                handleResetCaja();
             }, 1500);
         } catch (error) {
             console.error('Error al cerrar caja:', error);
@@ -128,6 +143,38 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                     <p className="text-gray-600">Cargando detalles de caja...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (alertState) {
+        return (
+            <div className="fixed inset-0 bg-black/60 bg-opacity-75 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 text-center animate-fade-in-up">
+                    <div className="mb-6 flex justify-center">
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center ${alertState.type === 'closed' ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'}`}>
+                            {alertState.type === 'closed' ? <FaExclamationTriangle size={40} /> : <FaExclamationTriangle size={40} />}
+                        </div>
+                    </div>
+
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                        {alertState.type === 'closed' ? 'Caja Cerrada' : 'Caja No Encontrad'}
+                    </h2>
+
+                    <p className="text-gray-600 mb-8">
+                        {alertState.type === 'closed'
+                            ? `Su caja fue cerrada el ${new Date(alertState.data.fecha_cierre || Date.now()).toLocaleString('es-MX')}. Si no la cerró usted, comuníquese con el administrador.`
+                            : 'No se ha encontrado la información de esta caja. Es posible que haya sido eliminada o el ID sea incorrecto.'
+                        }
+                    </p>
+
+                    <button
+                        onClick={handleResetCaja}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                    >
+                        Abrir otra caja
+                    </button>
                 </div>
             </div>
         );
