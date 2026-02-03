@@ -434,41 +434,24 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                 {/* Balance Final */}
                 <View style={styles.balanceSection}>
                     <View style={styles.balanceRow}>
-                        <Text style={styles.balanceLabel}>Fondo Inicial:</Text>
-                        <Text style={styles.balanceValue}>{formatCurrency(montoInicial)}</Text>
-                    </View>
-                    <View style={styles.balanceRow}>
-                        <Text style={styles.balanceLabel}>+ Total Ventas:</Text>
+                        <Text style={styles.balanceLabel}>Venta Total:</Text>
                         <Text style={styles.balanceValue}>{formatCurrency(totalVentas)}</Text>
                     </View>
                     <View style={styles.balanceRow}>
-                        <Text style={styles.balanceLabel}>- Total Gastos:</Text>
+                        <Text style={styles.balanceLabel}>Gastos:</Text>
                         <Text style={[styles.balanceValue, styles.textRed]}>{formatCurrency(totalGastos)}</Text>
                     </View>
-                    <View style={styles.balanceDivider} />
                     <View style={styles.balanceRow}>
-                        <Text style={styles.balanceLabel}>Balance Esperado:</Text>
-                        <Text style={styles.balanceValue}>{formatCurrency(balanceEsperado)}</Text>
+                        <Text style={styles.balanceLabel}>Tarjeta:</Text>
+                        <Text style={styles.balanceValue}>{formatCurrency(tarjeta)}</Text>
                     </View>
                     <View style={styles.balanceRow}>
-                        <Text style={styles.balanceLabel}>Monto Final Contado:</Text>
-                        <Text style={styles.balanceValue}>{formatCurrency(montoFinal)}</Text>
+                        <Text style={styles.balanceLabel}>Transferencia:</Text>
+                        <Text style={styles.balanceValue}>{formatCurrency(transferencia)}</Text>
                     </View>
-                    <View style={styles.balanceDivider} />
                     <View style={styles.balanceRow}>
-                        <Text style={styles.balanceLabel}>Diferencia:</Text>
-                        <Text style={
-                            diferencia > 0
-                                ? styles.diferenciaPositiva
-                                : diferencia < 0
-                                    ? styles.diferenciaNegativa
-                                    : styles.diferenciaCero
-                        }>
-                            {diferencia > 0 && '+'}{formatCurrency(diferencia)}
-                            {diferencia > 0 && ' (Sobrante)'}
-                            {diferencia < 0 && ' (Faltante)'}
-                            {diferencia === 0 && ' ✓ Cuadra perfecto'}
-                        </Text>
+                        <Text style={styles.balanceLabel}>Efectivo (menos gastos):</Text>
+                        <Text style={styles.balanceValue}>{formatCurrency(efectivo - totalGastos)}</Text>
                     </View>
                 </View>
 
