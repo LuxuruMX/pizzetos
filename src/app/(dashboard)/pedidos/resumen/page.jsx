@@ -13,6 +13,7 @@ import { pagarVenta } from "@/services/orderService";
 import CancellationModal from "@/components/ui/CancellationModal";
 import PDFViewerModal from '@/components/ui/PDFViewerModal';
 import { showToast } from '@/utils/toast';
+import { getSucursalFromToken } from '@/services/jwt';
 
 // Función auxiliar para reconstruir la orden (adaptada de useCartEdit)
 
@@ -25,6 +26,7 @@ export default function TodosPedidosPage() {
   const [idSuc] = useState(null);
   const [modalPagosOpen, setModalPagosOpen] = useState(false);
   const [permisos, setPermisos] = useState(null);
+  const [currentVersion, setCurrentVersion] = useState(null);
 
 
   const [pedidoAPagar, setPedidoAPagar] = useState(null);
@@ -64,6 +66,37 @@ export default function TodosPedidosPage() {
       console.error("Error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkVersion = async () => {
+    try {
+      // Priorizar el idSuc si está seleccionado (para admin), si no, getSucursalFromToken
+      let currentIdSuc = idSuc;
+      if (!currentIdSuc) {
+        try {
+          currentIdSuc = getSucursalFromToken();
+        } catch (e) {
+          // Si no hay token o sucursal, probablemente no debamos verificar nada
+          return;
+        }
+      }
+
+      if (!currentIdSuc) return;
+
+      const response = await api.get(`/pos/pedidos-cocina/verificacion/${currentIdSuc}`);
+      const newVersion = response.data.version;
+
+      if (currentVersion !== null && currentVersion !== newVersion) {
+        console.log(`Nueva versión detectada en resumen: ${newVersion} (Anterior: ${currentVersion})`);
+        setCurrentVersion(newVersion);
+        await fetchTodosPedidos();
+      } else if (currentVersion === null) {
+        // Primera carga
+        setCurrentVersion(newVersion);
+      }
+    } catch (err) {
+      console.error('Error verificando versión:', err);
     }
   };
   const handleEdit = (product) => {
@@ -107,6 +140,13 @@ export default function TodosPedidosPage() {
     }
     fetchTodosPedidos();
   }, [filtro, statusFiltro, idSuc]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkVersion();
+    }, 5000); // 5 segundos
+    return () => clearInterval(interval);
+  }, [currentVersion, filtro, statusFiltro, idSuc]);
 
   // Calcular suma total de todos los pedidos
   const sumaTotal = pedidos.reduce((acc, pedido) => acc + pedido.total, 0);
