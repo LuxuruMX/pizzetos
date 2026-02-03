@@ -202,7 +202,7 @@ export default function CajaControlPanel({ cajaId, onClose }) {
         acc + (parseFloat(gasto.precio || gasto.monto) || 0), 0
     );
 
-    const balanceEsperado = montoInicial + totalVentas - totalGastos;
+    const balanceEsperado = efectivo - totalGastos;
     const montoFinalIngresado = parseFloat(cierreData.monto_final) || 0;
     const diferencia = cierreData.monto_final ? montoFinalIngresado - balanceEsperado : 0;
     const hayDiferencia = cierreData.monto_final && diferencia !== 0;
