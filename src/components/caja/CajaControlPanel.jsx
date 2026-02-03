@@ -262,18 +262,6 @@ export default function CajaControlPanel({ cajaId, onClose }) {
 
                             <Card className="hover:shadow-md transition-shadow" padding="none">
                                 <div className="p-5 flex items-center gap-4">
-                                    <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                                        <FaShoppingCart size={24} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total Ventas</p>
-                                        <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(totalVentas)}</p>
-                                    </div>
-                                </div>
-                            </Card>
-
-                            <Card className="hover:shadow-md transition-shadow" padding="none">
-                                <div className="p-5 flex items-center gap-4">
                                     <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
                                         <FaReceipt size={24} />
                                     </div>
@@ -286,21 +274,6 @@ export default function CajaControlPanel({ cajaId, onClose }) {
 
                             <Card className="hover:shadow-md transition-shadow" padding="none">
                                 <div className="p-5 flex items-center gap-4">
-                                    <div className="p-3 bg-green-50 text-green-600 rounded-xl">
-                                        <FaChartLine size={24} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Balance Esperado</p>
-                                        <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(balanceEsperado)}</p>
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
-
-                        {/* Expenses Stats */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                            <Card className="hover:shadow-md transition-shadow" padding="none">
-                                <div className="p-5 flex items-center gap-4">
                                     <div className="p-3 bg-red-50 text-red-600 rounded-xl">
                                         <FaFileInvoiceDollar size={24} />
                                     </div>
@@ -310,6 +283,19 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                                     </div>
                                 </div>
                             </Card>
+
+                            <Card className="hover:shadow-md transition-shadow" padding="none">
+                                <div className="p-5 flex items-center gap-4">
+                                    <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                                        <FaShoppingCart size={24} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Venta Total</p>
+                                        <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(totalVentas)}</p>
+                                    </div>
+                                </div>
+                            </Card>
+
                         </div>
 
                         {/* Sales Breakdown */}
@@ -322,7 +308,7 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                                         </div>
                                         <span className="font-semibold text-green-900">Efectivo</span>
                                     </div>
-                                    <p className="text-3xl font-bold text-green-800">{formatCurrency(efectivo)}</p>
+                                    <p className="text-3xl font-bold text-green-800">{formatCurrency(efectivo - totalGastos)}</p>
                                     <p className="text-xs text-green-600 mt-2">
                                         {totalVentas > 0 ? ((efectivo / totalVentas) * 100).toFixed(1) : 0}% del total
                                     </p>
@@ -507,8 +493,8 @@ export default function CajaControlPanel({ cajaId, onClose }) {
                                     <div className={`p-4 rounded-lg border-2 ${diferencia > 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                                         <p className={`text-sm font-medium ${diferencia > 0 ? 'text-green-800' : 'text-red-800'}`}>
                                             {diferencia > 0
-                                                ? '💰 Hay un sobrante. Verifica que no falte registrar algún gasto.'
-                                                : '⚠️ Hay un faltante. Verifica el conteo o si falta registrar alguna venta.'
+                                                ? 'Hay un sobrante. Verifica que no falte registrar algún gasto.'
+                                                : 'Hay un faltante. Verifica el conteo o si falta registrar alguna venta.'
                                             }
                                         </p>
                                     </div>
