@@ -370,7 +370,7 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Información General</Text>
                     <View style={styles.infoGrid}>
-                        {/* Fila Superior - 3 Cards */}
+                        {/* Single Row - 4 Cards */}
                         <View style={styles.infoRow}>
                             <View style={[styles.infoCard, styles.infoCardFirstRow]}>
                                 <Text style={styles.infoLabel}>Fondo Inicial</Text>
@@ -384,17 +384,9 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                                 <Text style={styles.infoLabel}>Número de Ventas</Text>
                                 <Text style={styles.infoValue}>{cajaDetails.numero_ventas || 0}</Text>
                             </View>
-                        </View>
-
-                        {/* Fila Inferior - 2 Cards */}
-                        <View style={styles.infoRow}>
-                            <View style={[styles.infoCard, styles.infoCardSecondRow]}>
+                            <View style={[styles.infoCard, styles.infoCardFirstRow]}>
                                 <Text style={styles.infoLabel}>Total Gastos</Text>
                                 <Text style={[styles.infoValue, styles.textRed]}>{formatCurrency(totalGastos)}</Text>
-                            </View>
-                            <View style={[styles.infoCard, styles.infoCardSecondRow]}>
-                                <Text style={styles.infoLabel}>Balance Esperado</Text>
-                                <Text style={styles.infoValue}>{formatCurrency(balanceEsperado)}</Text>
                             </View>
                         </View>
                     </View>
@@ -409,10 +401,10 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                             <View>
                                 <Text style={styles.paymentLabel}>Efectivo</Text>
                                 <Text style={styles.paymentPercent}>
-                                    {totalVentas > 0 ? ((efectivo / totalVentas) * 100).toFixed(1) : 0}% del total
+                                    {totalVentas > 0 ? (((efectivo - totalGastos) / totalVentas) * 100).toFixed(1) : 0}% del total
                                 </Text>
                             </View>
-                            <Text style={styles.paymentAmount}>{formatCurrency(efectivo)}</Text>
+                            <Text style={styles.paymentAmount}>{formatCurrency(efectivo - totalGastos)}</Text>
                         </View>
 
                         {/* Tarjeta */}
