@@ -377,15 +377,15 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                                 <Text style={styles.infoValue}>{formatCurrency(montoInicial)}</Text>
                             </View>
                             <View style={[styles.infoCard, styles.infoCardFirstRow]}>
-                                <Text style={styles.infoLabel}>Total Ventas</Text>
+                                <Text style={styles.infoLabel}>Venta Total</Text>
                                 <Text style={styles.infoValue}>{formatCurrency(totalVentas)}</Text>
                             </View>
                             <View style={[styles.infoCard, styles.infoCardFirstRow]}>
-                                <Text style={styles.infoLabel}>Número de Ventas</Text>
+                                <Text style={styles.infoLabel}>Número de Pedidos</Text>
                                 <Text style={styles.infoValue}>{cajaDetails.numero_ventas || 0}</Text>
                             </View>
                             <View style={[styles.infoCard, styles.infoCardFirstRow]}>
-                                <Text style={styles.infoLabel}>Total Gastos</Text>
+                                <Text style={styles.infoLabel}>Gastos</Text>
                                 <Text style={[styles.infoValue, styles.textRed]}>{formatCurrency(totalGastos)}</Text>
                             </View>
                         </View>
@@ -450,7 +450,7 @@ export default function CierreCajaPDF({ cajaDetails, cierreData, ventasData = []
                         <Text style={styles.balanceValue}>{formatCurrency(transferencia)}</Text>
                     </View>
                     <View style={styles.balanceRow}>
-                        <Text style={styles.balanceLabel}>Efectivo (menos gastos):</Text>
+                        <Text style={styles.balanceLabel}>Efectivo:</Text>
                         <Text style={styles.balanceValue}>{formatCurrency(efectivo - totalGastos)}</Text>
                     </View>
                 </View>

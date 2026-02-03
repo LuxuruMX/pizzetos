@@ -9,6 +9,9 @@ import { getCaja, cerrarCaja, getVentasCaja, getGastosCaja } from '@/services/ca
 import { FaChevronDown, FaChevronUp, FaFileInvoiceDollar, FaExclamationTriangle } from 'react-icons/fa';
 import ConfirmModal from '../ui/ConfirmModal';
 
+import { pdf } from '@react-pdf/renderer';
+import CierreCajaPDF from './CierreCajaPDF';
+
 // Importar dinámicamente el componente de PDF para evitar problemas de SSR
 const PDFDownloadButton = dynamic(
     () => import('./PDFDownloadButton'),
@@ -112,6 +115,29 @@ export default function CajaControlPanel({ cajaId, onClose }) {
         try {
             await cerrarCaja(cajaId, cierreData);
             setMessage({ type: 'success', text: 'Caja cerrada exitosamente' });
+
+            // Generar y descargar PDF automáticamente
+            try {
+                const blob = await pdf(
+                    <CierreCajaPDF
+                        cajaDetails={cajaDetails}
+                        cierreData={cierreData}
+                        ventasData={ventasData}
+                        gastosData={gastosData}
+                    />
+                ).toBlob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `cierre_caja_${cajaId}_${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (pdfError) {
+                console.error("Error generando PDF automático:", pdfError);
+                // No bloqueamos el flujo principal si falla el PDF, pero avisamos
+                setMessage({ type: 'warning', text: 'Caja cerrada, pero hubo un error generando el PDF automático.' });
+            }
 
             // Limpiar localStorage y redirigir después de 1.5 segundos
             setTimeout(() => {
