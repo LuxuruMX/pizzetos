@@ -259,9 +259,14 @@ export const enviarOrdenAPI = async (orden, datosExtra = {}, comentarios = '', t
                   precio_unitario: parseFloat(producto.precio),
                   pizza_mitad: {
                     tamano: parseInt(producto.detalles_ingredientes.tamano || 0),
-                    ingredientes: producto.detalles_ingredientes.especialidades.map(id => {
-                        const parsed = parseInt(id);
-                        return isNaN(parsed) ? id : parsed;
+                    ingredientes: producto.detalles_ingredientes.especialidades.map(esp => {
+                        // Si es un objeto, extraer el id_esp
+                        if (typeof esp === 'object' && esp !== null && esp.id_esp) {
+                            return parseInt(esp.id_esp);
+                        }
+                        // Si ya es un valor (ID), parsearlo
+                        const parsed = parseInt(esp);
+                        return isNaN(parsed) ? esp : parsed;
                     })
                   },
                   queso: producto.conQueso ? precioQueso : null,
