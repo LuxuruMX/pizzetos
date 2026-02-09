@@ -43,6 +43,13 @@ const ProductsSection = ({
     const esActiva = categoriaActiva === categoria;
     const estaDeshabilitada = deshabilitarCategorias && !esActiva;
 
+    // Mapa de nombres para mostrar en la interfaz
+    const displayNames = {
+      'refrescos': 'Bebidas',
+    };
+
+    const displayName = displayNames[categoria] || (categoria.charAt(0).toUpperCase() + categoria.slice(1));
+
     return (
       <button
         key={categoria}
@@ -62,7 +69,7 @@ const ProductsSection = ({
           }`}
         title={estaDeshabilitada ? 'Completa las 4 porciones rectangulares primero' : ''}
       >
-        {categoria.charAt(0).toUpperCase() + categoria.slice(1)}
+        {displayName}
       </button>
     );
   };
