@@ -203,6 +203,13 @@ const CartItem = ({ item, onUpdateQuantity, onRemove, onToggleQueso }) => {
             </div>
           );
         })()}
+
+        {/* Mostrar tamaño para Bebidas/Refrescos */}
+        {(item.tipoId === 'id_refresco') && (
+          <p className="text-xs text-gray-500 mt-1">
+            {item.subcategoria || item.tamano || item.tamaño}
+          </p>
+        )}
       </div>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
