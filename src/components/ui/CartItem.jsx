@@ -102,10 +102,10 @@ const CartItem = ({ item, onUpdateQuantity, onRemove, onToggleQueso }) => {
 
         {/* Lista de productos */}
         <div className="space-y-2 mt-2 pt-2 border-t border-gray-200">
-          {item.productos.map((producto) => {
+          {item.productos.map((producto, index) => {
             const statusClass = getStatusClass(producto.status);
             return (
-              <div key={producto.id} className={`flex items-center justify-between text-sm p-2 rounded border ${statusClass}`}>
+              <div key={`${producto.id}-${index}`} className={`flex items-center justify-between text-sm p-2 rounded border ${statusClass}`}>
                 <div className="flex-1">
                   <p className="text-gray-700">{producto.nombre}</p>
                   {/* Checkbox Queso solo para Pizzas/Mariscos en grupo */}
