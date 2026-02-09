@@ -151,7 +151,11 @@ const ProductsSection = ({
                 if (!searchTerm) return true;
                 const termino = searchTerm.toLowerCase();
                 const nombre = (producto.nombre || '').toLowerCase();
-                return nombre.includes(termino);
+
+                // Buscar también por tamaño/subcategoría
+                const tamano = (producto.tamano || producto.tamaño || producto.subcategoria || '').toString().toLowerCase();
+
+                return nombre.includes(termino) || tamano.includes(termino);
               })
               .map((producto) => {
                 if (!producto) return null;
