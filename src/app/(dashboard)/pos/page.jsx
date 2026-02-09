@@ -354,6 +354,8 @@ const POS = () => {
       setDireccionSeleccionada(null);
       setFechaEntrega(null);
       setTipoServicio(2);
+      setUltimoTamanoSeleccionado(null);
+      setUsarTamanoAutomatico(false);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       showToast.error(error.message || 'Hubo un error al enviar la orden.');
@@ -400,6 +402,8 @@ const POS = () => {
       setMesa('');
       setNombreClie('');
       setTipoServicio(2);
+      setUltimoTamanoSeleccionado(null);
+      setUsarTamanoAutomatico(false);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       showToast.error(error.message || 'Hubo un error al enviar la orden.');
@@ -459,6 +463,8 @@ const POS = () => {
       setFechaEntrega(null);
       setClienteSeleccionado(null);
       setTipoServicio(2);
+      setUltimoTamanoSeleccionado(null);
+      setUsarTamanoAutomatico(false);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       showToast.error(error.message || 'Hubo un error al enviar la orden.');
@@ -504,6 +510,8 @@ const POS = () => {
       setFechaEntrega(null);
       setClienteSeleccionado(null);
       setTipoServicio(2);
+      setUltimoTamanoSeleccionado(null);
+      setUsarTamanoAutomatico(false);
     } catch (error) {
       console.error('Error al enviar la orden:', error);
       showToast.error(error.message || 'Hubo un error al enviar la orden.');
