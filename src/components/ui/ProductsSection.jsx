@@ -149,13 +149,38 @@ const ProductsSection = ({
             productos
               .filter(producto => {
                 if (!searchTerm) return true;
-                const termino = searchTerm.toLowerCase();
-                const nombre = (producto.nombre || '').toLowerCase();
+
+                // Helper to normalize text (remove accents, lowercase)
+                const normalizeText = (text) => {
+                  return (text || '')
+                    .toString()
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "");
+                };
+
+                const termino = normalizeText(searchTerm);
+                const nombre = normalizeText(producto.nombre);
 
                 // Buscar también por tamaño/subcategoría
-                const tamano = (producto.tamano || producto.tamaño || producto.subcategoria || '').toString().toLowerCase();
+                // Normalize all potential size properties
+                const tamano = normalizeText(producto.tamano || producto.tamaño || producto.subcategoria);
 
-                return nombre.includes(termino) || tamano.includes(termino);
+                // Check primary product fields
+                if (nombre.includes(termino) || tamano.includes(termino)) return true;
+
+                // Check variants if they exist
+                if (producto.todos_variantes && Array.isArray(producto.todos_variantes)) {
+                  return producto.todos_variantes.some(v => {
+                    const vTamano = normalizeText(v.tamano || v.tamaño || v.subcategoria || '');
+                    // We can also check v.nombre but it should be same as parent,
+                    // however sometimes variants might have slightly different names if data is messy,
+                    // but mainly we want the variant's specific attributes.
+                    return vTamano.includes(termino);
+                  });
+                }
+
+                return false;
               })
               .map((producto) => {
                 if (!producto) return null;

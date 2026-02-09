@@ -696,8 +696,11 @@ const POS = () => {
       const nombresUnicos = {};
       productosCategoria.forEach(producto => {
         if (!nombresUnicos[producto.nombre]) {
-          nombresUnicos[producto.nombre] = producto;
+          // Inicializar con array de variantes vacío
+          nombresUnicos[producto.nombre] = { ...producto, todos_variantes: [] };
         }
+        // Agregar la variante actual a la lista
+        nombresUnicos[producto.nombre].todos_variantes.push(producto);
       });
       return Object.values(nombresUnicos);
     }
