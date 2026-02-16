@@ -63,7 +63,7 @@ export default function EditarCategoriaPage() {
 
     setSaving(true);
     try {
-      await api.put(`/ventas/categoria/${params.id}`, formData);
+      await api.put(`/recursos/categorias/${params.id}`, formData);
       showToast.success('Categoría actualizada correctamente ✅');
       router.push('/recursos/categorias');
     } catch (error) {
