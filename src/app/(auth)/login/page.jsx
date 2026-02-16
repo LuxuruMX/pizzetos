@@ -21,8 +21,13 @@ export default function LoginPage() {
   }, [router]);
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      showToast.warning('Por favor llena todos los campos');
+    if (!username) {
+      showToast.error('El usuario es obligatorio');
+      return;
+    }
+
+    if (!password) {
+      showToast.error('La contraseña es obligatoria');
       return;
     }
 

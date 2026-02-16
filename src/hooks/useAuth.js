@@ -30,9 +30,19 @@ export function useAuth() {
       return { success: true };
     } catch (error) {
       console.error('Error en login:', error);
+      let errorMessage = 'Login fallido. Revisa usuario y contraseña';
+      
+      if (error.response && error.response.data) {
+        if (error.response.data.detail) {
+           errorMessage = error.response.data.detail;
+        } else if (error.response.data.message) {
+           errorMessage = error.response.data.message;
+        }
+      }
+      
       return { 
         success: false, 
-        error: 'Login fallido. Revisa usuario y contraseña' 
+        error: errorMessage 
       };
     }
   };
