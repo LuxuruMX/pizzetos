@@ -78,6 +78,7 @@ export default function AgregarCargoPage() {
     setLoading(true);
     try {
       await api.post('/recursos/cargos', formData);
+      showToast.success('Cargo creado correctamente');
       router.push('/recursos/cargos');
     } catch (error) {
       console.error('Error creating cargo:', error);

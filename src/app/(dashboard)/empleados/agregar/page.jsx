@@ -9,10 +9,11 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function AgregarEmpleadoPage() {
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     direccion: '',
@@ -22,7 +23,7 @@ export default function AgregarEmpleadoPage() {
     nickName: '',
     password: '',
   });
-  
+
   const [cargos, setCargos] = useState([]);
   const [sucursales, setSucursales] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,7 +40,7 @@ export default function AgregarEmpleadoPage() {
         catalogsService.getCargosEmpleados(),
         catalogsService.getSucursales()
       ]);
-      
+
       setCargos(cargosData);
       setSucursales(sucursalesData);
     } catch (error) {
@@ -59,53 +60,54 @@ export default function AgregarEmpleadoPage() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (!formData.nombre || !formData.direccion || !formData.telefono || 
+    e.preventDefault();
+
+    if (!formData.nombre || !formData.direccion || !formData.telefono ||
       !formData.cargo || !formData.sucursal) {
-    alert('Por favor completa todos los campos obligatorios');
-    return;
-  }
-
-  setLoading(true);
-  setError(''); // Limpiar errores previos
-
-  try {
-    const dataToSend = {
-      nombre: formData.nombre,
-      direccion: formData.direccion,
-      telefono: formData.telefono,
-      id_ca: parseInt(formData.cargo),
-      id_suc: parseInt(formData.sucursal),
-      status: true,
-    };
-
-    if (formData.nickName && formData.nickName.trim() !== '') {
-      dataToSend.nickName = formData.nickName.trim();
-    }
-
-    if (formData.password && formData.password.trim() !== '') {
-      dataToSend.password = formData.password;
-    }
-
-    const response = await api.post('/empleados', dataToSend);
-    const result = response.data; // Ajusta esto si usas fetch en lugar de axios
-
-    // Verificar si el backend devolvió un mensaje de error lógico
-    if (result.message === "El nickName ya existe, elija otro usuario") {
-      setError('El nombre de usuario ya está en uso. Por favor, elige otro.');
-      setLoading(false);
+      alert('Por favor completa todos los campos obligatorios');
       return;
     }
 
-    // Si todo salió bien
-    router.push('/empleados');
-  } catch (error) {
-    console.error('Error creating empleado:', error);
-    setError('Error al crear el empleado. Intenta nuevamente.');
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    setError(''); // Limpiar errores previos
+
+    try {
+      const dataToSend = {
+        nombre: formData.nombre,
+        direccion: formData.direccion,
+        telefono: formData.telefono,
+        id_ca: parseInt(formData.cargo),
+        id_suc: parseInt(formData.sucursal),
+        status: true,
+      };
+
+      if (formData.nickName && formData.nickName.trim() !== '') {
+        dataToSend.nickName = formData.nickName.trim();
+      }
+
+      if (formData.password && formData.password.trim() !== '') {
+        dataToSend.password = formData.password;
+      }
+
+      const response = await api.post('/empleados', dataToSend);
+      const result = response.data; // Ajusta esto si usas fetch en lugar de axios
+
+      // Verificar si el backend devolvió un mensaje de error lógico
+      if (result.message === "El nickName ya existe, elija otro usuario") {
+        setError('El nombre de usuario ya está en uso. Por favor, elige otro.');
+        setLoading(false);
+        return;
+      }
+
+      // Si todo salió bien
+      showToast.success('Empleado agregado correctamente ✅');
+      router.push('/empleados');
+    } catch (error) {
+      console.error('Error creating empleado:', error);
+      setError('Error al crear el empleado. Intenta nuevamente.');
+      setLoading(false);
+    }
+  };
 
   if (loadingCatalogs) {
     return (
@@ -123,8 +125,8 @@ export default function AgregarEmpleadoPage() {
     <div className="p-6">
       <Card>
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             icon={FaArrowLeft}
             onClick={() => router.push('/empleados')}
           >
@@ -211,15 +213,15 @@ export default function AgregarEmpleadoPage() {
           )}
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               icon={FaSave}
               disabled={loading}
             >
               {loading ? 'Guardando...' : 'Guardar'}
             </Button>
-            
-            <Button 
+
+            <Button
               type="button"
               variant="secondary"
               onClick={() => router.push('/empleados')}

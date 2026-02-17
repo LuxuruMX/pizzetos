@@ -128,6 +128,7 @@ export default function EditarCargoPage() {
     setSaving(true);
     try {
       await api.put(`/recursos/cargos/${params.id}`, formData);
+      showToast.success('Cargo actualizado correctamente');
       router.push('/recursos/cargos');
     } catch (error) {
       console.error('Error updating cargo:', error);

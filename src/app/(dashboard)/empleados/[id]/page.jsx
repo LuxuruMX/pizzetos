@@ -114,6 +114,7 @@ export default function EditarEmpleadoPage() {
 
       await api.put(`/empleados/${params.id}`, dataToSend);
 
+      showToast.success('Empleado actualizado correctamente ✅');
       router.push('/empleados');
     } catch (error) {
       console.error('Error updating empleado:', error);
