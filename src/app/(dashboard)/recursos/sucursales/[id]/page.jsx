@@ -61,6 +61,7 @@ export default function EditarSucursalPage() {
     setSaving(true);
     try {
       await api.put(`/recursos/sucursales/${params.id}`, formData);
+      showToast.success('Sucursal actualizada correctamente ✅');
       router.push('/recursos/sucursales');
     } catch (error) {
       console.error('Error updating sucursal:', error);

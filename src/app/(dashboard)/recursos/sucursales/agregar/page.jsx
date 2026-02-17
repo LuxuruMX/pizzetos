@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
+import { showToast } from '@/utils/toast';
 
 export default function AgregarSucursalPage() {
   const router = useRouter();
@@ -27,20 +28,21 @@ export default function AgregarSucursalPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.nombre.trim() || !formData.direccion.trim() || !String(formData.telefono).trim()) {
-      alert('Todos los campos son obligatorios');
+      showToast.error('Todos los campos son obligatorios');
       return;
     }
 
     setLoading(true);
     try {
       await api.post('/recursos/sucursales', formData);
+      showToast.success('Sucursal creada correctamente');
       router.push('/recursos/sucursales');
     } catch (error) {
       console.error('Error creating sucursal:', error);
       const errorMsg = error.response?.data?.Message || error.response?.data?.detail || 'Error al crear la sucursal ❌';
-      alert(errorMsg);
+      showToast.error(errorMsg);
     } finally {
       setLoading(false);
     }
