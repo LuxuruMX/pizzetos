@@ -45,7 +45,7 @@ export default function AgregarEmpleadoPage() {
       setSucursales(sucursalesData);
     } catch (error) {
       console.error('Error loading catalogs:', error);
-      alert('Error al cargar los catálogos');
+      showToast.error('Error al cargar los catálogos');
     } finally {
       setLoadingCatalogs(false);
     }
@@ -64,7 +64,12 @@ export default function AgregarEmpleadoPage() {
 
     if (!formData.nombre || !formData.direccion || !formData.telefono ||
       !formData.cargo || !formData.sucursal) {
-      alert('Por favor completa todos los campos obligatorios');
+      showToast.error('Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    if (formData.nickName && formData.nickName.trim() !== '' && (!formData.password || formData.password.trim() === '')) {
+      showToast.error('Si asignas un usuario, la contraseña es obligatoria');
       return;
     }
 
