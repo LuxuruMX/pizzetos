@@ -6,6 +6,7 @@ import { jwtDecode } from 'jwt-decode';
 import api from '@/services/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import Popconfirm from '@/components/ui/Popconfirm';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { showToast } from '@/utils/toast';
 
@@ -65,8 +66,6 @@ export default function EmpleadosPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar este empleado?')) return;
-
     try {
       await api.delete(`/empleados/${id}`);
       setEmpleados(empleados.filter(emp => emp.id_emp !== id));
@@ -201,13 +200,19 @@ export default function EmpleadosPage() {
                           </button>
                         )}
                         {permisos.eliminar_empleado && (
-                          <button
-                            onClick={() => handleDelete(empleado.id_emp)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Eliminar"
+                          <Popconfirm
+                            title="¿Seguro que quiere eliminar?"
+                            okText="Sí"
+                            cancelText="No"
+                            onConfirm={() => handleDelete(empleado.id_emp)}
                           >
-                            <FaTrash size={18} />
-                          </button>
+                            <button
+                              className="text-red-600 hover:text-red-900"
+                              title="Eliminar"
+                            >
+                              <FaTrash size={18} />
+                            </button>
+                          </Popconfirm>
                         )}
                       </div>
                     </td>
