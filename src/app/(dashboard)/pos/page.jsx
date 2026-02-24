@@ -783,7 +783,7 @@ const POS = () => {
         </div>
       </div>
 
-      <div className="flex flex-1 h-full items-stretch min-h-[500px]">
+      <div className="flex flex-1 h-full items-stretch min-h-125">
         <ProductsSection
           categorias={categorias}
           categoriaActiva={categoriaActiva}
