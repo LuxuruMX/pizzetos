@@ -20,40 +20,43 @@ const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta", au
                     onLoad={(e) => {
                         try {
                             const iframe = e.target;
-
-                            // Prevent infinite loops
                             if (iframe.dataset.printed === 'true') return;
                             iframe.dataset.printed = 'true';
 
-                            setTimeout(() => {
-                                iframe.contentWindow.focus();
+                            // NUEVA LÓGICA: Si estamos en Electron
+                            if (window.electronAPI) {
+                                // Extraemos el PDF del blob URL
+                                fetch(pdfUrl)
+                                    .then(res => res.arrayBuffer())
+                                    .then(buffer => {
+                                        // Lo mandamos al backend de Electron
+                                        window.electronAPI.printPdfFile(buffer);
 
-                                // Improved print handling
-                                const closeAfterPrint = () => {
-                                    // Small delay to ensure print dialog logic is done
-                                    setTimeout(() => {
+                                        // Cerramos el modal casi de inmediato
+                                        setTimeout(() => handleClose(), 500);
+                                    })
+                                    .catch(err => {
+                                        console.error("Error leyendo PDF:", err);
                                         handleClose();
-                                    }, 500);
-                                };
-
-                                // Listeners for afterprint
-                                iframe.contentWindow.onafterprint = closeAfterPrint;
-
-                                // Fallback: On some browsers, print() blocks, so code after it runs when closed.
-                                // On others, it doesn't.
-                                // We also listen for focus returning to the main window
-                                const onFocus = () => {
-                                    window.removeEventListener('focus', onFocus);
-                                    closeAfterPrint();
-                                };
-                                window.addEventListener('focus', onFocus);
-
-                                iframe.contentWindow.print();
-
-                            }, 500);
+                                    });
+                            } else {
+                                // TU LÓGICA ORIGINAL INTACTA: Por si abres el sistema en Firefox/Chrome normal
+                                setTimeout(() => {
+                                    iframe.contentWindow.focus();
+                                    const closeAfterPrint = () => {
+                                        setTimeout(() => handleClose(), 500);
+                                    };
+                                    iframe.contentWindow.onafterprint = closeAfterPrint;
+                                    const onFocus = () => {
+                                        window.removeEventListener('focus', onFocus);
+                                        closeAfterPrint();
+                                    };
+                                    window.addEventListener('focus', onFocus);
+                                    iframe.contentWindow.print();
+                                }, 500);
+                            }
                         } catch (err) {
                             console.error("Auto-print error:", err);
-                            // Fallback to manual close if error
                             handleClose();
                         }
                     }}
