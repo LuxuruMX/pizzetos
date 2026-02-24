@@ -13,5 +13,5 @@ const getLocalStorage = (key, defaultValue) => {
 
 export const POS_CONFIG = {
   lockViewport: getLocalStorage('POS_LOCK_VIEWPORT', true),
-  PRINTER_SIZE: getLocalStorage('POS_PRINTER_SIZE', '58mm'), // Options: '58mm', '80mm'
+  PRINTER_SIZE: getLocalStorage('POS_PRINTER_SIZE', '80mm'), // Options: '58mm', '80mm'
 };
