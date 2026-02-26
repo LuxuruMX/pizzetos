@@ -237,16 +237,9 @@ const POS = () => {
         />
       ).toBlob();
 
-      // En navegadores estrictos como Firefox y Brave, un "blob:" incrustado 
-      // en iframe imprime páginas en blanco por políticas de seguridad.
-      // Solución real sin ventanas nuevas: convertir el PDF a formato Base64 (Data URI)
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = () => {
-        const base64data = reader.result;
-        setPdfUrl(base64data);
-        setPdfModalOpen(true);
-      };
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+      setPdfModalOpen(true);
     } catch (error) {
       console.error("Error generando PDF:", error);
     }
@@ -790,7 +783,7 @@ const POS = () => {
         </div>
       </div>
 
-      <div className="flex flex-1 h-full items-stretch min-h-125">
+      <div className="flex flex-1 h-full items-stretch min-h-[500px]">
         <ProductsSection
           categorias={categorias}
           categoriaActiva={categoriaActiva}
