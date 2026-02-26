@@ -77,6 +77,19 @@ const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta", au
                 <div className="flex justify-between items-center p-4 border-b">
                     <h2 className="text-xl font-bold text-gray-800">{title}</h2>
                     <div className="flex gap-2">
+                        {/* Botón de imprimir manual (útil para Firefox) */}
+                        <button
+                            onClick={() => {
+                                const iframe = document.getElementById('pdf-viewer-iframe');
+                                if (iframe && iframe.contentWindow) {
+                                    iframe.contentWindow.focus();
+                                    iframe.contentWindow.print();
+                                }
+                            }}
+                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center gap-2"
+                        >
+                            Imprimir
+                        </button>
                         <button
                             onClick={handleClose}
                             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
@@ -87,10 +100,10 @@ const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta", au
                 </div>
                 <div className="flex-1 overflow-hidden">
                     <iframe
+                        id="pdf-viewer-iframe"
                         src={pdfUrl}
                         className="w-full h-full border-0"
                         title="PDF Viewer"
-                    // Fallback simple print trigger if somehow autoPrint is false but we want manual action
                     />
                 </div>
             </div>
