@@ -3,7 +3,7 @@ import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/rendere
 import { POS_CONFIG } from '@/config/posConfig';
 
 // Determine width based on config
-const PRINTER_SIZE = POS_CONFIG.PRINTER_SIZE || '58mm';
+const PRINTER_SIZE = POS_CONFIG.PRINTER_SIZE || '80mm';
 const PAGE_WIDTH = PRINTER_SIZE === '80mm' ? 227 : 164; // 80mm ~ 227pt, 58mm ~ 164pt
 
 // Registrar fuente estándar si es necesario, o usar Helvetica por defecto
@@ -14,8 +14,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Helvetica',
         fontSize: 9,
         padding: 5,
-        padding: 5,
-        width: PAGE_WIDTH,
+        // (Se remueven width: PAGE_WIDTH y padding duplicado para evitar conflictos de escala)
     },
     header: {
         marginBottom: 5,
