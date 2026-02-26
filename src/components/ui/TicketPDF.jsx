@@ -213,7 +213,8 @@ const TicketPDF = ({ orden, total, datosExtra, fecha, cliente, tipoServicio, com
         height += 30;
 
         // Min height para asegurar que no quede demasiado pequeño en tickets vacíos o muy simples
-        return Math.max(height, 200);
+        // Debe ser mayor que el ancho (PAGE_WIDTH es máx 227) para que el navegador NO lo rote a orientación Horizontal (Landscape)
+        return Math.max(height, 300);
     };
 
     const dynamicHeight = calculateContentHeight();
