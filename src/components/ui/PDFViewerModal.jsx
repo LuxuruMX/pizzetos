@@ -23,38 +23,19 @@ const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta", au
                             if (iframe.dataset.printed === 'true') return;
                             iframe.dataset.printed = 'true';
 
-                            // NUEVA LÓGICA: Si estamos en Electron
-                            if (window.electronAPI) {
-                                // Extraemos el PDF del blob URL
-                                fetch(pdfUrl)
-                                    .then(res => res.arrayBuffer())
-                                    .then(buffer => {
-                                        // Lo mandamos al backend de Electron
-                                        window.electronAPI.printPdfFile(buffer);
+                            // Disparar la impresión en cuanto cargue el contenido
+                            setTimeout(() => {
+                                iframe.contentWindow.focus();
+                                iframe.contentWindow.print();
 
-                                        // Cerramos el modal casi de inmediato
-                                        setTimeout(() => handleClose(), 500);
-                                    })
-                                    .catch(err => {
-                                        console.error("Error leyendo PDF:", err);
-                                        handleClose();
-                                    });
-                            } else {
-                                // TU LÓGICA ORIGINAL INTACTA: Por si abres el sistema en Firefox/Chrome normal
-                                setTimeout(() => {
-                                    iframe.contentWindow.focus();
-                                    const closeAfterPrint = () => {
-                                        setTimeout(() => handleClose(), 500);
-                                    };
-                                    iframe.contentWindow.onafterprint = closeAfterPrint;
-                                    const onFocus = () => {
-                                        window.removeEventListener('focus', onFocus);
-                                        closeAfterPrint();
-                                    };
-                                    window.addEventListener('focus', onFocus);
-                                    iframe.contentWindow.print();
-                                }, 500);
-                            }
+                                // Escuchar cuándo regresamos del cuadro de diálogo de impresión
+                                // para cerrar el modal automáticamente
+                                const onFocus = () => {
+                                    window.removeEventListener('focus', onFocus);
+                                    setTimeout(() => handleClose(), 500);
+                                };
+                                window.addEventListener('focus', onFocus);
+                            }, 500);
                         } catch (err) {
                             console.error("Auto-print error:", err);
                             handleClose();
@@ -77,19 +58,6 @@ const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta", au
                 <div className="flex justify-between items-center p-4 border-b">
                     <h2 className="text-xl font-bold text-gray-800">{title}</h2>
                     <div className="flex gap-2">
-                        {/* Botón de imprimir manual (útil para Firefox) */}
-                        <button
-                            onClick={() => {
-                                const iframe = document.getElementById('pdf-viewer-iframe');
-                                if (iframe && iframe.contentWindow) {
-                                    iframe.contentWindow.focus();
-                                    iframe.contentWindow.print();
-                                }
-                            }}
-                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center gap-2"
-                        >
-                            Imprimir
-                        </button>
                         <button
                             onClick={handleClose}
                             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
@@ -100,10 +68,10 @@ const PDFViewerModal = ({ isOpen, pdfUrl, onClose, title = "Ticket de Venta", au
                 </div>
                 <div className="flex-1 overflow-hidden">
                     <iframe
-                        id="pdf-viewer-iframe"
                         src={pdfUrl}
                         className="w-full h-full border-0"
                         title="PDF Viewer"
+                    // Fallback simple print trigger if somehow autoPrint is false but we want manual action
                     />
                 </div>
             </div>

@@ -237,9 +237,16 @@ const POS = () => {
         />
       ).toBlob();
 
-      const url = URL.createObjectURL(blob);
-      setPdfUrl(url);
-      setPdfModalOpen(true);
+      // En navegadores estrictos como Firefox y Brave, un "blob:" incrustado 
+      // en iframe imprime páginas en blanco por políticas de seguridad.
+      // Solución real sin ventanas nuevas: convertir el PDF a formato Base64 (Data URI)
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = () => {
+        const base64data = reader.result;
+        setPdfUrl(base64data);
+        setPdfModalOpen(true);
+      };
     } catch (error) {
       console.error("Error generando PDF:", error);
     }
